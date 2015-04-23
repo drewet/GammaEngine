@@ -44,7 +44,7 @@ Renderer::~Renderer()
 }
 
 
-int Renderer::LoadVertexShader( const std::string file, int devid )
+int Renderer::LoadVertexShader( const std::string file )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
 	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );
@@ -56,7 +56,7 @@ int Renderer::LoadVertexShader( const std::string file, int devid )
 }
 
 
-int Renderer::LoadFragmentShader( const std::string file, int devid )
+int Renderer::LoadFragmentShader( const std::string file )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
 	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );

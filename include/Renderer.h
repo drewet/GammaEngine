@@ -30,8 +30,8 @@ public:
 	Renderer( Instance* instance, int devid = 0 );
 	~Renderer();
 
-	int LoadVertexShader( const std::string file, int devid );
-	int LoadFragmentShader( const std::string file, int devid );
+	int LoadVertexShader( const std::string file );
+	int LoadFragmentShader( const std::string file );
 
 	void Compute();
 	void Draw();
