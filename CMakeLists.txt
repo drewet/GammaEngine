@@ -11,6 +11,7 @@ add_executable(gammaengine
 	src/gememory.cpp
 	src/Instance.cpp
 	src/Renderer.cpp
+	src/Shader.cpp
 	fake/dummy_vk.cpp)
 
 install(TARGETS gammaengine RUNTIME DESTINATION bin)

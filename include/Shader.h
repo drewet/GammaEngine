@@ -17,32 +17,24 @@
  *
  */
 
-#ifndef INSTANCE_H
-#define INSTANCE_H
+#ifndef SHADER_H
+#define SHADER_H
 
 #include "vulkan.h"
 
-class Instance
+class Instance;
+
+class Shader
 {
 public:
-	Instance( const char* appName, uint32_t appVersion, bool easy_instance = true );
-	~Instance();
-
-	int EnumerateGpus();
-	void CreateDevice( int devid, int queueCount );
-
-	VK_DEVICE device( int devid );
-
-	static void* sAlloc( size_t size, size_t align, int32_t allocType );
-	static void sFree( void* pMem );
+	Shader( Instance* instance, const std::string vs, const std::string fs, int devid = 0 );
+	~Shader();
 
 private:
-	VK_INSTANCE mInstance;
-	VK_DEVICE mDevices[VK_MAX_PHYSICAL_GPUS];
-	VK_QUEUE mQueue;
+	uint8_t* loadFile( const std::string filename, size_t* sz );
 
-	uint32_t mGpuCount;
-	VK_PHYSICAL_GPU mGpus[VK_MAX_PHYSICAL_GPUS];
+	VK_SHADER mVertexShader;
+	VK_SHADER mFragmentShader;
 };
 
-#endif // INSTANCE_H
+#endif // SHADER_H
