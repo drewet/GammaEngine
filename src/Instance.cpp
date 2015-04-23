@@ -86,7 +86,43 @@ void Instance::CreateDevice( int devid, int queueCount )
 
 	vkCreateDevice( mGpus[devid], &deviceInfo, &mDevices[devid] );
 
-	vkGetDeviceQueue( mDevices[devid], 0, 0, &mQueue );
+	vkGetDeviceQueue( mDevices[devid], 0, 0, &mQueues[devid] );
+
+	GR_FENCE_CREATE_INFO fenceCreateInfo = {};
+	vkCreateFence( mDevices[devid], &fenceCreateInfo, &mFences[devid] );
+}
+
+
+VK_MEMORY_REF Instance::AllocateObject( int devid, VK_OBJECT object )
+{
+	VK_MEMORY_REQUIREMENTS memReqs = {};
+	VK_SIZE memReqsSize = sizeof(memReqs);
+	vkGetObjectInfo(object, VK_INFO_TYPE_MEMORY_REQUIREMENTS, &memReqsSize, &memReqs );
+
+	VK_MEMORY_HEAP_PROPERTIES heapProps = {};
+	VK_SIZE heapPropsSize = sizeof(heapProps);
+	vkGetMemoryHeapInfo(mDevices[devid], memReqs.heaps[0], VK_INFO_TYPE_MEMORY_HEAP_PROPERTIES, &heapPropsSize, &heapProps );
+
+	VK_MEMORY_ALLOC_INFO allocInfo = {};
+	VK_GPU_MEMORY memory;
+	allocInfo.size = ( 1 + memReqs.size / heapProps.pageSize ) * heapProps.pageSize;
+	allocInfo.alignment = 0; // TEST/TODO : 16/32/64 perf improv ??
+	allocInfo.memPriority = VK_MEMORY_PRIORITY_HIGH;
+	allocInfo.heapCount = 1;
+	allocInfo.heaps[0] = memReqs.heaps[0];
+	vkAllocMemory( mDevices[devid], &allocInfo, &memory );
+
+	VK_MEMORY_REF ret = {};
+	vkBindObjectMemory( object, memory, 0 );
+	ret.mem = memory;
+
+	return ret;
+}
+
+
+void Instance::QueueSubmit( int devid, VK_CMD_BUFFER buf, VK_MEMORY_REF* refs, int nRefs )
+{
+	vkQueueSubmit( mQueues[devid], 1, &buf, nRefs, refs, mFences[devid] );
 }
 
 

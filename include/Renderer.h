@@ -30,8 +30,25 @@ public:
 	Renderer( Instance* instance, int devid = 0 );
 	~Renderer();
 
+	int LoadVertexShader( const std::string file, int devid );
+	int LoadFragmentShader( const std::string file, int devid );
+
+	void Compute();
+	void Draw();
+
 private:
+	uint8_t* loadShader( const std::string filename, size_t* sz );
+	void createPipeline();
+
+	bool mReady;
+	Instance* mInstance;
+	int mDevId;
+
 	VK_CMD_BUFFER mCmdBuffer;
+	VK_PIPELINE mPipeline;
+	VK_MEMORY_REF mPipelineRef;
+	VK_SHADER mVertexShader;
+	VK_SHADER mFragmentShader;
 };
 
 #endif // RENDERER_H

@@ -31,15 +31,20 @@ public:
 	int EnumerateGpus();
 	void CreateDevice( int devid, int queueCount );
 
+	VK_MEMORY_REF AllocateObject( int devid, VK_OBJECT object );
+
+	void QueueSubmit( int devid, VK_CMD_BUFFER buf, VK_MEMORY_REF* refs, int nRefs );
+
 	VK_DEVICE device( int devid );
 
+private:
 	static void* sAlloc( size_t size, size_t align, int32_t allocType );
 	static void sFree( void* pMem );
 
-private:
 	VK_INSTANCE mInstance;
 	VK_DEVICE mDevices[VK_MAX_PHYSICAL_GPUS];
-	VK_QUEUE mQueue;
+	VK_QUEUE mQueues[VK_MAX_PHYSICAL_GPUS];
+	VK_FENCE mFences[VK_MAX_PHYSICAL_GPUS];
 
 	uint32_t mGpuCount;
 	VK_PHYSICAL_GPU mGpus[VK_MAX_PHYSICAL_GPUS];
