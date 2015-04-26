@@ -1,18 +1,24 @@
+#include <unistd.h>
 #include <iostream>
 #include "Instance.h"
 #include "Renderer.h"
+#include "Object.h"
+
+using namespace GE;
 
 int main(int argc, char **argv)
 {
-	Instance* instance = new Instance( "GammaEngine test", 42 );
-// 	Window* window = new Window( instance, "Hello GammaEngine !", 1280, 720, 0 );
+	chdir("..");
 
-// 	Object* cube = new Object( "scene/cube.obj" );
+	/*Instance* instance = */new Instance( "GammaEngine test", 42 );
+// 	Window* window = new Window( [instance], "Hello GammaEngine !", 1280, 720, 0 );
 
-	Renderer* renderer = new Renderer( instance );
+	Object* cube = new Object( "scene/cube.obj" );
+
+	Renderer* renderer = new Renderer();
 	renderer->LoadVertexShader( "shaders/basic.bvs" );
 	renderer->LoadFragmentShader( "shaders/basic.bfs" );
-// 	renderer->AddObject( cube );
+	renderer->AddObject( cube );
 	renderer->Compute();
 
 	while ( 1 ) {

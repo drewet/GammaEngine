@@ -1,5 +1,5 @@
 /*
- * The GammaEngine Library 2.0 is a multiplatform Vulkan-based game engine
+ * <one line to give the library's name and an idea of what it does.>
  * Copyright (C) 2015  Adrien Aubry <dridri85@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,17 +14,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
+*
+*/
 
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef VECTOR_H
+#define VECTOR_H
 
-#include <stdint.h>
+class Vector3f
+{
+public:
+	Vector3f( float x = 0.0f, float y = 0.0f, float z = 0.0f );
 
-void* geMemalign( uintptr_t size, uintptr_t align, bool clear_mem = true );
-void* geRealloc( void* last, uintptr_t size, bool clear_mem = true );
-void* geMalloc( uintptr_t size, bool clear_mem = true );
-void geFree( void* data );
+// Attributes defined as public for fast access
+public:
+	float x;
+	float y;
+	float z;
+} __attribute__((packed));
 
-#endif // MEMORY_H
+#endif // VECTOR_H

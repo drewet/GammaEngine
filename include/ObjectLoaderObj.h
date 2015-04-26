@@ -1,5 +1,5 @@
 /*
- * The GammaEngine Library 2.0 is a multiplatform Vulkan-based game engine
+ * <one line to give the library's name and an idea of what it does.>
  * Copyright (C) 2015  Adrien Aubry <dridri85@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,48 +17,44 @@
  *
  */
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef OBJECTLOADEROBJ_H
+#define OBJECTLOADEROBJ_H
 
-#include <vector>
-#include "vulkan.h"
+
+#include <map>
+#include "Object.h"
+
 
 namespace GE {
 
-class Instance;
-class Object;
+class File;
 
-class Renderer
+class ObjectLoaderObj : public ObjectLoader
 {
 public:
-	Renderer( Instance* instance = nullptr, int devid = 0 );
-	~Renderer();
-
-	int LoadVertexShader( const std::string file );
-	int LoadFragmentShader( const std::string file );
-
-	void AddObject( Object* obj );
-
-	void Compute();
-	void Draw();
+	ObjectLoaderObj();
+	virtual TYPE fileType();
+	virtual uint32_t magic();
+	virtual std::vector< std::string > contentPatterns();
+	virtual std::vector< std::string > extensions();
+	virtual ObjectLoader* NewInstance();
+	virtual void Load( File* file );
 
 private:
-	uint8_t* loadShader( const std::string filename, size_t* sz );
-	void createPipeline();
+	typedef struct Material {
+		uint32_t ambient;
+		uint32_t diffuse;
+		uint32_t specular;
+	} Material;
 
-	bool mReady;
-	Instance* mInstance;
-	int mDevId;
+	void LoadMaterials( File* file, std::string filename );
 
-	std::vector< Object* > mObjects;
-
-	VK_CMD_BUFFER mCmdBuffer;
-	VK_PIPELINE mPipeline;
-	VK_MEMORY_REF mPipelineRef;
-	VK_SHADER mVertexShader;
-	VK_SHADER mFragmentShader;
+	static ObjectLoaderObj* mBaseInstance;
+	std::map< std::string, Material* > mMaterials;
 };
+
 
 } // namespace GE
 
-#endif // RENDERER_H
+
+#endif // OBJECTLOADEROBJ_H

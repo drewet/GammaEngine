@@ -8,15 +8,15 @@
 #endif
 
 
-uintptr_t _ge_AllocMemBlock( int size )
+uintptr_t _ge_AllocMemBlock( uintptr_t size )
 {
 	return (uintptr_t)malloc( size );
 }
 
 
-void* geMemalign( int size, int align, bool clear_mem )
+void* geMemalign( uintptr_t size, uintptr_t align, bool clear_mem )
 {
-	int block_sz = sizeof(uintptr_t) * 2;
+	uintptr_t block_sz = sizeof(uintptr_t) * 2;
 	uintptr_t addr = _ge_AllocMemBlock( size + ( align > block_sz ? align : block_sz ) + align );
 	uintptr_t* var = (uintptr_t*)( ALIGN( addr + ( align > block_sz ? align : block_sz ), align ) - block_sz );
 	var[0] = addr;
@@ -27,7 +27,7 @@ void* geMemalign( int size, int align, bool clear_mem )
 }
 
 
-void* geMalloc( int size, bool clear_mem )
+void* geMalloc( uintptr_t size, bool clear_mem )
 {
 	if ( size <= 0 ) {
 		return NULL;
@@ -48,7 +48,7 @@ void geFree( void* data )
 }
 
 
-void* geRealloc( void* last, int size, bool clear_mem )
+void* geRealloc( void* last, uintptr_t size, bool clear_mem )
 {
 	if ( size <= 0 ) {
 		geFree( last );
@@ -68,7 +68,7 @@ void* geRealloc( void* last, int size, bool clear_mem )
 		memset( (void*)(uintptr_t)&var[2], 0x0, size );
 	}
 
-	int sz_copy = last_size < size ? last_size : size;
+	uintptr_t sz_copy = last_size < size ? last_size : size;
 	memcpy(new_ptr, last, sz_copy);
 
 	var = (uintptr_t*)last;

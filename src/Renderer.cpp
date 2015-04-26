@@ -22,20 +22,24 @@
 
 #include "Instance.h"
 #include "Renderer.h"
+#include "Object.h"
+#include "Debug.h"
 #include "gememory.h"
+
+namespace GE {
 
 Renderer::Renderer( Instance* instance, int devid )
 	: mReady( false )
-	, mInstance( instance )
+	, mInstance( instance ? instance : Instance::baseInstance() )
 	, mDevId( devid )
 	, mPipeline( 0 )
 {
 	VK_CMD_BUFFER_CREATE_INFO info;
 
 	info.queueType = 0;
-	info.flags = 0;
+	info.flags = VK_CMD_BUFFER_OPTIMIZE_DESCRIPTOR_SET_SWITCH;
 
-	vkCreateCommandBuffer( instance->device( mDevId ), &info, &mCmdBuffer );
+	vkCreateCommandBuffer( mInstance->device( mDevId ), &info, &mCmdBuffer );
 }
 
 
@@ -115,11 +119,40 @@ void Renderer::createPipeline()
 }
 
 
+void Renderer::AddObject( Object* obj )
+{
+	mObjects.emplace_back( obj );
+}
+
+
 void Renderer::Compute()
 {
 	if ( !mReady ) {
 		createPipeline();
 	}
+
+	vkBeginCommandBuffer( mCmdBuffer, 0 );
+
+	VK_COLOR_TARGET_BIND_INFO colorTargetBindInfo;
+//	colorTargetBindInfo.view = colorTargetView; // TODO
+	colorTargetBindInfo.colorTargetState = VK_MEMORY_STATE_TARGET_RENDER_ACCESS_OPTIMAL;
+	vkCmdBindTargets( mCmdBuffer, 1, &colorTargetBindInfo, nullptr );
+/*	TODO TODO TODO
+	vkCmdBindStateObject( mCmdBuffer, VK_STATE_BIND_MSAA, msaaState );
+	vkCmdBindStateObject( mCmdBuffer, VK_STATE_BIND_VIEWPORT, viewportState );
+	vkCmdBindStateObject( mCmdBuffer, VK_STATE_BIND_COLOR_BLEND, colorBlendState );
+	vkCmdBindStateObject( mCmdBuffer, VK_STATE_BIND_DEPTH_STENCIL, depthStencilState );
+	vkCmdBindStateObject( mCmdBuffer, VK_STATE_BIND_RASTER, rasterState );
+*/
+	vkCmdBindPipeline( mCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline );
+
+	for ( decltype(mObjects)::iterator it = mObjects.begin(); it != mObjects.end(); ++it ) {
+		vkCmdBindDescriptorSet( mCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 0, (*it)->descriptorSet( mInstance, mDevId ), 0 );
+		vkCmdBindIndexData( mCmdBuffer, (*it)->indicesRef( mInstance, mDevId ).mem, 0, VK_INDEX_32 );
+		vkCmdDrawIndexed( mCmdBuffer, 0, (*it)->indicesCount(), 0, 0, 1 );
+	}
+
+	vkEndCommandBuffer( mCmdBuffer );
 }
 
 
@@ -148,3 +181,5 @@ uint8_t* Renderer::loadShader( const std::string filename, size_t* sz )
 	*sz = size;
 	return data;
 }
+
+} // namespace GE

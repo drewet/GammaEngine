@@ -22,6 +22,8 @@
 
 #include "vulkan.h"
 
+namespace GE {
+
 class Instance
 {
 public:
@@ -32,14 +34,18 @@ public:
 	void CreateDevice( int devid, int queueCount );
 
 	VK_MEMORY_REF AllocateObject( int devid, VK_OBJECT object );
+	VK_MEMORY_REF AllocateMappableBuffer( int devid, size_t size );
 
 	void QueueSubmit( int devid, VK_CMD_BUFFER buf, VK_MEMORY_REF* refs, int nRefs );
 
 	VK_DEVICE device( int devid );
 
+	static Instance* baseInstance();
+
 private:
 	static void* sAlloc( size_t size, size_t align, int32_t allocType );
 	static void sFree( void* pMem );
+	static Instance* mBaseInstance;
 
 	VK_INSTANCE mInstance;
 	VK_DEVICE mDevices[VK_MAX_PHYSICAL_GPUS];
@@ -49,5 +55,7 @@ private:
 	uint32_t mGpuCount;
 	VK_PHYSICAL_GPU mGpus[VK_MAX_PHYSICAL_GPUS];
 };
+
+} // namespace GE
 
 #endif // INSTANCE_H
