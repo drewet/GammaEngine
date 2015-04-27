@@ -24,8 +24,10 @@
 #include <vector>
 #include <map>
 
+#include <vulkan.h>
+
 #include "Vertex.h"
-#include "vulkan.h"
+#include "Matrix.h"
 
 namespace GE {
 
@@ -42,6 +44,8 @@ public:
 
 	uint32_t verticesCount();
 	uint32_t indicesCount();
+	Matrix* matrix();
+
 	VK_DESCRIPTOR_SET descriptorSet( Instance* instance, int devid );
 	VK_MEMORY_REF indicesRef( Instance* instance, int devid );
 
@@ -52,6 +56,7 @@ protected:
 	uint32_t mVerticesCount;
 	uint32_t* mIndices;
 	uint32_t mIndicesCount;
+	Matrix* mMatrix;
 
 	// descriptorSet, descriptorMemRef, vertexDataMemRef, indexMemRef associated to <Instance*, devid>
 	std::map< std::pair< Instance*, int >, std::tuple< VK_DESCRIPTOR_SET, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF > > mVkRefs;

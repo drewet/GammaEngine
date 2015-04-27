@@ -3,6 +3,7 @@
 #include "Instance.h"
 #include "Renderer.h"
 #include "Object.h"
+#include "Image.h"
 
 using namespace GE;
 
@@ -15,6 +16,8 @@ int main(int argc, char **argv)
 
 	Object* cube = new Object( "scene/cube.obj" );
 
+	Image* image = new Image( "scene/texture.png" );
+
 	Renderer* renderer = new Renderer();
 	renderer->LoadVertexShader( "shaders/basic.bvs" );
 	renderer->LoadFragmentShader( "shaders/basic.bfs" );
@@ -22,7 +25,8 @@ int main(int argc, char **argv)
 	renderer->Compute();
 
 	while ( 1 ) {
-// 		cube->matrix()->Rotate( 0.001f, 0.0014f, 0.0f );
+		cube->matrix()->RotateX( 0.001f );
+		cube->matrix()->RotateY( 0.0014f );
 
 // 		window->Clear();
 		renderer->Draw();

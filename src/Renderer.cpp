@@ -24,6 +24,7 @@
 #include "Renderer.h"
 #include "Object.h"
 #include "Debug.h"
+#include "File.h"
 #include "gememory.h"
 
 namespace GE {
@@ -37,7 +38,7 @@ Renderer::Renderer( Instance* instance, int devid )
 	VK_CMD_BUFFER_CREATE_INFO info;
 
 	info.queueType = 0;
-	info.flags = VK_CMD_BUFFER_OPTIMIZE_DESCRIPTOR_SET_SWITCH;
+	info.flags = VK_CMD_BUFFER_OPTIMIZE_DESCRIPTOR_SET_SWITCH | VK_CMD_BUFFER_OPTIMIZE_GPU_SMALL_BATCH;
 
 	vkCreateCommandBuffer( mInstance->device( mDevId ), &info, &mCmdBuffer );
 }
@@ -48,7 +49,7 @@ Renderer::~Renderer()
 }
 
 
-int Renderer::LoadVertexShader( const std::string file )
+int Renderer::LoadVertexShader( const std::string& file )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
 	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );
@@ -60,7 +61,7 @@ int Renderer::LoadVertexShader( const std::string file )
 }
 
 
-int Renderer::LoadFragmentShader( const std::string file )
+int Renderer::LoadFragmentShader( const std::string& file )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
 	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );
@@ -148,6 +149,7 @@ void Renderer::Compute()
 
 	for ( decltype(mObjects)::iterator it = mObjects.begin(); it != mObjects.end(); ++it ) {
 		vkCmdBindDescriptorSet( mCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 0, (*it)->descriptorSet( mInstance, mDevId ), 0 );
+		// TODO / TEST : vkCmdBindVertexBuffer
 		vkCmdBindIndexData( mCmdBuffer, (*it)->indicesRef( mInstance, mDevId ).mem, 0, VK_INDEX_32 );
 		vkCmdDrawIndexed( mCmdBuffer, 0, (*it)->indicesCount(), 0, 0, 1 );
 	}
@@ -166,17 +168,17 @@ void Renderer::Draw()
 }
 
 
-uint8_t* Renderer::loadShader( const std::string filename, size_t* sz )
+uint8_t* Renderer::loadShader( const std::string& filename, size_t* sz )
 {
-	std::ifstream file( filename, std::ios::binary | std::ios::ate );
+	File* file = new File( filename, File::READ );
 
-	size_t size = file.tellg();
-	file.seekg( 0, std::ios::beg );
+	size_t size = file->Seek( 0, File::END );
+	file->Rewind();
 
 	uint8_t* data = (uint8_t*)geMalloc( size );
 
-	file.read( (char*)data, size );
-	file.close();
+	file->Read( data, size );
+	delete file;
 
 	*sz = size;
 	return data;

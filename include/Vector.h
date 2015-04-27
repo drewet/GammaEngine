@@ -20,10 +20,19 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+namespace GE {
+
 class Vector3f
 {
 public:
 	Vector3f( float x = 0.0f, float y = 0.0f, float z = 0.0f );
+
+	void normalize();
+
+	Vector3f operator+( Vector3f& v );
+	Vector3f operator-( Vector3f& v );
+	Vector3f operator^( Vector3f& v );
+	float operator*( Vector3f& v );
 
 // Attributes defined as public for fast access
 public:
@@ -31,5 +40,7 @@ public:
 	float y;
 	float z;
 } __attribute__((packed));
+
+} // namespace GE
 
 #endif // VECTOR_H

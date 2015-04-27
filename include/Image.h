@@ -17,48 +17,53 @@
  *
  */
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef IMAGE_H
+#define IMAGE_H
 
+#include <string>
 #include <vector>
-#include "vulkan.h"
+#include <map>
+
+#include <vulkan.h>
 
 namespace GE {
 
 class Instance;
-class Object;
+class ImageLoader;
+class File;
 
-class Renderer
+class Image
 {
 public:
-	Renderer( Instance* instance = nullptr, int devid = 0 );
-	~Renderer();
+	Image();
+	Image( const std::string filename );
+	~Image();
 
-	int LoadVertexShader( const std::string& file );
-	int LoadFragmentShader( const std::string& file );
+	static ImageLoader* AddImageLoader( ImageLoader* loader );
 
-	void AddObject( Object* obj );
+protected:
+	uint32_t mWidth;
+	uint32_t mHeight;
+	uint32_t* mData;
 
-	void Compute();
-	void Draw();
+	std::map< std::pair< Instance*, int >, VK_MEMORY_REF > mVkRefs;
 
-private:
-	uint8_t* loadShader( const std::string& filename, size_t* sz );
-	void createPipeline();
-
-	bool mReady;
-	Instance* mInstance;
-	int mDevId;
-
-	std::vector< Object* > mObjects;
-
-	VK_CMD_BUFFER mCmdBuffer;
-	VK_PIPELINE mPipeline;
-	VK_MEMORY_REF mPipelineRef;
-	VK_SHADER mVertexShader;
-	VK_SHADER mFragmentShader;
+	static std::vector< ImageLoader* > mImageLoaders;
 };
+
+
+class ImageLoader : public Image
+{
+public:
+	ImageLoader() : Image() { ; }
+	virtual ~ImageLoader() { ; }
+	virtual std::vector< std::string > contentPatterns() = 0;
+	virtual std::vector< std::string > extensions() = 0;
+	virtual ImageLoader* NewInstance() = 0;
+	virtual void Load( File* file, uint32_t pref_w = 0, uint32_t pref_h = 0 ) = 0;
+};
+
 
 } // namespace GE
 
-#endif // RENDERER_H
+#endif // IMAGE_H

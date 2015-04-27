@@ -61,7 +61,7 @@ typedef uint64_t VK_STATE_OBJECT;
 const uint64_t VK_NULL_HANDLE = 0;
 
 const int VK_MAX_PHYSICAL_GPUS = 4;
-const int VK_API_VERSION = 1;
+const int VK_API_VERSION = 0x32002;
 const int VK_MAX_PHYSICAL_GPU_NAME = 255; // Guess
 const int VK_MAX_VIEWPORTS = 16; // Guess
 const int VK_MAX_MEMORY_HEAPS = 8;

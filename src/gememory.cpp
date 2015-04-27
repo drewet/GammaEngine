@@ -41,7 +41,7 @@ void geFree( void* data )
 	if ( data != NULL && data != (void*)0xDEADBEEF && data != (void*)0xBAADF00D ) {
 		uintptr_t* var = (uintptr_t*)data;
 		uintptr_t addr = var[-2];
-		uintptr_t size = var[-1];
+// 		uintptr_t size = var[-1];
 		free((void*)addr);
 		// TODO : Update RAM counter
 	}

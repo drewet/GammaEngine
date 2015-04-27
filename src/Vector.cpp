@@ -18,6 +18,9 @@
  */
 
 #include "Vector.h"
+#include <cmath>
+
+namespace GE {
 
 Vector3f::Vector3f( float x, float y, float z )
 	: x( x )
@@ -25,3 +28,59 @@ Vector3f::Vector3f( float x, float y, float z )
 	, z( z )
 {
 }
+
+
+void Vector3f::normalize()
+{
+	float l = std::sqrt( x * x + y * y + z * z );
+	if ( l > 0.00001f ) {
+		float il = 1.0f / l;
+		x *= il;
+		y *= il;
+		z *= il;
+	}
+}
+
+
+Vector3f Vector3f::operator+( Vector3f& v )
+{
+	Vector3f ret;
+
+	ret.x = x + v.x;
+	ret.y = y + v.y;
+	ret.z = z + v.z;
+
+	return ret;
+}
+
+
+Vector3f Vector3f::operator-( Vector3f& v )
+{
+	Vector3f ret;
+
+	ret.x = x - v.x;
+	ret.y = y - v.y;
+	ret.z = z - v.z;
+
+	return ret;
+}
+
+
+Vector3f Vector3f::operator^( Vector3f& v )
+{
+	Vector3f ret;
+
+	ret.x = y * v.z - z * v.y;
+	ret.y = z * v.x - x * v.z;
+	ret.z = x * v.y - y * v.x;
+
+	return ret;
+}
+
+
+float Vector3f::operator*( Vector3f& v )
+{
+	return x * v.x + y * v.y + z * v.z;
+}
+
+} // namespace GE

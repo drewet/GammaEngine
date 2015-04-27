@@ -24,8 +24,8 @@
 
 #include <algorithm>
 
-namespace GE {
 
+namespace GE {
 
 std::vector< ObjectLoader* > Object::mObjectLoaders = std::vector< ObjectLoader* >();
 
@@ -33,6 +33,9 @@ std::vector< ObjectLoader* > Object::mObjectLoaders = std::vector< ObjectLoader*
 Object::Object()
 	: mVertices( nullptr )
 	, mVerticesCount( 0 )
+	, mIndices( nullptr )
+	, mIndicesCount( 0 )
+	, mMatrix( new Matrix() )
 {
 }
 
@@ -86,8 +89,15 @@ Object::Object( const std::string filename )
 	if ( loader ) {
 		loader = loader->NewInstance();
 		loader->Load( file );
+
+		// Delete pointers that will be replaced by loader data
+		delete( mMatrix );
+
+		// Copy data from loader to this object
 		*this = static_cast< Object >( *loader );
-		delete loader;
+
+		// Don't call destructor to keep copied pointers
+		free( loader );
 	}
 
 	delete file;
@@ -96,6 +106,7 @@ Object::Object( const std::string filename )
 
 Object::~Object()
 {
+	delete mMatrix;
 }
 
 
@@ -108,6 +119,11 @@ uint32_t Object::verticesCount()
 uint32_t Object::indicesCount()
 {
 	return mIndicesCount;
+}
+
+Matrix* Object::matrix()
+{
+	return mMatrix;
 }
 
 
@@ -142,7 +158,7 @@ void Object::AllocateGpu( Instance* instance, int devid )
 	VK_MEMORY_REF descriptorMemRef = {};
 	VK_MEMORY_REF vertexDataMemRef = {};
 	VK_CMD_BUFFER_CREATE_INFO bufferCreateInfo = { 0, 0 };
-	void* bufferPointer;
+	void* bufferPointer = nullptr;
 
 	VK_DESCRIPTOR_SET_CREATE_INFO descriptorCreateInfo = {};
 	descriptorCreateInfo.slots = 4;
@@ -151,8 +167,12 @@ void Object::AllocateGpu( Instance* instance, int devid )
 
 	vertexDataMemRef = instance->AllocateMappableBuffer( devid, sizeof( decltype(mVertices) ) * mVerticesCount );
 	vkMapMemory( vertexDataMemRef.mem, 0, &bufferPointer );
-	memcpy( bufferPointer, mVertices, sizeof( decltype(mVertices) ) * mVerticesCount );
-	vkUnmapMemory( vertexDataMemRef.mem );
+	if ( bufferPointer ) {
+		memcpy( bufferPointer, mVertices, sizeof( decltype(mVertices) ) * mVerticesCount );
+		vkUnmapMemory( vertexDataMemRef.mem );
+	} else {
+		gDebug() << "Error : vkMapMemory(vertexDataMemRef) returned null pointer\n";
+	}
 
 	VK_CMD_BUFFER initDataCmdBuffer;
 	vkCreateCommandBuffer( instance->device( devid ), &bufferCreateInfo, &initDataCmdBuffer );
@@ -201,8 +221,12 @@ void Object::AllocateGpu( Instance* instance, int devid )
 
 	VK_MEMORY_REF indexMemRef = instance->AllocateMappableBuffer( devid, sizeof( uint32_t) * mIndicesCount );
 	vkMapMemory( indexMemRef.mem, 0, &bufferPointer );
-	memcpy( bufferPointer, mIndices, sizeof( decltype(mIndices) ) * mIndicesCount );
-	vkUnmapMemory( indexMemRef.mem );
+	if ( bufferPointer ) {
+		memcpy( bufferPointer, mIndices, sizeof( decltype(mIndices) ) * mIndicesCount );
+		vkUnmapMemory( indexMemRef.mem );
+	} else {
+		gDebug() << "Error : vkMapMemory(indexMemRef) returned null pointer\n";
+	}
 
 	std::tuple< VK_DESCRIPTOR_SET, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF > data( descriptorSet, descriptorMemRef, vertexDataMemRef, indexMemRef );
 	mVkRefs.insert( std::pair< decltype(key), decltype(data) > ( key, data ) );

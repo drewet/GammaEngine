@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+namespace GE {
+
 class Vertex
 {
 public:
@@ -34,5 +36,7 @@ public:
 	float nx, ny, nz;
 	float x, y, z;
 } __attribute__((packed)); // Stay cool with memory
+
+} // namespace GE
 
 #endif // VERTEX_H

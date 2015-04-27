@@ -19,6 +19,8 @@
 
 #include "Vertex.h"
 
+namespace GE {
+
 Vertex::Vertex()
 	: u( 0.0f ), v( 0.0f ), w( 0.0f )
 	, color( 0x00000000 )
@@ -26,3 +28,5 @@ Vertex::Vertex()
 	, x( 0.0f ), y( 0.0f ), z( 0.0f )
 {
 }
+
+} // namespace GE

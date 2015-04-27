@@ -1,5 +1,5 @@
 /*
- * <one line to give the library's name and an idea of what it does.>
+ * The GammaEngine Library 2.0 is a multiplatform Vulkan-based game engine
  * Copyright (C) 2015  Adrien Aubry <dridri85@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -72,7 +72,7 @@ static inline std::string className(const std::string& prettyFunction)
 #define gDebug() Debug() << __CLASS_NAME__ << "::" << __FUNCTION__ << "() "
 // #define fDebug( x ) Debug() << __CLASS_NAME__ << "::" << __FUNCTION__ << "( " << x << " )\n"
 
-
+#pragma GCC system_header // HACK Disable unused-function warnings
 static void fDebug_base( const char* end, bool f ) {
 	std::cout << " " << end;
 }
@@ -80,7 +80,7 @@ static void fDebug_base( const char* end, bool f ) {
 #include <cxxabi.h>
 
 template<typename Arg1, typename... Args> static void fDebug_base( const char* end, bool first, const Arg1& arg1, const Args&... args ) {
-	const char* type = abi::__cxa_demangle(typeid(arg1).name(), nullptr, nullptr, nullptr);
+	char* type = abi::__cxa_demangle(typeid(arg1).name(), nullptr, nullptr, nullptr);
 	char cap = 0;
 	if ( strstr( type, "char" ) ) {
 		if ( strstr( type, "*" ) || ( strstr( type, "[" ) && strstr( type, "]" ) ) ) {
@@ -89,6 +89,7 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 			cap = '\'';
 		}
 	}
+	free(type);
 
 	if (!first ) {
 		std::cout << ", ";
