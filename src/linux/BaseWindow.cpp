@@ -28,6 +28,8 @@
 #include "linux/BaseWindow.h"
 #include "Window.h"
 #include "Instance.h"
+#include "Time.h"
+#include "Input.h"
 #include "gememory.h"
 
 namespace GE {
@@ -38,6 +40,9 @@ BaseWindow::BaseWindow( Instance* instance, int devid, const std::string& title,
 	, mDevId( devid )
 	, mWidth( width )
 	, mHeight( height )
+	, mWindow( 0 )
+	, mKeys{ false }
+	, mDisplay( 0 )
 {
 	Window::Flags flags = static_cast<Window::Flags>( _flags );
 
@@ -116,17 +121,110 @@ BaseWindow::BaseWindow( Instance* instance, int devid, const std::string& title,
 	connectionInfo.screen = mScreen;
 	connectionInfo.window = mWindow;
 	vkWsiX11AssociateConnection( instance->gpu( mDevId ), &connectionInfo );
-}
 
-
-void BaseWindow::SwapBuffersBase()
-{
-	glXSwapBuffers( mDisplay, mWindow );
+// 	mEventThread = new std::thread( &BaseWindow::pEventThread, this );
 }
 
 
 BaseWindow::~BaseWindow()
 {
+}
+
+
+void BaseWindow::SwapBuffersBase()
+{
+	pEventThread();
+// 	glXSwapBuffers( mDisplay, mWindow );
+}
+
+
+void BaseWindow::pEventThread()
+{
+	uint32_t ticks = Time::GetTick();
+	bool finished = false;
+	int key = 0;
+	XEvent event;
+
+// 	while ( 1 )
+	{
+		while ( XPending( mDisplay ) ) {
+			XNextEvent( mDisplay, &event );
+// 			if(event.type)printf("event: %d\n", event.type);
+			if ( ( event.type == ButtonPress || event.type == ButtonRelease ) && ( event.xbutton.button == Input::MWHEELUP || event.xbutton.button == Input::MWHEELDOWN ) ) {
+				// TODO
+			}
+			switch ( event.type ) {
+				case ClientMessage:
+// 					if ( XGetAtomName( mDisplay, event.xclient.message_type) == "WM_PROTOCOLS" ) {
+// 						finished = true;
+// 					}
+					if ( (Atom)event.xclient.data.l[0] == XInternAtom( mDisplay, "WM_DELETE_WINDOW", False ) ) {
+						finished = true;
+					}
+					break;
+				case ConfigureNotify:
+					// TODO : inter-thread call "Resize"
+					break;
+				case KeymapNotify:
+					XRefreshKeyboardMapping( &event.xmapping );
+					break;
+				case KeyPress:
+					key = (int)XLookupKeysym(&event.xkey, 0);
+					if ( key >= 'a' && key <= 'z' ) {
+						key += ( 'A' - 'a' );
+					}
+					if ( key < 256 ) {
+// 						printf( "'%c' pressed\n", key);
+						mKeys[key] = true;
+					} else {
+						// TODO
+						if ( mKeys[ Input::LALT ] && mKeys[ Input::F4 ] ) {
+							finished = true;
+						}
+					}
+					break;
+				case KeyRelease:
+					key = (int)XLookupKeysym(&event.xkey, 0);
+					if ( key >= 'a' && key <= 'z' ) {
+						key += ( 'A' - 'a' );
+					}
+					if ( key < 256 ) {
+// 						printf( "'%c' released\n", key);
+						mKeys[key] = false;
+					} else {
+						// TODO
+					}
+					break;
+				case ButtonPress:
+					
+					if ( event.xbutton.button == 4 ) { // wheel up
+						// TODO
+					} else if ( event.xbutton.button == 5 ) { // wheel down
+						// TODO
+					} else {
+						mKeys[ Input::LBUTTON + event.xbutton.button - 1 ] = true;
+					}
+					break;
+				case ButtonRelease:
+					if ( event.xbutton.button == 4 ) { // wheel up
+						// TODO
+					} else if ( event.xbutton.button == 5 ) { // wheel down
+						// TODO
+					} else {
+						mKeys[ Input::LBUTTON + event.xbutton.button - 1 ] = false;
+					}
+					break;
+				default:
+					break;
+			}
+		}
+		if ( finished ) {
+			mClosing = true;
+			finished = false;
+			return;
+		}
+// 		ticks = Time::WaitTick( 1000 / 120, ticks );
+	}
 }
 
 

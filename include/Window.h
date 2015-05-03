@@ -45,6 +45,8 @@ public:
 
 	VK_IMAGE colorImage();
 
+	void ReadKeys( bool* keys );
+
 private:
 	void InitPresentableImage();
 

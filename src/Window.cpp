@@ -17,6 +17,7 @@
  *
  */
 
+#include <string.h>
 #include "Window.h"
 #include "Instance.h"
 
@@ -186,6 +187,14 @@ void Window::SwapBuffers()
 	presentInfo.presentMode = VK_WSI_WIN_PRESENT_MODE_WINDOWED;
 
 	vkWsiWinQueuePresent( mInstance->queue( mDevId ), &presentInfo );
+
+	SwapBuffersBase();
+}
+
+
+void Window::ReadKeys( bool* keys )
+{
+	memcpy( keys, mKeys, sizeof( mKeys ) );
 }
 
 

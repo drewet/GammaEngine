@@ -22,6 +22,24 @@
 
 namespace GE {
 
+
+class Vector2i
+{
+public:
+	Vector2i( int x = 0, int y = 0 );
+
+	void normalize();
+
+	Vector2i operator+( Vector2i& v );
+	Vector2i operator-( Vector2i& v );
+	int operator*( Vector2i& v );
+
+public:
+	int x;
+	int y;
+} __attribute__((packed));
+
+
 class Vector3f
 {
 public:
@@ -40,6 +58,7 @@ public:
 	float y;
 	float z;
 } __attribute__((packed));
+
 
 } // namespace GE
 

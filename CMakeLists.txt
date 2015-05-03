@@ -4,7 +4,7 @@ project(gammaengine)
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -I./fake -g3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -I./fake -g3")
 
 include_directories(include)
 # include_directories(fake)
@@ -26,13 +26,13 @@ add_executable(gammaengine
 	src/Matrix.cpp
 	src/File.cpp
 	src/Time.cpp
+	src/Input.cpp
 	src/Debug.cpp
 	src/Window.cpp
 	src/linux/BaseWindow.cpp
-	gl430test.cpp
 # 	fake/dummy_vk.cpp
 )
 
-target_link_libraries(gammaengine ${PNG_LIBRARIES} ${OPENGL_LIBRARIES} -lvulkangl -lX11)
+target_link_libraries(gammaengine ${PNG_LIBRARIES} ${OPENGL_LIBRARIES} -lvulkangl -lX11 -pthread)
 
 install(TARGETS gammaengine RUNTIME DESTINATION bin)

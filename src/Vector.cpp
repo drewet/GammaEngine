@@ -22,6 +22,58 @@
 
 namespace GE {
 
+
+
+
+Vector2i::Vector2i( int x, int y )
+	: x( x )
+	, y( y )
+{
+}
+
+
+void Vector2i::normalize()
+{
+	float l = std::sqrt( x * x + y * y );
+	if ( l > 0.00001f ) {
+		float il = 1.0f / l;
+		x *= il;
+		y *= il;
+	}
+}
+
+
+Vector2i Vector2i::operator+( Vector2i& v )
+{
+	Vector2i ret;
+
+	ret.x = x + v.x;
+	ret.y = y + v.y;
+
+	return ret;
+}
+
+
+Vector2i Vector2i::operator-( Vector2i& v )
+{
+	Vector2i ret;
+
+	ret.x = x - v.x;
+	ret.y = y - v.y;
+
+	return ret;
+}
+
+
+int Vector2i::operator*( Vector2i& v )
+{
+	return x * v.x + y * v.y;
+}
+
+
+
+
+
 Vector3f::Vector3f( float x, float y, float z )
 	: x( x )
 	, y( y )

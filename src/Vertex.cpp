@@ -23,7 +23,7 @@ namespace GE {
 
 Vertex::Vertex()
 	: u( 0.0f ), v( 0.0f ), w( 0.0f ), _align1( 0.0f )
-	, color( { 0.0f } )
+	, color{ 0.0f }
 	, nx( 0.0f ), ny( 0.0f ), nz( 0.0f ), _align2( 0.0f )
 	, x( 0.0f ), y( 0.0f ), z( 0.0f ), weight( 0.0f )
 {

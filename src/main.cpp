@@ -9,6 +9,7 @@
 #include "Image.h"
 #include "Camera.h"
 #include "Time.h"
+#include "Input.h"
 
 using namespace GE;
 
@@ -20,10 +21,11 @@ int main( int argc, char** argv )
 
 	Instance* instance = new Instance( "GammaEngine test", 42 );
 	Window* window = new Window( instance, 0, "Hello GammaEngine !", 1280, 720 );
+	Input* input = new Input( window );
 
 	Object* cube = new Object( "scene/cube.obj" );
 
-	Image* image = new Image( "scene/texture.png" );
+// 	Image* image = new Image( "scene/texture.png" );
 
 	Renderer* renderer = new Renderer();
 	renderer->LoadVertexShader( "shaders/basic.vert" );
@@ -42,8 +44,24 @@ int main( int argc, char** argv )
 	uint32_t img = 0;
 
 	while ( 1 ) {
-		cube->matrix()->RotateX( 0.01f );
-		cube->matrix()->RotateY( 0.014f );
+		float dt = Time::Delta();
+
+		cube->matrix()->RotateX( 1.0f * dt );
+		cube->matrix()->RotateY( 1.4f * dt );
+
+		input->Update();
+		if ( input->pressed( 'Z' ) ) {
+			camera->WalkForward( 5.0 );
+		}
+		if ( input->pressed( 'S' ) ) {
+			camera->WalkBackward( 5.0 );
+		}
+		if ( input->pressed( 'Q' ) ) {
+			camera->WalkLeft( 5.0 );
+		}
+		if ( input->pressed( 'D' ) ) {
+			camera->WalkRight( 5.0 );
+		}
 
 		window->Clear( 0xFF202020 );
 		window->BindTarget();
@@ -51,6 +69,8 @@ int main( int argc, char** argv )
 		scene->Draw( camera );
 
 		window->SwapBuffers();
+
+		Time::GlobalSync();
 
 		img++;
 		if ( Time::GetSeconds() - time > 0.2f ) {

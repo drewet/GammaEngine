@@ -1,5 +1,5 @@
 /*
- * <one line to give the library's name and an idea of what it does.>
+ * The GammaEngine Library 2.0 is a multiplatform Vulkan-based game engine
  * Copyright (C) 2015  Adrien Aubry <dridri85@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,32 +17,31 @@
  *
  */
 
-#ifndef TIME_H
-#define TIME_H
+#include <string.h>
+#include "Input.h"
 
-#include <stdint.h>
+using namespace GE;
 
-namespace GE {
+Input::Input( Window* window )
+	: mWindow( window )
+	, mCursor( Vector2i( 0, 0 ) )
+	, mKeys{ false }
+{
+}
 
-class Time {
-public:
-	Time();
 
-	static void GlobalSync();
-	static float Delta();
-	static uint32_t GetTick();
-	static float GetSeconds();
-	static uint32_t WaitTick( uint32_t t, uint32_t last );
-	static void Sleep( uint32_t t );
+Input::~Input()
+{
+}
 
-protected:
-	float Sync();
 
-private:
-	static uint32_t sTime;
-	static float sDt;
-};
+void Input::Update()
+{
+	mWindow->ReadKeys( mKeys );
+}
 
-} // namespace GE
+bool Input::pressed( unsigned int keycode )
+{
+	return mKeys[ keycode ];
+}
 
-#endif // TIME_H

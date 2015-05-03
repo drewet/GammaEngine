@@ -17,30 +17,52 @@
  *
  */
 
+#include <unistd.h>
 #include <time.h>
 #include "Time.h"
 
 namespace GE {
 
 
+uint32_t Time::sTime = 0;
+float Time::sDt = 0.0f;
+
+
 Time::Time()
-	: mTime( 0 )
 {
+}
+
+
+void Time::GlobalSync()
+{
+	if ( sTime == 0 ) {
+		sTime = GetTick();
+	}
+
+	uint32_t dt = GetTick() - sTime;
+	sDt = ( (float)dt ) / 1000.0f;
+	sTime = GetTick();
+}
+
+
+float Time::Delta()
+{
+	return sDt;
 }
 
 
 float Time::Sync()
 {
-	uint32_t nTime = GetTick();
+// 	uint32_t nTime = GetTick();
 
-	if ( mTime == 0 ) {
-		mTime = GetTick();
+	if ( sTime == 0 ) {
+		GlobalSync();
 	}
-	uint32_t dt = nTime - mTime;
 
-	mTime = nTime;
+	return sDt;
 
-	return ( (float)dt ) / 1000.0f;
+// 	uint32_t dt = GetTick() - sTime;
+// 	return ( (float)dt ) / 1000.0f;
 }
 
 
@@ -60,6 +82,22 @@ float Time::GetSeconds()
 	uint32_t ms = now.tv_nsec / 1000000;
 	ret += ( (float)ms ) / 1000.0;
 	return ret;
+}
+
+
+uint32_t Time::WaitTick( uint32_t t, uint32_t last )
+{
+	uint32_t ticks = GetTick();
+	if ( ( ticks - last ) < t ) {
+		Sleep( t - (ticks - last) - 1);
+	}
+	return GetTick();
+}
+
+
+void Time::Sleep( uint32_t t )
+{
+	usleep( t * 1000 );
 }
 
 

@@ -21,19 +21,17 @@
 #define BASEWINDOW_H
 
 #include <string>
+#include <thread>
 #include <vulkan.h>
 
 #ifndef BASEWINDOW_CPP
 #ifndef Display
-// typedef struct _XDisplay Display;
 #define Display void
 #endif
 #ifndef XSetWindowAttributes
-// typedef struct XSetWindowAttributes XSetWindowAttributes;
 #define XSetWindowAttributes void
 #endif
 #ifndef XVisualInfo
-// typedef struct XVisualInfo XVisualInfo;
 #define XVisualInfo void
 #endif
 #endif
@@ -51,11 +49,15 @@ public:
 	void SwapBuffersBase();
 
 protected:
+	void pEventThread();
+
 	Instance* mInstance;
 	int mDevId;
 	int mWidth;
 	int mHeight;
 	uint64_t mWindow;
+	std::thread* mEventThread;
+	bool mKeys[512];
 
 private:
 	Display* mDisplay;
@@ -63,6 +65,7 @@ private:
 	XVisualInfo* mVisualInfo;
 	uint64_t mColorMap;
 	XSetWindowAttributes* mWindowAttributes;
+	bool mClosing;
 };
 
 
