@@ -17,37 +17,44 @@
  *
  */
 
-#ifndef VERTEX_H
-#define VERTEX_H
+#include "Scene.h"
 
-#include <stdint.h>
-#include <vulkan.h>
+using namespace GE;
 
-namespace GE {
-
-class Vertex
+Scene::Scene( const std::string& filename )
 {
-public:
-	Vertex();
 
-	static void UpdateDescriptorSet( VK_DESCRIPTOR_SET descriptorSet, VK_MEMORY_VIEW_ATTACH_INFO* memoryViewAttachInfo );
+}
 
-// Attributes defined as public for fast access
-public:
-	float u, v, w, _align1;
-	float color[4];
-	float nx, ny, nz, _align2;
-	float x, y, z, weight;
-} __attribute__((packed, aligned(16))); // Stay cool with memory
+Scene::~Scene()
+{
 
-/*
-typedef struct Vertex {
-	float u, v, w, _align1;
-	float color[4];
-	float nx, ny, nz, _align2;
-	float x, y, z, weight;
-} Vertex;
-*/
-} // namespace GE
+}
 
-#endif // VERTEX_H
+
+void Scene::AddRenderer( Renderer* renderer )
+{
+	mRenderers.emplace_back( renderer );
+}
+
+
+void Scene::RemoveRenderer( Renderer* renderer )
+{
+
+}
+
+
+Renderer* Scene::renderer( std::string name )
+{
+	return nullptr;
+}
+
+
+void Scene::Draw( Camera* camera )
+{
+	for ( decltype(mRenderers)::iterator it = mRenderers.begin(); it != mRenderers.end(); ++it ) {
+		(*it)->Look( camera );
+		(*it)->Draw();
+	}
+}
+

@@ -44,10 +44,18 @@ public:
 
 	uint32_t verticesCount();
 	uint32_t indicesCount();
+	Vertex* vertices();
+	uint32_t* indices();
 	Matrix* matrix();
 
+	void UploadMatrix( Instance* instance, int devid );
+
 	VK_DESCRIPTOR_SET descriptorSet( Instance* instance, int devid );
+	VK_MEMORY_REF verticesRef( Instance* instance, int devid );
 	VK_MEMORY_REF indicesRef( Instance* instance, int devid );
+
+	void operator=( Object& other );
+	void operator=( Object* other );
 
 	static ObjectLoader* AddObjectLoader( ObjectLoader* loader );
 
@@ -58,8 +66,8 @@ protected:
 	uint32_t mIndicesCount;
 	Matrix* mMatrix;
 
-	// descriptorSet, descriptorMemRef, vertexDataMemRef, indexMemRef associated to <Instance*, devid>
-	std::map< std::pair< Instance*, int >, std::tuple< VK_DESCRIPTOR_SET, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF > > mVkRefs;
+	// descriptorSet, descriptorMemRef, vertexDataMemRef, indexMemRef, matrixMemRef associated to <Instance*, devid>
+	std::map< std::pair< Instance*, int >, std::tuple< VK_DESCRIPTOR_SET, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF > > mVkRefs;
 
 	static std::vector< ObjectLoader* > mObjectLoaders;
 

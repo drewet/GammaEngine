@@ -17,53 +17,56 @@
  *
  */
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef BASEWINDOW_H
+#define BASEWINDOW_H
 
-#include <vector>
-#include "vulkan.h"
+#include <string>
+#include <vulkan.h>
+
+#ifndef BASEWINDOW_CPP
+#ifndef Display
+// typedef struct _XDisplay Display;
+#define Display void
+#endif
+#ifndef XSetWindowAttributes
+// typedef struct XSetWindowAttributes XSetWindowAttributes;
+#define XSetWindowAttributes void
+#endif
+#ifndef XVisualInfo
+// typedef struct XVisualInfo XVisualInfo;
+#define XVisualInfo void
+#endif
+#endif
 
 namespace GE {
 
 class Instance;
-class Object;
-class Camera;
-class Matrix;
 
-class Renderer
+class BaseWindow
 {
 public:
-	Renderer( Instance* instance = nullptr, int devid = 0 );
-	~Renderer();
+	BaseWindow( Instance* instance, int devid, const std::string& title, int width, int height, uint32_t flags );
+	~BaseWindow();
 
-	int LoadVertexShader( const std::string& file );
-	int LoadFragmentShader( const std::string& file );
+	void SwapBuffersBase();
 
-	void AddObject( Object* obj );
-
-	void Compute();
-	void Draw();
-	void Look( Camera* cam );
-
-private:
-	uint8_t* loadShader( const std::string& filename, size_t* sz );
-	void createPipeline();
-
-	bool mReady;
+protected:
 	Instance* mInstance;
 	int mDevId;
+	int mWidth;
+	int mHeight;
+	uint64_t mWindow;
 
-	Matrix* mMatrixProjection;
-	Matrix* mMatrixView;
-	std::vector< Object* > mObjects;
-
-	VK_CMD_BUFFER mCmdBuffer;
-	VK_PIPELINE mPipeline;
-	VK_MEMORY_REF mPipelineRef;
-	VK_SHADER mVertexShader;
-	VK_SHADER mFragmentShader;
+private:
+	Display* mDisplay;
+	int mScreen;
+	XVisualInfo* mVisualInfo;
+	uint64_t mColorMap;
+	XSetWindowAttributes* mWindowAttributes;
 };
+
 
 } // namespace GE
 
-#endif // RENDERER_H
+#endif // BASEWINDOW_H
+ 

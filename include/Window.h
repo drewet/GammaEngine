@@ -17,53 +17,55 @@
  *
  */
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef WINDOW_H
+#define WINDOW_H
 
-#include <vector>
-#include "vulkan.h"
+#include <string>
+
+#include "linux/BaseWindow.h"
 
 namespace GE {
 
 class Instance;
-class Object;
-class Camera;
-class Matrix;
 
-class Renderer
+class Window : public BaseWindow
 {
 public:
-	Renderer( Instance* instance = nullptr, int devid = 0 );
-	~Renderer();
+	typedef enum {
+		Nil = 0,
+		Resizable,
+		Fullscreen,
+	} Flags;
+	Window( Instance* instance, int devid, const std::string& title, int width, int height, Flags flags = Nil );
+	~Window();
 
-	int LoadVertexShader( const std::string& file );
-	int LoadFragmentShader( const std::string& file );
+	void Clear( uint32_t color = 0xFF000000 );
+	void BindTarget();
+	void SwapBuffers();
 
-	void AddObject( Object* obj );
-
-	void Compute();
-	void Draw();
-	void Look( Camera* cam );
+	VK_IMAGE colorImage();
 
 private:
-	uint8_t* loadShader( const std::string& filename, size_t* sz );
-	void createPipeline();
+	void InitPresentableImage();
 
-	bool mReady;
-	Instance* mInstance;
-	int mDevId;
+	VK_IMAGE mColorImage;
+	VK_MEMORY_REF mColorImageMemRef;
+	VK_IMAGE_SUBRESOURCE_RANGE mImageColorRange;
+	VK_COLOR_TARGET_VIEW mColorTargetView;
 
-	Matrix* mMatrixProjection;
-	Matrix* mMatrixView;
-	std::vector< Object* > mObjects;
+	VK_IMAGE mDepthImage;
+	VK_MEMORY_REF mDepthImageMemRef;
+	VK_IMAGE_SUBRESOURCE_RANGE mImageDepthRange;
+	VK_DEPTH_STENCIL_VIEW mDepthTargetView;
 
-	VK_CMD_BUFFER mCmdBuffer;
-	VK_PIPELINE mPipeline;
-	VK_MEMORY_REF mPipelineRef;
-	VK_SHADER mVertexShader;
-	VK_SHADER mFragmentShader;
+	VK_CMD_BUFFER mBindCmdBuffer;
+	VK_CMD_BUFFER mClearCmdBuffer;
+
+	uint32_t mClearColor;
 };
+
 
 } // namespace GE
 
-#endif // RENDERER_H
+#endif // WINDOW_H
+ 

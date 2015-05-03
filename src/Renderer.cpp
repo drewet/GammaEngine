@@ -25,9 +25,16 @@
 #include "Object.h"
 #include "Debug.h"
 #include "File.h"
+#include "Camera.h"
 #include "gememory.h"
 
 namespace GE {
+static void print_matrix(float* m){
+	printf("data = %f %f %f %f\n", m[0], m[1], m[2], m[3]);
+	printf("     = %f %f %f %f\n", m[4], m[5], m[6], m[7]);
+	printf("     = %f %f %f %f\n", m[8], m[9], m[10], m[11]);
+	printf("     = %f %f %f %f\n", m[12], m[13], m[14], m[15]);
+}
 
 Renderer::Renderer( Instance* instance, int devid )
 	: mReady( false )
@@ -41,6 +48,11 @@ Renderer::Renderer( Instance* instance, int devid )
 	info.flags = VK_CMD_BUFFER_OPTIMIZE_DESCRIPTOR_SET_SWITCH | VK_CMD_BUFFER_OPTIMIZE_GPU_SMALL_BATCH;
 
 	vkCreateCommandBuffer( mInstance->device( mDevId ), &info, &mCmdBuffer );
+
+	mMatrixProjection = new Matrix();
+	mMatrixProjection->Perspective( 60.0f, 16.0f / 9.0f, 0.01f, 1000.0f );
+	mMatrixView = new Matrix();
+	mMatrixView->Identity();
 }
 
 
@@ -79,22 +91,43 @@ void Renderer::createPipeline()
 		// TODO : Free existing pipeline
 	}
 
-	VK_DESCRIPTOR_SLOT_INFO vsDescriptorSlots[2];
-	VK_DESCRIPTOR_SLOT_INFO psDescriptorSlots[2];
+	uint32_t nvs = 0;
+	VK_DESCRIPTOR_SLOT_INFO vsDescriptorSlots[16];
+	VK_DESCRIPTOR_SLOT_INFO psDescriptorSlots[16];
+	VK_LINK_CONST_BUFFER vsLinkConstBuffers[16];
 	VK_GRAPHICS_PIPELINE_CREATE_INFO pipelineCreateInfo = {};
 
-	vsDescriptorSlots[0].slotObjectType = VK_SLOT_SHADER_RESOURCE;
-	vsDescriptorSlots[0].shaderEntityIndex = 0;
-	vsDescriptorSlots[1].slotObjectType = VK_SLOT_SHADER_RESOURCE;
-	vsDescriptorSlots[1].shaderEntityIndex = 1;
+	vsDescriptorSlots[nvs  ].slotObjectType = VK_SLOT_SHADER_RESOURCE;
+	vsDescriptorSlots[nvs++].shaderEntityIndex = 0;
+	vsDescriptorSlots[nvs  ].slotObjectType = VK_SLOT_SHADER_RESOURCE;
+	vsDescriptorSlots[nvs++].shaderEntityIndex = 1;
+	vsDescriptorSlots[nvs  ].slotObjectType = VK_SLOT_SHADER_RESOURCE;
+	vsDescriptorSlots[nvs++].shaderEntityIndex = 2;
+	vsDescriptorSlots[nvs  ].slotObjectType = VK_SLOT_SHADER_RESOURCE;
+	vsDescriptorSlots[nvs++].shaderEntityIndex = 3;
+	vsDescriptorSlots[nvs  ].slotObjectType = VK_SLOT_SHADER_RESOURCE;
+	vsDescriptorSlots[nvs++].shaderEntityIndex = 10;
+	vsDescriptorSlots[nvs  ].slotObjectType = VK_SLOT_SHADER_RESOURCE;
+	vsDescriptorSlots[nvs++].shaderEntityIndex = 11;
+	vsDescriptorSlots[nvs  ].slotObjectType = VK_SLOT_SHADER_RESOURCE;
+	vsDescriptorSlots[nvs++].shaderEntityIndex = 12;
+
+	vsLinkConstBuffers[0].bufferId = 10;
+	vsLinkConstBuffers[0].bufferSize = sizeof(float) * 16;
+	vsLinkConstBuffers[0].pBufferData = mMatrixProjection->data();
+	vsLinkConstBuffers[1].bufferId = 11;
+	vsLinkConstBuffers[1].bufferSize = sizeof(float) * 16;
+	vsLinkConstBuffers[1].pBufferData = mMatrixView->data();
 
 	psDescriptorSlots[0].slotObjectType = VK_SLOT_UNUSED;
 	psDescriptorSlots[1].slotObjectType = VK_SLOT_UNUSED;
 
 	pipelineCreateInfo.vs.shader = mVertexShader;
 	pipelineCreateInfo.vs.dynamicMemoryViewMapping.slotObjectType = VK_SLOT_UNUSED;
-	pipelineCreateInfo.vs.descriptorSetMapping[0].descriptorCount = 2;
+	pipelineCreateInfo.vs.descriptorSetMapping[0].descriptorCount = nvs;
 	pipelineCreateInfo.vs.descriptorSetMapping[0].pDescriptorInfo = vsDescriptorSlots;
+	pipelineCreateInfo.vs.linkConstBufferCount = 2;
+	pipelineCreateInfo.vs.pLinkConstBufferInfo = vsLinkConstBuffers;
 
 	pipelineCreateInfo.ps.shader = mFragmentShader;
 	pipelineCreateInfo.ps.dynamicMemoryViewMapping.slotObjectType = VK_SLOT_UNUSED;
@@ -134,10 +167,6 @@ void Renderer::Compute()
 
 	vkBeginCommandBuffer( mCmdBuffer, 0 );
 
-	VK_COLOR_TARGET_BIND_INFO colorTargetBindInfo;
-//	colorTargetBindInfo.view = colorTargetView; // TODO
-	colorTargetBindInfo.colorTargetState = VK_MEMORY_STATE_TARGET_RENDER_ACCESS_OPTIMAL;
-	vkCmdBindTargets( mCmdBuffer, 1, &colorTargetBindInfo, nullptr );
 /*	TODO TODO TODO
 	vkCmdBindStateObject( mCmdBuffer, VK_STATE_BIND_MSAA, msaaState );
 	vkCmdBindStateObject( mCmdBuffer, VK_STATE_BIND_VIEWPORT, viewportState );
@@ -149,9 +178,10 @@ void Renderer::Compute()
 
 	for ( decltype(mObjects)::iterator it = mObjects.begin(); it != mObjects.end(); ++it ) {
 		vkCmdBindDescriptorSet( mCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 0, (*it)->descriptorSet( mInstance, mDevId ), 0 );
-		// TODO / TEST : vkCmdBindVertexBuffer
+		vkCmdBindVertexBuffer( mCmdBuffer, (*it)->verticesRef( mInstance, mDevId ).mem, 0, 0 ); // TESTING
 		vkCmdBindIndexData( mCmdBuffer, (*it)->indicesRef( mInstance, mDevId ).mem, 0, VK_INDEX_32 );
 		vkCmdDrawIndexed( mCmdBuffer, 0, (*it)->indicesCount(), 0, 0, 1 );
+// 		vkCmdDraw( mCmdBuffer, 0, (*it)->verticesCount(), 0, 1 );
 	}
 
 	vkEndCommandBuffer( mCmdBuffer );
@@ -164,7 +194,18 @@ void Renderer::Draw()
 		return;
 	}
 
+	for ( decltype(mObjects)::iterator it = mObjects.begin(); it != mObjects.end(); ++it ) {
+		(*it)->UploadMatrix( mInstance, mDevId );
+	}
+
 	mInstance->QueueSubmit( mDevId, mCmdBuffer, 0, 0 );
+}
+
+
+void Renderer::Look( Camera* cam )
+{
+	memcpy( mMatrixView->data(), cam->data(), sizeof( float ) * 16 );
+	// TODO / TBD : upload matrix to shader
 }
 
 

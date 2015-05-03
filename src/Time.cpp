@@ -17,47 +17,50 @@
  *
  */
 
-#ifndef OBJECTLOADEROBJ_H
-#define OBJECTLOADEROBJ_H
-
-
-#include <map>
-#include "Object.h"
-
+#include <time.h>
+#include "Time.h"
 
 namespace GE {
 
-class File;
 
-class ObjectLoaderObj : public ObjectLoader
+Time::Time()
+	: mTime( 0 )
 {
-public:
-	ObjectLoaderObj();
-	virtual TYPE fileType();
-	virtual uint32_t magic();
-	virtual std::vector< std::string > contentPatterns();
-	virtual std::vector< std::string > extensions();
-	virtual ObjectLoader* NewInstance();
-	virtual void Load( File* file );
+}
 
-private:
-	typedef struct Material {
-// 		uint32_t ambient;
-// 		uint32_t diffuse;
-// 		uint32_t specular;
-		float ambient[4];
-		float diffuse[4];
-		float specular[4];
-	} Material;
 
-	void LoadMaterials( File* file, std::string filename );
+float Time::Sync()
+{
+	uint32_t nTime = GetTick();
 
-	static ObjectLoaderObj* mBaseInstance;
-	std::map< std::string, Material* > mMaterials;
-};
+	if ( mTime == 0 ) {
+		mTime = GetTick();
+	}
+	uint32_t dt = nTime - mTime;
+
+	mTime = nTime;
+
+	return ( (float)dt ) / 1000.0f;
+}
+
+
+uint32_t Time::GetTick()
+{
+	struct timespec now;
+	clock_gettime( CLOCK_MONOTONIC, &now );
+	return now.tv_sec * 1000 + now.tv_nsec / 1000000;
+}
+
+
+float Time::GetSeconds()
+{
+	struct timespec now;
+	clock_gettime( CLOCK_MONOTONIC, &now );
+	float ret = (float)now.tv_sec;
+	uint32_t ms = now.tv_nsec / 1000000;
+	ret += ( (float)ms ) / 1000.0;
+	return ret;
+}
 
 
 } // namespace GE
-
-
-#endif // OBJECTLOADEROBJ_H

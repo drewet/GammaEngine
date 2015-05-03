@@ -18,6 +18,8 @@
  */
 
 #include "Matrix.h"
+#include <stdio.h>
+#include <string.h>
 #include <cmath>
 
 #define PI_OVER_360 0.0087266f
@@ -118,7 +120,8 @@ void Matrix::LookAt( Vector3f& eye, Vector3f& center, Vector3f& up )
 	t.m[11]= 0.0;
 	t.m[15]= 1.0;
 
-	*this *= t;
+// 	*this *= t;
+	operator*=(t);
 	Translate( -eye.x, -eye.y, -eye.z );
 }
 
@@ -132,7 +135,8 @@ void Matrix::Translate( float x, float y, float z )
 	t.m[13] = y;
 	t.m[14] = z;
 
-	*this *= t;
+// 	*this *= t;
+	operator*=(t);
 }
 
 
@@ -145,7 +149,8 @@ void Matrix::Scale( float x, float y, float z )
 	t.m[5] = y;
 	t.m[10] = z;
 
-	*this *= t;
+// 	*this *= t;
+	operator*=(t);
 }
 
 
@@ -161,7 +166,8 @@ void Matrix::RotateX( float a )
 	t.m[2*4+1] = -s;
 	t.m[2*4+2] = c;
 
-	*this *= t;
+// 	*this *= t;
+	operator*=(t);
 }
 
 
@@ -177,7 +183,8 @@ void Matrix::RotateY( float a )
 	t.m[2*4+0] = s;
 	t.m[2*4+2] = c;
 
-	*this *= t;
+// 	*this *= t;
+	operator*=(t);
 }
 
 
@@ -193,7 +200,8 @@ void Matrix::RotateZ( float a )
 	t.m[1*4+0] = -s;
 	t.m[1*4+1] = c;
 
-	*this *= t;
+// 	*this *= t;
+	operator*=(t);
 }
 
 
@@ -213,7 +221,16 @@ Matrix Matrix::operator*( Matrix& other )
 
 void Matrix::operator*=( Matrix& other )
 {
-	*this = *this * other;
+	float ret[16];
+	int i=0, j=0, k=0;
+
+	for ( i = 0; i < 16; i++ ) {
+		ret[i] = m[j] * other.m[k] + m[j+4] * other.m[k+1] + m[j+8] * other.m[k+2] + m[j+12] * other.m[k+3];
+		k += 4 * ( ( j + 1 ) == 4 );
+		j = ( j + 1 ) % 4;
+	}
+
+	memcpy( m, ret, sizeof(float) * 16 );
 }
 
 } // namespace GE

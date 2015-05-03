@@ -90,17 +90,33 @@ Object::Object( const std::string filename )
 		loader = loader->NewInstance();
 		loader->Load( file );
 
-		// Delete pointers that will be replaced by loader data
-		delete( mMatrix );
-
 		// Copy data from loader to this object
-		*this = static_cast< Object >( *loader );
+		*this = static_cast< Object* >( loader );
 
-		// Don't call destructor to keep copied pointers
-		free( loader );
+		delete loader;
 	}
 
 	delete file;
+}
+
+
+void Object::operator=( Object& other )
+{
+	mVertices = other.mVertices;
+	mVerticesCount = other.mVerticesCount;
+	mIndices = other.mIndices;
+	mIndicesCount = other.mIndicesCount;
+	memcpy( mMatrix->data(), other.mMatrix->data(), sizeof(float) * 16 );
+}
+
+
+void Object::operator=( Object* other )
+{
+	mVertices = other->mVertices;
+	mVerticesCount = other->mVerticesCount;
+	mIndices = other->mIndices;
+	mIndicesCount = other->mIndicesCount;
+	memcpy( mMatrix->data(), other->mMatrix->data(), sizeof(float) * 16 );
 }
 
 
@@ -121,6 +137,19 @@ uint32_t Object::indicesCount()
 	return mIndicesCount;
 }
 
+
+Vertex* Object::vertices()
+{
+	return mVertices;
+}
+
+
+uint32_t* Object::indices()
+{
+	return mIndices;
+}
+
+
 Matrix* Object::matrix()
 {
 	return mMatrix;
@@ -136,6 +165,17 @@ VK_DESCRIPTOR_SET Object::descriptorSet( Instance* instance, int devid )
 	}
 
 	return std::get<0>( mVkRefs.at( key ) );
+}
+
+VK_MEMORY_REF Object::verticesRef( Instance* instance, int devid )
+{
+	std::pair< Instance*, int > key( instance, devid );
+
+	if ( mVkRefs.find( key ) == mVkRefs.end() ) {
+		AllocateGpu( instance, devid );
+	}
+
+	return std::get<2>( mVkRefs.at( key ) );
 }
 
 VK_MEMORY_REF Object::indicesRef( Instance* instance, int devid )
@@ -157,22 +197,35 @@ void Object::AllocateGpu( Instance* instance, int devid )
 	VK_DESCRIPTOR_SET descriptorSet = {};
 	VK_MEMORY_REF descriptorMemRef = {};
 	VK_MEMORY_REF vertexDataMemRef = {};
+	VK_MEMORY_REF matrixMemRef = {};
 	VK_CMD_BUFFER_CREATE_INFO bufferCreateInfo = { 0, 0 };
 	void* bufferPointer = nullptr;
 
 	VK_DESCRIPTOR_SET_CREATE_INFO descriptorCreateInfo = {};
-	descriptorCreateInfo.slots = 4;
+	descriptorCreateInfo.slots = 5;
 	vkCreateDescriptorSet( instance->device( devid ), &descriptorCreateInfo, &descriptorSet );
 	descriptorMemRef = instance->AllocateObject( devid, descriptorSet );
 
-	vertexDataMemRef = instance->AllocateMappableBuffer( devid, sizeof( decltype(mVertices) ) * mVerticesCount );
+
+	vertexDataMemRef = instance->AllocateMappableBuffer( devid, sizeof( Vertex ) * mVerticesCount );
 	vkMapMemory( vertexDataMemRef.mem, 0, &bufferPointer );
 	if ( bufferPointer ) {
-		memcpy( bufferPointer, mVertices, sizeof( decltype(mVertices) ) * mVerticesCount );
+		memcpy( bufferPointer, mVertices, sizeof( Vertex ) * mVerticesCount );
 		vkUnmapMemory( vertexDataMemRef.mem );
 	} else {
 		gDebug() << "Error : vkMapMemory(vertexDataMemRef) returned null pointer\n";
 	}
+
+
+	matrixMemRef = instance->AllocateMappableBuffer( devid, sizeof( float ) * 16 );
+	vkMapMemory( matrixMemRef.mem, 0, &bufferPointer );
+	if ( bufferPointer ) {
+		memcpy( bufferPointer, mMatrix->data(), sizeof( float ) * 16 );
+		vkUnmapMemory( matrixMemRef.mem );
+	} else {
+		gDebug() << "Error : vkMapMemory(matrixMemRef) returned null pointer\n";
+	}
+
 
 	VK_CMD_BUFFER initDataCmdBuffer;
 	vkCreateCommandBuffer( instance->device( devid ), &bufferCreateInfo, &initDataCmdBuffer );
@@ -180,56 +233,82 @@ void Object::AllocateGpu( Instance* instance, int devid )
 		VK_MEMORY_STATE_TRANSITION dataTransition = {};
 		dataTransition.mem = vertexDataMemRef.mem;
 		dataTransition.oldState = VK_MEMORY_STATE_DATA_TRANSFER;
-		dataTransition.newState = VK_MEMORY_STATE_GRAPHICS_SHADER_READ_ONLY; // TEST VK_MEMORY_STATE_MULTI_SHADER_READ_ONLY
+		dataTransition.newState = VK_MEMORY_STATE_GRAPHICS_SHADER_READ_ONLY;
 		dataTransition.offset = 0;
-		dataTransition.regionSize = sizeof( decltype(mVertices) ) * mVerticesCount;
+		dataTransition.regionSize = sizeof( Vertex ) * mVerticesCount;
 		vkCmdPrepareMemoryRegions( initDataCmdBuffer, 1, &dataTransition );
 	vkEndCommandBuffer( initDataCmdBuffer );
 	instance->QueueSubmit( devid, initDataCmdBuffer, &vertexDataMemRef, 1 );
+
 
 	vkBeginDescriptorSetUpdate( descriptorSet );
 		VK_MEMORY_VIEW_ATTACH_INFO memoryViewAttachInfo = {};
 		memoryViewAttachInfo.state = VK_MEMORY_STATE_GRAPHICS_SHADER_READ_ONLY;
 		memoryViewAttachInfo.mem = vertexDataMemRef.mem;
-		memoryViewAttachInfo.stride = sizeof( decltype(mVertices) );
-		memoryViewAttachInfo.range = sizeof( decltype(mVertices) ) * mVerticesCount;
+		memoryViewAttachInfo.range = sizeof( Vertex ) * mVerticesCount;
 
-		// U, V, W
+		Vertex::UpdateDescriptorSet( descriptorSet, &memoryViewAttachInfo );
+
+		/// HACK / TBD
+		// Object matrix
+		memoryViewAttachInfo.state = VK_MEMORY_STATE_GRAPHICS_SHADER_READ_ONLY;
+		memoryViewAttachInfo.mem = matrixMemRef.mem;
+		memoryViewAttachInfo.stride = 0;
+		memoryViewAttachInfo.range = sizeof( float ) * 16;
 		memoryViewAttachInfo.offset = 0;
-		memoryViewAttachInfo.format.channelFormat = VK_CH_FMT_R32G32B32;
+		memoryViewAttachInfo.format.channelFormat = VK_CH_FMT_R32G32B32A32;
 		memoryViewAttachInfo.format.numericFormat = VK_NUM_FMT_FLOAT;
-		vkAttachMemoryViewDescriptors( descriptorSet, 0, 1, &memoryViewAttachInfo );
+		vkAttachMemoryViewDescriptors( descriptorSet, 12, 1, &memoryViewAttachInfo );
+		// END HACK / TBD
 
-		// COLOR
-		memoryViewAttachInfo.offset = sizeof( float ) * 3;
-		memoryViewAttachInfo.format.channelFormat = VK_CH_FMT_R8G8B8A8;
-		memoryViewAttachInfo.format.numericFormat = VK_NUM_FMT_SRGB;
-		vkAttachMemoryViewDescriptors( descriptorSet, 1, 1, &memoryViewAttachInfo );
-
-		// NX, NY, NZ
-		memoryViewAttachInfo.offset = sizeof( float ) * 3 + sizeof( uint32_t );
-		memoryViewAttachInfo.format.channelFormat = VK_CH_FMT_R32G32B32;
-		memoryViewAttachInfo.format.numericFormat = VK_NUM_FMT_FLOAT;
-		vkAttachMemoryViewDescriptors( descriptorSet, 2, 1, &memoryViewAttachInfo );
-
-		// X, Y, Z
-		memoryViewAttachInfo.offset = sizeof( float ) * 3 + sizeof( uint32_t ) + sizeof( float ) * 3;
-		memoryViewAttachInfo.format.channelFormat = VK_CH_FMT_R32G32B32;
-		memoryViewAttachInfo.format.numericFormat = VK_NUM_FMT_FLOAT;
-		vkAttachMemoryViewDescriptors( descriptorSet, 3, 1, &memoryViewAttachInfo );
 	vkEndDescriptorSetUpdate( descriptorSet );
 
-	VK_MEMORY_REF indexMemRef = instance->AllocateMappableBuffer( devid, sizeof( uint32_t) * mIndicesCount );
+
+	VK_MEMORY_REF indexMemRef = instance->AllocateMappableBuffer( devid, sizeof(uint32_t) * mIndicesCount );
 	vkMapMemory( indexMemRef.mem, 0, &bufferPointer );
 	if ( bufferPointer ) {
-		memcpy( bufferPointer, mIndices, sizeof( decltype(mIndices) ) * mIndicesCount );
+		memcpy( bufferPointer, mIndices, sizeof(uint32_t) * mIndicesCount );
 		vkUnmapMemory( indexMemRef.mem );
 	} else {
 		gDebug() << "Error : vkMapMemory(indexMemRef) returned null pointer\n";
 	}
 
-	std::tuple< VK_DESCRIPTOR_SET, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF > data( descriptorSet, descriptorMemRef, vertexDataMemRef, indexMemRef );
+/*	TEST
+	vkBeginCommandBuffer( initDataCmdBuffer, 0 );
+		VK_MEMORY_STATE_TRANSITION dataTransition = {};
+		dataTransition.mem = indexMemRef.mem;
+		dataTransition.oldState = VK_MEMORY_STATE_DATA_TRANSFER;
+		dataTransition.newState = VK_MEMORY_STATE_GRAPHICS_SHADER_READ_ONLY; // TEST VK_MEMORY_STATE_MULTI_SHADER_READ_ONLY
+		dataTransition.offset = 0;
+		dataTransition.regionSize = sizeof( decltype(mIndices) ) * mIndicesCount;
+		vkCmdPrepareMemoryRegions( initDataCmdBuffer, 1, &dataTransition );
+	vkEndCommandBuffer( initDataCmdBuffer );
+	instance->QueueSubmit( devid, initDataCmdBuffer, &indexMemRef, 1 );
+*/
+
+	std::tuple< VK_DESCRIPTOR_SET, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF > data( descriptorSet, descriptorMemRef, vertexDataMemRef, indexMemRef, matrixMemRef );
 	mVkRefs.insert( std::pair< decltype(key), decltype(data) > ( key, data ) );
+}
+
+
+void Object::UploadMatrix( Instance* instance, int devid )
+{
+	std::pair< Instance*, int > key( instance, devid );
+
+	if ( mVkRefs.find( key ) == mVkRefs.end() ) {
+		return;
+	}
+
+	VK_MEMORY_REF matrixMemRef = std::get<4>( mVkRefs.at( key ) );
+	void* bufferPointer = nullptr;
+
+	vkMapMemory( matrixMemRef.mem, 0, &bufferPointer );
+	if ( bufferPointer ) {
+		memcpy( bufferPointer, mMatrix->data(), sizeof( float ) * 16 );
+		vkUnmapMemory( matrixMemRef.mem );
+	} else {
+		gDebug() << "Error : vkMapMemory(matrixMemRef) returned null pointer\n";
+	}
 }
 
 

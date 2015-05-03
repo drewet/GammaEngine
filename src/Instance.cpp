@@ -20,7 +20,6 @@
 #include "Instance.h"
 #include "Debug.h"
 #include "gememory.h"
-#include <malloc.h>
 
 namespace GE {
 
@@ -40,19 +39,17 @@ Instance::Instance( const char* appName, uint32_t appVersion, bool easy_instance
 		mBaseInstance = this;
 	}
 
-	VK_APPLICATION_INFO appInfo;
-	VK_ALLOC_CALLBACKS allocCb;
 
-	appInfo.pAppName = appName;
-	appInfo.appVersion = appVersion;
-	appInfo.pEngineName = "Gamma Engine";
-	appInfo.engineVersion = 0x00020000;
-	appInfo.apiVersion = VK_API_VERSION;
+	mAppInfo.pAppName = appName;
+	mAppInfo.appVersion = appVersion;
+	mAppInfo.pEngineName = "Gamma Engine";
+	mAppInfo.engineVersion = 0x00020000;
+	mAppInfo.apiVersion = VK_API_VERSION;
 
-	allocCb.pfnAlloc = &Instance::sAlloc;
-	allocCb.pfnFree = &Instance::sFree;
+	mAllocCb.pfnAlloc = &Instance::sAlloc;
+	mAllocCb.pfnFree = &Instance::sFree;
 
-	vkCreateInstance( &appInfo, &allocCb, &mInstance );
+	vkCreateInstance( &mAppInfo, &mAllocCb, &mInstance );
 
 	if ( easy_instance ) {
 		EnumerateGpus();
@@ -124,11 +121,11 @@ VK_MEMORY_REF Instance::AllocateObject( int devid, VK_OBJECT object )
 
 	VK_MEMORY_REQUIREMENTS memReqs = {};
 	VK_SIZE memReqsSize = sizeof(memReqs);
-	vkGetObjectInfo(object, VK_INFO_TYPE_MEMORY_REQUIREMENTS, &memReqsSize, &memReqs );
+	vkGetObjectInfo( object, VK_INFO_TYPE_MEMORY_REQUIREMENTS, &memReqsSize, &memReqs );
 
 	VK_MEMORY_HEAP_PROPERTIES heapProps = {};
 	VK_SIZE heapPropsSize = sizeof(heapProps);
-	vkGetMemoryHeapInfo(mDevices[devid], memReqs.heaps[0], VK_INFO_TYPE_MEMORY_HEAP_PROPERTIES, &heapPropsSize, &heapProps );
+	vkGetMemoryHeapInfo( mDevices[devid], memReqs.heaps[0], VK_INFO_TYPE_MEMORY_HEAP_PROPERTIES, &heapPropsSize, &heapProps );
 
 	if ( heapProps.pageSize <= 0 ) {
 		VK_MEMORY_REF ret = { 0 };
@@ -163,7 +160,7 @@ VK_MEMORY_REF Instance::AllocateMappableBuffer( int devid, size_t size )
 	VK_UINT suitableHeap = -1;
 	for ( VK_UINT i = 0; i < heapCount; i++ ) {
 		vkGetMemoryHeapInfo( mDevices[devid], i, VK_INFO_TYPE_MEMORY_HEAP_PROPERTIES, &heapPropsSize, &heapProps );
-		if ( true /* HACK FIXME heapProps.flags & VK_MEMORY_HEAP_CPU_VISIBLE TODO */ ) {
+		if ( heapProps.flags & VK_MEMORY_HEAP_CPU_VISIBLE ) {
 			suitableHeap = i;
 			break;
 		}
@@ -192,12 +189,26 @@ VK_MEMORY_REF Instance::AllocateMappableBuffer( int devid, size_t size )
 void Instance::QueueSubmit( int devid, VK_CMD_BUFFER buf, VK_MEMORY_REF* refs, int nRefs )
 {
 	vkQueueSubmit( mQueues[devid], 1, &buf, nRefs, refs, mFences[devid] );
+
+// 	vkWaitForFences( mDevices[devid], 1, &mFences[devid], true, 0.0f ); // TESTING
+}
+
+
+VK_PHYSICAL_GPU Instance::gpu( int devid )
+{
+	return mGpus[ devid ];
 }
 
 
 VK_DEVICE Instance::device( int devid )
 {
 	return mDevices[devid];
+}
+
+
+VK_QUEUE Instance::queue( int devid )
+{
+	return mQueues[devid];
 }
 
 } // namespace GE

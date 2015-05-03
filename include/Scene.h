@@ -17,53 +17,33 @@
  *
  */
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef GE_SCENE_H
+#define GE_SCENE_H
 
 #include <vector>
-#include "vulkan.h"
+#include <string>
+
+#include "Renderer.h"
+#include "Camera.h"
 
 namespace GE {
 
-class Instance;
-class Object;
-class Camera;
-class Matrix;
-
-class Renderer
+class Scene
 {
 public:
-	Renderer( Instance* instance = nullptr, int devid = 0 );
-	~Renderer();
+	Scene( const std::string& filename = "" );
+	~Scene();
 
-	int LoadVertexShader( const std::string& file );
-	int LoadFragmentShader( const std::string& file );
+	void AddRenderer( Renderer* renderer );
+	void RemoveRenderer( Renderer* renderer );
+	Renderer* renderer( std::string name );
 
-	void AddObject( Object* obj );
+	void Draw( Camera* camera );
 
-	void Compute();
-	void Draw();
-	void Look( Camera* cam );
-
-private:
-	uint8_t* loadShader( const std::string& filename, size_t* sz );
-	void createPipeline();
-
-	bool mReady;
-	Instance* mInstance;
-	int mDevId;
-
-	Matrix* mMatrixProjection;
-	Matrix* mMatrixView;
-	std::vector< Object* > mObjects;
-
-	VK_CMD_BUFFER mCmdBuffer;
-	VK_PIPELINE mPipeline;
-	VK_MEMORY_REF mPipelineRef;
-	VK_SHADER mVertexShader;
-	VK_SHADER mFragmentShader;
+protected:
+	std::vector< Renderer* > mRenderers;
 };
 
-} // namespace GE
+}
 
-#endif // RENDERER_H
+#endif // GE_SCENE_H

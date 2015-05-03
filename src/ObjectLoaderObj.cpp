@@ -173,7 +173,7 @@ void ObjectLoaderObj::Load( File* file )
 				if ( str == "" || str.length() <= 1 ) {
 					break;
 				}
-// 				gDebug() << "f[" << iFace << "][" << n << "] = '" << str << "'\n";
+				gDebug() << "f[" << iFace << "][" << n << "] = '" << str << "'\n";
 				if ( elements.find( str ) != elements.end() )
 				{
 					idx = elements[ str ];
@@ -188,7 +188,8 @@ void ObjectLoaderObj::Load( File* file )
 					tokenizer2.clear();
 					tokenizer2.str( str );
 					while(std::getline( tokenizer2, str2, '/') ) {
-						point_indexes[p] = std::stoi( str2 );
+						point_indexes[p] = std::stoi( str2 ) - 1;
+// 						printf("  point_indexes[%d] = %d\n", p, point_indexes[p]);
 						p++;
 					}
 					if ( p == 3 ) {
@@ -201,10 +202,11 @@ void ObjectLoaderObj::Load( File* file )
 						buff[idx].nx = norms[point_indexes[2]].x;
 						buff[idx].ny = norms[point_indexes[2]].y;
 						buff[idx].nz = norms[point_indexes[2]].z;
-						buff[idx].color = mat->diffuse;
-// 						aDebug( "buff[" << idx << "].xyz = ", buff[idx].x, buff[idx].y, buff[idx].z ) << "\n";
-// 						aDebug( "buff[" << idx << "].uvw = ", buff[idx].u, buff[idx].v, buff[idx].w ) << "\n";
-// 						aDebug( "buff[" << idx << "].nnn = ", buff[idx].nx, buff[idx].ny, buff[idx].nz ) << "\n";
+						memcpy( buff[idx].color, mat->diffuse, sizeof(float) * 4);
+// 						buff[idx].color = mat->diffuse;
+						aDebug( "buff[" << idx << "].xyz = ", buff[idx].x, buff[idx].y, buff[idx].z );
+// 						aDebug( "buff[" << idx << "].uvw = ", buff[idx].u, buff[idx].v, buff[idx].w );
+// 						aDebug( "buff[" << idx << "].nnn = ", buff[idx].nx, buff[idx].ny, buff[idx].nz );
 					}
 
 					if ( iBuff + 1 >= maxBuff ) {
@@ -213,15 +215,16 @@ void ObjectLoaderObj::Load( File* file )
 					}
 					iBuff++;
 				}
+				printf("idx = %d\n\n", idx);
 				face_indices[n] = idx;
 				n++;
 			}
 			if ( n == 3 ) { // Triangle
-				memcpy( &indices[iIndices], face_indices, sizeof( uint32_t ) * 3 );
 				if ( iIndices + 3 >= maxIndices ) {
 					indices = ( uint32_t* )geRealloc( indices, maxIndices + 128 * 3 );
 					maxIndices += 128 * 3;
 				}
+				memcpy( &indices[iIndices], face_indices, sizeof( uint32_t ) * 3 );
 				iIndices += 3;
 			} else if ( n == 4 ) { // Quad
 				// TODO
@@ -283,21 +286,33 @@ void ObjectLoaderObj::LoadMaterials( File* base_file, std::string filename )
 			tokenizer >> f1;
 			tokenizer >> f2;
 			tokenizer >> f3;
-			mat->ambient = RGBAf( f1, f2, f3, alpha );
+// 			mat->ambient = RGBAf( f1, f2, f3, alpha );
+			mat->ambient[0] = f1;
+			mat->ambient[1] = f2;
+			mat->ambient[2] = f3;
+			mat->ambient[3] = alpha;
 		}
 
 		if ( type == "Kd" ) {
 			tokenizer >> f1;
 			tokenizer >> f2;
 			tokenizer >> f3;
-			mat->diffuse = RGBAf( f1, f2, f3, alpha );
+// 			mat->diffuse = RGBAf( f1, f2, f3, alpha );
+			mat->diffuse[0] = f1;
+			mat->diffuse[1] = f2;
+			mat->diffuse[2] = f3;
+			mat->diffuse[3] = alpha;
 		}
 
 		if ( type == "Ks" ) {
 			tokenizer >> f1;
 			tokenizer >> f2;
 			tokenizer >> f3;
-			mat->specular = RGBAf( f1, f2, f3, alpha );
+// 			mat->specular = RGBAf( f1, f2, f3, alpha );
+			mat->specular[0] = f1;
+			mat->specular[1] = f2;
+			mat->specular[2] = f3;
+			mat->specular[3] = alpha;
 		}
 	}
 

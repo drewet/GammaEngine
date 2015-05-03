@@ -17,53 +17,41 @@
  *
  */
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef CAMERA_H
+#define CAMERA_H
 
-#include <vector>
-#include "vulkan.h"
+#include "Time.h"
+#include "Matrix.h"
 
 namespace GE {
 
-class Instance;
-class Object;
-class Camera;
-class Matrix;
 
-class Renderer
+class Camera : protected Time
 {
 public:
-	Renderer( Instance* instance = nullptr, int devid = 0 );
-	~Renderer();
+	Camera();
+	~Camera();
 
-	int LoadVertexShader( const std::string& file );
-	int LoadFragmentShader( const std::string& file );
+	void UpVector( const Vector3f& up );
+	void LookAt( const Vector3f& pos, const Vector3f& center );
+	void WalkForward( float speed = 1.0f );
+	void WalkBackward( float speed = 1.0f );
+	void WalkLeft( float speed = 1.0f );
+	void WalkRight( float speed = 1.0f );
 
-	void AddObject( Object* obj );
+	float* data();
 
-	void Compute();
-	void Draw();
-	void Look( Camera* cam );
+protected:
+	Matrix mMatrix;
+	Vector3f mPosition;
+	Vector3f mLookPoint;
+	Vector3f mUpVector;
+	float mRotV; // in rad
+	float mRotH; // in rad
 
-private:
-	uint8_t* loadShader( const std::string& filename, size_t* sz );
-	void createPipeline();
-
-	bool mReady;
-	Instance* mInstance;
-	int mDevId;
-
-	Matrix* mMatrixProjection;
-	Matrix* mMatrixView;
-	std::vector< Object* > mObjects;
-
-	VK_CMD_BUFFER mCmdBuffer;
-	VK_PIPELINE mPipeline;
-	VK_MEMORY_REF mPipelineRef;
-	VK_SHADER mVertexShader;
-	VK_SHADER mFragmentShader;
+	void UpdateLookPoint();
 };
 
 } // namespace GE
 
-#endif // RENDERER_H
+#endif // CAMERA_H

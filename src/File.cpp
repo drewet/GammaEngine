@@ -102,6 +102,17 @@ File::~File()
 }
 
 
+bool File::isOpened()
+{
+	if ( mType == BUFFER ) {
+		return true;
+	} else if ( mType == FILE ) {
+		return mStream && mStream->is_open();
+	}
+	return false;
+}
+
+
 void File::Rewind()
 {
 	if ( mType == BUFFER ) {

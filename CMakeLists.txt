@@ -1,18 +1,22 @@
 cmake_minimum_required(VERSION 2.6)
 project(gammaengine)
 
+find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -I./fake -g3")
 
 include_directories(include)
-include_directories(fake)
+# include_directories(fake)
+include_directories(/usr/local/includevulkangl)
 
 add_executable(gammaengine
 	src/main.cpp
 	src/gememory.cpp
 	src/Instance.cpp
 	src/Renderer.cpp
+	src/Scene.cpp
+	src/Camera.cpp
 	src/Object.cpp
 	src/ObjectLoaderObj.cpp
 	src/Image.cpp
@@ -21,9 +25,14 @@ add_executable(gammaengine
 	src/Vector.cpp
 	src/Matrix.cpp
 	src/File.cpp
+	src/Time.cpp
 	src/Debug.cpp
-	fake/dummy_vk.cpp)
+	src/Window.cpp
+	src/linux/BaseWindow.cpp
+	gl430test.cpp
+# 	fake/dummy_vk.cpp
+)
 
-target_link_libraries(gammaengine ${PNG_LIBRARIES})
+target_link_libraries(gammaengine ${PNG_LIBRARIES} ${OPENGL_LIBRARIES} -lvulkangl -lX11)
 
 install(TARGETS gammaengine RUNTIME DESTINATION bin)

@@ -38,7 +38,9 @@ public:
 
 	void QueueSubmit( int devid, VK_CMD_BUFFER buf, VK_MEMORY_REF* refs, int nRefs );
 
+	VK_PHYSICAL_GPU gpu( int devid );
 	VK_DEVICE device( int devid );
+	VK_QUEUE queue( int devid );
 
 	static Instance* baseInstance();
 
@@ -47,6 +49,8 @@ private:
 	static void sFree( void* pMem );
 	static Instance* mBaseInstance;
 
+	VK_APPLICATION_INFO mAppInfo;
+	VK_ALLOC_CALLBACKS mAllocCb;
 	VK_INSTANCE mInstance;
 	VK_DEVICE mDevices[VK_MAX_PHYSICAL_GPUS];
 	VK_QUEUE mQueues[VK_MAX_PHYSICAL_GPUS];

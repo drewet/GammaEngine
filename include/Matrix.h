@@ -44,7 +44,7 @@ public:
 	Matrix operator*( Matrix& other );
 	void operator*=( Matrix& other );
 
-private:
+protected:
 	float m[16];
 };
 

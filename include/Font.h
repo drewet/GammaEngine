@@ -1,6 +1,6 @@
 /*
  * The GammaEngine Library 2.0 is a multiplatform Vulkan-based game engine
- * Copyright (C) 2015  Adrien Aubry <dridri85@gmail.com>
+ * Copyright (C) 2015  Adrien Aubry <email>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,37 +17,18 @@
  *
  */
 
-#ifndef VERTEX_H
-#define VERTEX_H
-
-#include <stdint.h>
-#include <vulkan.h>
+#ifndef GE_FONT_H
+#define GE_FONT_H
 
 namespace GE {
 
-class Vertex
+class Font
 {
 public:
-	Vertex();
+	Font();
+	~Font();
+};
 
-	static void UpdateDescriptorSet( VK_DESCRIPTOR_SET descriptorSet, VK_MEMORY_VIEW_ATTACH_INFO* memoryViewAttachInfo );
+}
 
-// Attributes defined as public for fast access
-public:
-	float u, v, w, _align1;
-	float color[4];
-	float nx, ny, nz, _align2;
-	float x, y, z, weight;
-} __attribute__((packed, aligned(16))); // Stay cool with memory
-
-/*
-typedef struct Vertex {
-	float u, v, w, _align1;
-	float color[4];
-	float nx, ny, nz, _align2;
-	float x, y, z, weight;
-} Vertex;
-*/
-} // namespace GE
-
-#endif // VERTEX_H
+#endif // GE_FONT_H

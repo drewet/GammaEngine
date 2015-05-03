@@ -47,6 +47,7 @@ public:
 	File( void* data, size_t len, MODE mode, bool copy_buffer = false );
 	~File();
 
+	bool isOpened();
 	void Rewind();
 	uint64_t Seek( uint64_t ofs, DIR dir );
 	uint64_t Read( void* buf, size_t len );

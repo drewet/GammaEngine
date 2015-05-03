@@ -17,47 +17,25 @@
  *
  */
 
-#ifndef OBJECTLOADEROBJ_H
-#define OBJECTLOADEROBJ_H
+#ifndef TIME_H
+#define TIME_H
 
-
-#include <map>
-#include "Object.h"
-
+#include <stdint.h>
 
 namespace GE {
 
-class File;
-
-class ObjectLoaderObj : public ObjectLoader
-{
+class Time {
 public:
-	ObjectLoaderObj();
-	virtual TYPE fileType();
-	virtual uint32_t magic();
-	virtual std::vector< std::string > contentPatterns();
-	virtual std::vector< std::string > extensions();
-	virtual ObjectLoader* NewInstance();
-	virtual void Load( File* file );
+	Time();
+	float Sync();
+
+	static uint32_t GetTick();
+	static float GetSeconds();
 
 private:
-	typedef struct Material {
-// 		uint32_t ambient;
-// 		uint32_t diffuse;
-// 		uint32_t specular;
-		float ambient[4];
-		float diffuse[4];
-		float specular[4];
-	} Material;
-
-	void LoadMaterials( File* file, std::string filename );
-
-	static ObjectLoaderObj* mBaseInstance;
-	std::map< std::string, Material* > mMaterials;
+	uint32_t mTime;
 };
-
 
 } // namespace GE
 
-
-#endif // OBJECTLOADEROBJ_H
+#endif // TIME_H

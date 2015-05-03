@@ -40,7 +40,7 @@ public:
 
 	template<typename T> Debug& operator<<( T t )
 	{
-		std::cout << t;
+		std::cout << t << std::flush;
 		if ( mWriteFile ) {
 			// TODO
 		}
@@ -74,7 +74,7 @@ static inline std::string className(const std::string& prettyFunction)
 
 #pragma GCC system_header // HACK Disable unused-function warnings
 static void fDebug_base( const char* end, bool f ) {
-	std::cout << " " << end;
+	std::cout << " " << end << std::flush;
 }
 
 #include <cxxabi.h>
@@ -104,7 +104,7 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 #define fDebug( args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "( "; fDebug_base( ")\n", true, args )
 #define fDebug0() std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "()\n"
 
-#define aDebug( name, args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}", true, args )
+#define aDebug( name, args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
 
 #endif // __DBG_CLASS
 
