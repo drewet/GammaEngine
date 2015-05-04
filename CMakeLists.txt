@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -W
 
 include_directories(include)
 # include_directories(fake)
-include_directories(/usr/local/includevulkangl)
+include_directories(/usr/local/include/vulkangl)
 
 add_executable(gammaengine
 	src/main.cpp
