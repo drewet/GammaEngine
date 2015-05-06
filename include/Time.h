@@ -29,18 +29,18 @@ public:
 	Time();
 
 	static void GlobalSync();
-	static float Delta();
+	static double Delta();
 	static uint32_t GetTick();
 	static float GetSeconds();
 	static uint32_t WaitTick( uint32_t t, uint32_t last );
 	static void Sleep( uint32_t t );
 
 protected:
-	float Sync();
+	double Sync();
 
 private:
 	static uint32_t sTime;
-	static float sDt;
+	static double sDt;
 };
 
 } // namespace GE

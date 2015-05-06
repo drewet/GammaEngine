@@ -123,6 +123,7 @@ BaseWindow::BaseWindow( Instance* instance, int devid, const std::string& title,
 	vkWsiX11AssociateConnection( instance->gpu( mDevId ), &connectionInfo );
 
 // 	mEventThread = new std::thread( &BaseWindow::pEventThread, this );
+
 }
 
 
@@ -131,9 +132,51 @@ BaseWindow::~BaseWindow()
 }
 
 
+int BaseWindow::width()
+{
+	return mWidth;
+}
+
+
+int BaseWindow::height()
+{
+	return mHeight;
+}
+
+
+Vector2i& BaseWindow::cursor()
+{
+	return mCursor;
+}
+
+
+Vector2i& BaseWindow::cursorWarp()
+{
+	return mCursorWarp;
+}
+
+
 void BaseWindow::SwapBuffersBase()
 {
 	pEventThread();
+
+	int unused, mx, my;
+	uint64_t unwin;
+	if ( XQueryPointer( mDisplay, mWindow, &unwin, &unwin, &unused, &unused, &mx, &my, (uint32_t*)&unused ) ) {
+		if ( false ) {
+			mCursorWarp.x = mx - mWidth / 2;
+			mCursorWarp.y = my - mHeight / 2;
+			mCursor.x = mWidth / 2;
+			mCursor.y = mHeight / 2;
+			XWarpPointer( mDisplay, mWindow, mWindow, 0, 0, 0, 0, mCursor.x, mCursor.y );
+		} else {
+			mCursorWarp.x = mx - mCursor.x;
+			mCursorWarp.y = my - mCursor.y;
+			mCursor.x = mx;
+			mCursor.y = my;
+		}
+	}
+
 // 	glXSwapBuffers( mDisplay, mWindow );
 }
 

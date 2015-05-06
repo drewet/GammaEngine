@@ -30,6 +30,12 @@ Camera::Camera()
 	, mUpVector( Vector3f( 0.0f, 0.0f, 1.0f ) )
 	, mRotV( 0.0f )
 	, mRotH( 0.0f )
+	, mInertia( Vector3f( 0.0f, 0.0f, 0.0f ) )
+	, mTorque( Vector2f( 0.0f, 0.0f ) )
+	, mInertiaDuration( 0.0f )
+	, mTorqueDuration( 0.0f )
+	, mInertiaFactor( 0.0f )
+	, mTorqueFactor( 0.0f )
 {
 }
 
@@ -52,74 +58,120 @@ void Camera::LookAt( const Vector3f& pos, const Vector3f& center )
 }
 
 
+void Camera::setInertia( const float inertia )
+{
+	mInertiaFactor = inertia;
+}
+
+void Camera::setRotationInertia( const float inertia )
+{
+	mTorqueFactor = inertia;
+}
+
+
 void Camera::WalkForward( float speed )
 {
 	float dt = Sync();
-	speed *= dt;
 
-	float x = std::cos( mRotH ) * speed;
-	float y = std::sin( mRotH ) * speed;
+	float x = std::cos( mRotH ) * speed * dt;
+	float y = std::sin( mRotH ) * speed * dt;
 
 	mPosition.x += x;
 	mPosition.y += y;
 
 	mLookPoint.x += x;
 	mLookPoint.y += y;
+
+	mInertia.x = x * speed;
+	mInertia.y = y * speed;
+	mTorqueDuration += speed;
 }
 
 
 void Camera::WalkBackward( float speed )
 {
 	float dt = Sync();
-	speed *= dt;
 
-	float x = std::cos( mRotH ) * speed;
-	float y = std::sin( mRotH ) * speed;
+	float x = std::cos( mRotH ) * speed * dt;
+	float y = std::sin( mRotH ) * speed * dt;
 
 	mPosition.x -= x;
 	mPosition.y -= y;
 
 	mLookPoint.x -= x;
 	mLookPoint.y -= y;
+
+	mInertia.x = -x * speed;
+	mInertia.y = -y * speed;
 }
 
 
 void Camera::WalkLeft( float speed )
 {
 	float dt = Sync();
-	speed *= dt;
 
-	float x = std::cos( mRotH ) * speed;
-	float y = std::sin( mRotH ) * speed;
+	float x = std::cos( mRotH ) * speed * dt;
+	float y = std::sin( mRotH ) * speed * dt;
 
 	mPosition.x -= y;
 	mPosition.y += x;
 
 	mLookPoint.x -= y;
 	mLookPoint.y += x;
+
+	mInertia.x = -y * speed;
+	mInertia.y = x * speed;
 }
 
 
 void Camera::WalkRight( float speed )
 {
 	float dt = Sync();
-	speed *= dt;
 
-	float x = std::cos( mRotH ) * speed;
-	float y = std::sin( mRotH ) * speed;
+	float x = std::cos( mRotH ) * speed * dt;
+	float y = std::sin( mRotH ) * speed * dt;
 
 	mPosition.x += y;
 	mPosition.y -= x;
 
 	mLookPoint.x += y;
 	mLookPoint.y -= x;
+
+	mInertia.x = y * speed;
+	mInertia.y = -x * speed;
 }
 
 
-void Camera::UpdateLookPoint()
+void Camera::RotateH( const float v, float speed )
 {
-	float rtemp = 10000000.0f * std::cos( mRotV );
-	mLookPoint.z = mPosition.z + 10000000.0f * std::sin( mRotV );
+	mRotH += v * speed;
+
+	mTorque.x += v * speed;
+}
+
+
+void Camera::RotateV( const float v, float speed )
+{
+	mRotV += v * speed;
+
+	mTorque.y += v * speed;
+}
+
+
+void Camera::Update()
+{
+/*
+	mInertia *= mInertiaFactor;
+	mPosition.x += mInertia.x;
+	mPosition.y += mInertia.y;
+	mPosition.z += mInertia.z;
+
+	mTorque *= mTorqueFactor;
+	mRotH *= mTorque.x;
+	mRotV *= mTorque.y;
+*/
+	float rtemp = 1000.0f * std::cos( mRotV );
+	mLookPoint.z = mPosition.z + 1000.0f * std::sin( mRotV );
 	mLookPoint.x = mPosition.x + rtemp * std::cos( mRotH );
 	mLookPoint.y = mPosition.y + rtemp * std::sin( mRotH );
 }
@@ -127,6 +179,7 @@ void Camera::UpdateLookPoint()
 
 float* Camera::data()
 {
+	Update();
 	mMatrix.Identity();
 	mMatrix.LookAt( mPosition, mLookPoint, mUpVector );
 	return mMatrix.data();

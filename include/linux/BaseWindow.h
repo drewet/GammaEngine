@@ -23,6 +23,7 @@
 #include <string>
 #include <thread>
 #include <vulkan.h>
+#include "Vector.h"
 
 #ifndef BASEWINDOW_CPP
 #ifndef Display
@@ -46,6 +47,11 @@ public:
 	BaseWindow( Instance* instance, int devid, const std::string& title, int width, int height, uint32_t flags );
 	~BaseWindow();
 
+	int width();
+	int height();
+	Vector2i& cursor();
+	Vector2i& cursorWarp();
+
 	void SwapBuffersBase();
 
 protected:
@@ -58,6 +64,8 @@ protected:
 	uint64_t mWindow;
 	std::thread* mEventThread;
 	bool mKeys[512];
+	Vector2i mCursor;
+	Vector2i mCursorWarp;
 
 private:
 	Display* mDisplay;

@@ -100,10 +100,13 @@ public:
 
 	void Update();
 	bool pressed( unsigned int keycode );
+	Vector2f cursorWarp();
 
 protected:
 	Window* mWindow;
 	Vector2i mCursor;
+	Vector2i mCursorLast;
+	Vector2i mCursorWarp;
 	bool mKeys[512];
 };
 

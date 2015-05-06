@@ -25,6 +25,8 @@ using namespace GE;
 Input::Input( Window* window )
 	: mWindow( window )
 	, mCursor( Vector2i( 0, 0 ) )
+	, mCursorLast( Vector2i( 0, 0 ) )
+	, mCursorWarp( Vector2i( 0, 0 ) )
 	, mKeys{ false }
 {
 }
@@ -38,10 +40,25 @@ Input::~Input()
 void Input::Update()
 {
 	mWindow->ReadKeys( mKeys );
+
+	mCursorLast = mCursor;
+	mCursor = mWindow->cursor();
+	mCursorWarp = mWindow->cursorWarp();
 }
+
 
 bool Input::pressed( unsigned int keycode )
 {
 	return mKeys[ keycode ];
 }
 
+
+Vector2f Input::cursorWarp()
+{
+	Vector2f ret;
+
+	ret.x = (float)mCursorWarp.x / mWindow->width();
+	ret.y = (float)mCursorWarp.y / mWindow->height();
+
+	return ret;
+}

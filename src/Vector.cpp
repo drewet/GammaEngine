@@ -43,7 +43,7 @@ void Vector2i::normalize()
 }
 
 
-Vector2i Vector2i::operator+( Vector2i& v )
+Vector2i Vector2i::operator+( const Vector2i& v )
 {
 	Vector2i ret;
 
@@ -54,7 +54,7 @@ Vector2i Vector2i::operator+( Vector2i& v )
 }
 
 
-Vector2i Vector2i::operator-( Vector2i& v )
+Vector2i Vector2i::operator-( const Vector2i& v )
 {
 	Vector2i ret;
 
@@ -65,9 +65,65 @@ Vector2i Vector2i::operator-( Vector2i& v )
 }
 
 
-int Vector2i::operator*( Vector2i& v )
+int Vector2i::operator*( const Vector2i& v )
 {
 	return x * v.x + y * v.y;
+}
+
+
+
+
+
+Vector2f::Vector2f( float x, float y )
+	: x( x )
+	, y( y )
+{
+}
+
+
+void Vector2f::normalize()
+{
+	float l = std::sqrt( x * x + y * y );
+	if ( l > 0.00001f ) {
+		float il = 1.0f / l;
+		x *= il;
+		y *= il;
+	}
+}
+
+
+Vector2f Vector2f::operator+( const Vector2f& v )
+{
+	Vector2f ret;
+
+	ret.x = x + v.x;
+	ret.y = y + v.y;
+
+	return ret;
+}
+
+
+Vector2f Vector2f::operator-( const Vector2f& v )
+{
+	Vector2f ret;
+
+	ret.x = x - v.x;
+	ret.y = y - v.y;
+
+	return ret;
+}
+
+
+float Vector2f::operator*( const Vector2f& v )
+{
+	return x * v.x + y * v.y;
+}
+
+
+void Vector2f::operator*=( float v )
+{
+	x *= v;
+	y *= v;
 }
 
 
@@ -94,7 +150,19 @@ void Vector3f::normalize()
 }
 
 
-Vector3f Vector3f::operator+( Vector3f& v )
+Vector3f Vector3f::operator-()
+{
+	Vector3f ret;
+
+	ret.x = -x;
+	ret.y = -y;
+	ret.z = -z;
+
+	return ret;
+}
+
+
+Vector3f Vector3f::operator+( const Vector3f& v )
 {
 	Vector3f ret;
 
@@ -106,7 +174,7 @@ Vector3f Vector3f::operator+( Vector3f& v )
 }
 
 
-Vector3f Vector3f::operator-( Vector3f& v )
+Vector3f Vector3f::operator-( const Vector3f& v )
 {
 	Vector3f ret;
 
@@ -118,7 +186,7 @@ Vector3f Vector3f::operator-( Vector3f& v )
 }
 
 
-Vector3f Vector3f::operator^( Vector3f& v )
+Vector3f Vector3f::operator^( const Vector3f& v )
 {
 	Vector3f ret;
 
@@ -130,9 +198,37 @@ Vector3f Vector3f::operator^( Vector3f& v )
 }
 
 
-float Vector3f::operator*( Vector3f& v )
+float Vector3f::operator*( const Vector3f& v )
 {
 	return x * v.x + y * v.y + z * v.z;
+}
+
+
+void Vector3f::operator+=( const Vector3f& v )
+{
+	x += v.x;
+	y += v.y;
+	z += v.z;
+}
+
+
+void Vector3f::operator*=( float v )
+{
+	x *= v;
+	y *= v;
+	z *= v;
+}
+
+
+Vector3f operator*( float f, const Vector3f& v )
+{
+	Vector3f ret = v;
+
+	ret.x *= f;
+	ret.y *= f;
+	ret.z *= f;
+
+	return ret;
 }
 
 } // namespace GE

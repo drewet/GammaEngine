@@ -37,6 +37,7 @@ int main( int argc, char** argv )
 	scene->AddRenderer( renderer );
 
 	Camera* camera = new Camera();
+	camera->setInertia( 0.999f );
 	camera->LookAt( { -10.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } );
 
 	float fps = 0.0f;
@@ -61,6 +62,10 @@ int main( int argc, char** argv )
 		}
 		if ( input->pressed( 'D' ) ) {
 			camera->WalkRight( 5.0 );
+		}
+		if ( input->pressed( Input::LBUTTON ) ) {
+			camera->RotateH( input->cursorWarp().x, -2.0f );
+			camera->RotateV( input->cursorWarp().y, -2.0f );
 		}
 
 		window->Clear( 0xFF202020 );

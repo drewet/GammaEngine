@@ -30,13 +30,31 @@ public:
 
 	void normalize();
 
-	Vector2i operator+( Vector2i& v );
-	Vector2i operator-( Vector2i& v );
-	int operator*( Vector2i& v );
+	Vector2i operator+( const Vector2i& v );
+	Vector2i operator-( const Vector2i& v );
+	int operator*( const Vector2i& v );
 
 public:
 	int x;
 	int y;
+} __attribute__((packed));
+
+
+class Vector2f
+{
+public:
+	Vector2f( float x = 0.0f, float y = 0.0f );
+
+	void normalize();
+
+	Vector2f operator+( const Vector2f& v );
+	Vector2f operator-( const Vector2f& v );
+	float operator*( const Vector2f& v );
+	void operator*=( float v );
+
+public:
+	float x;
+	float y;
 } __attribute__((packed));
 
 
@@ -47,10 +65,13 @@ public:
 
 	void normalize();
 
-	Vector3f operator+( Vector3f& v );
-	Vector3f operator-( Vector3f& v );
-	Vector3f operator^( Vector3f& v );
-	float operator*( Vector3f& v );
+	Vector3f operator-();
+	Vector3f operator+( const Vector3f& v );
+	Vector3f operator-( const Vector3f& v );
+	Vector3f operator^( const Vector3f& v );
+	float operator*( const Vector3f& v );
+	void operator+=( const Vector3f& v );
+	void operator*=( float v );
 
 // Attributes defined as public for fast access
 public:
@@ -58,6 +79,9 @@ public:
 	float y;
 	float z;
 } __attribute__((packed));
+
+
+Vector3f operator*( float f, const Vector3f& v );
 
 
 } // namespace GE

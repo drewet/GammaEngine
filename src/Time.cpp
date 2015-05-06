@@ -25,7 +25,7 @@ namespace GE {
 
 
 uint32_t Time::sTime = 0;
-float Time::sDt = 0.0f;
+double Time::sDt = 0.0;
 
 
 Time::Time()
@@ -40,18 +40,18 @@ void Time::GlobalSync()
 	}
 
 	uint32_t dt = GetTick() - sTime;
-	sDt = ( (float)dt ) / 1000.0f;
+	sDt = ( (double)dt ) / 1000.0;
 	sTime = GetTick();
 }
 
 
-float Time::Delta()
+double Time::Delta()
 {
 	return sDt;
 }
 
 
-float Time::Sync()
+double Time::Sync()
 {
 // 	uint32_t nTime = GetTick();
 

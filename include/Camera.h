@@ -38,6 +38,10 @@ public:
 	void WalkBackward( float speed = 1.0f );
 	void WalkLeft( float speed = 1.0f );
 	void WalkRight( float speed = 1.0f );
+	void RotateH( const float v, float speed = 1.0f );
+	void RotateV( const float v, float speed = 1.0f );
+	void setInertia( const float inertia );
+	void setRotationInertia( const float inertia );
 
 	float* data();
 
@@ -48,8 +52,14 @@ protected:
 	Vector3f mUpVector;
 	float mRotV; // in rad
 	float mRotH; // in rad
+	Vector3f mInertia;
+	Vector2f mTorque;
+	float mInertiaDuration;
+	float mTorqueDuration;
+	float mInertiaFactor;
+	float mTorqueFactor;
 
-	void UpdateLookPoint();
+	void Update();
 };
 
 } // namespace GE

@@ -17,6 +17,7 @@ add_executable(gammaengine
 	src/Renderer.cpp
 	src/Scene.cpp
 	src/Camera.cpp
+	src/PhysicalObject.cpp
 	src/Object.cpp
 	src/ObjectLoaderObj.cpp
 	src/Image.cpp
