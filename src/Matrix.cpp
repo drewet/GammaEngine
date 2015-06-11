@@ -20,6 +20,7 @@
 #include "Matrix.h"
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
 #include <cmath>
 
 #define PI_OVER_360 0.0087266f
@@ -29,14 +30,35 @@
 namespace GE {
 
 Matrix::Matrix()
+	: m ( (float*)malloc(sizeof(float) * 16) )
+	, mAllocedData( true )
 {
 	Identity();
+}
+
+
+void Matrix::setDataPointer( float* d, bool keep_current_data )
+{
+	if ( keep_current_data ) {
+		memcpy( d, m, sizeof(float) * 16 );
+	}
+	if ( mAllocedData ) {
+		free( m );
+		mAllocedData = false;
+	}
+	m = d;
 }
 
 
 float* Matrix::data()
 {
 	return m;
+}
+
+
+float* Matrix::constData() const
+{
+	return (float*)m;
 }
 
 
@@ -85,7 +107,7 @@ void Matrix::Perspective( float fov, float aspect, float zNear, float zFar )
 }
 
 
-void Matrix::LookAt( Vector3f& eye, Vector3f& center, Vector3f& up )
+void Matrix::LookAt( const Vector3f& eye, const Vector3f& center, const Vector3f& up )
 {
 	Matrix t;
 	Vector3f f;
@@ -123,6 +145,20 @@ void Matrix::LookAt( Vector3f& eye, Vector3f& center, Vector3f& up )
 // 	*this *= t;
 	operator*=(t);
 	Translate( -eye.x, -eye.y, -eye.z );
+}
+
+
+void Matrix::Translate( const Vector3f& v )
+{
+	Matrix t;
+	t.Identity();
+	
+	t.m[12] = v.x;
+	t.m[13] = v.y;
+	t.m[14] = v.z;
+	
+	// 	*this *= t;
+	operator*=(t);
 }
 
 
@@ -204,7 +240,7 @@ void Matrix::RotateZ( float a )
 	operator*=(t);
 }
 
-
+/*
 Matrix Matrix::operator*( Matrix& other )
 {
 	Matrix ret;
@@ -218,8 +254,9 @@ Matrix Matrix::operator*( Matrix& other )
 
 	return ret;
 }
+*/
 
-void Matrix::operator*=( Matrix& other )
+void Matrix::operator*=( const Matrix& other )
 {
 	float ret[16];
 	int i=0, j=0, k=0;
@@ -232,5 +269,34 @@ void Matrix::operator*=( Matrix& other )
 
 	memcpy( m, ret, sizeof(float) * 16 );
 }
+
+
+Matrix operator*( const Matrix& m1, const Matrix& m2 )
+{
+	Matrix ret;
+	int i=0, j=0, k=0;
+
+	for ( i = 0; i < 16; i++ ) {
+		ret.m[i] = m1.m[j] * m2.m[k] + m1.m[j+4] * m2.m[k+1] + m1.m[j+8] * m2.m[k+2] + m1.m[j+12] * m2.m[k+3];
+		k += 4 * ( ( j + 1 ) == 4 );
+		j = ( j + 1 ) % 4;
+	}
+
+	return ret;
+}
+
+
+Vector4f operator*( const Matrix& m, const Vector4f& vec )
+{
+	Vector4f ret;
+
+	ret.x = vec[0] * m.constData()[0] + vec[1] * m.constData()[4] + vec[2] * m.constData()[8]  + vec[3] * m.constData()[12];
+	ret.y = vec[0] * m.constData()[1] + vec[1] * m.constData()[5] + vec[2] * m.constData()[9]  + vec[3] * m.constData()[13];
+	ret.z = vec[0] * m.constData()[2] + vec[1] * m.constData()[6] + vec[2] * m.constData()[10] + vec[3] * m.constData()[14];
+	ret.w = vec[0] * m.constData()[3] + vec[1] * m.constData()[7] + vec[2] * m.constData()[11] + vec[3] * m.constData()[15];
+
+	return ret;
+}
+
 
 } // namespace GE

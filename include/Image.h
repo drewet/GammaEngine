@@ -36,8 +36,12 @@ class Image
 {
 public:
 	Image();
-	Image( const std::string filename );
+	Image( const std::string filename, Instance* instance = nullptr );
 	~Image();
+
+	uint32_t width();
+	uint32_t height();
+	uint32_t* data();
 
 	static ImageLoader* AddImageLoader( ImageLoader* loader );
 
@@ -60,7 +64,7 @@ public:
 	virtual std::vector< std::string > contentPatterns() = 0;
 	virtual std::vector< std::string > extensions() = 0;
 	virtual ImageLoader* NewInstance() = 0;
-	virtual void Load( File* file, uint32_t pref_w = 0, uint32_t pref_h = 0 ) = 0;
+	virtual void Load( Instance* instance, File* file, uint32_t pref_w = 0, uint32_t pref_h = 0 ) = 0;
 };
 
 

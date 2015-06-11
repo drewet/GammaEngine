@@ -63,9 +63,17 @@ void Camera::setInertia( const float inertia )
 	mInertiaFactor = inertia;
 }
 
+
 void Camera::setRotationInertia( const float inertia )
 {
 	mTorqueFactor = inertia;
+}
+
+
+void Camera::Translate( const Vector3f& t )
+{
+	mPosition += t;
+	mLookPoint += t;
 }
 
 
@@ -174,6 +182,14 @@ void Camera::Update()
 	mLookPoint.z = mPosition.z + 1000.0f * std::sin( mRotV );
 	mLookPoint.x = mPosition.x + rtemp * std::cos( mRotH );
 	mLookPoint.y = mPosition.y + rtemp * std::sin( mRotH );
+}
+
+
+Vector3f Camera::direction()
+{
+	Vector3f ret = mLookPoint - mPosition;
+	ret.normalize();
+	return ret;
 }
 
 

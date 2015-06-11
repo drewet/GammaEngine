@@ -38,9 +38,12 @@ Image::Image()
 }
 
 
-Image::Image( const std::string filename )
+Image::Image( const std::string filename, Instance* instance )
 	: Image()
 {
+	if ( !instance ) {
+		instance = Instance::baseInstance();
+	}
 	ImageLoader* loader = nullptr;
 	File* file = new File( filename, File::READ );
 
@@ -79,7 +82,7 @@ Image::Image( const std::string filename )
 
 	if ( loader ) {
 		loader = loader->NewInstance();
-		loader->Load( file );
+		loader->Load( instance, file );
 		*this = static_cast< Image >( *loader );
 		delete loader;
 		gDebug() << "Image loaded, size = " << mWidth << " x " << mHeight << "\n";
@@ -91,6 +94,24 @@ Image::Image( const std::string filename )
 
 Image::~Image()
 {
+}
+
+
+uint32_t Image::width()
+{
+	return mWidth;
+}
+
+
+uint32_t Image::height()
+{
+	return mHeight;
+}
+
+
+uint32_t* Image::data()
+{
+	return mData;
 }
 
 

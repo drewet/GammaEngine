@@ -28,6 +28,7 @@
 
 namespace GE {
 
+class Instance;
 
 class File
 {
@@ -44,7 +45,7 @@ public:
 
 	File( std::string filename, MODE mode );
 	File( File* side, std::string filename, MODE mode );
-	File( void* data, size_t len, MODE mode, bool copy_buffer = false );
+	File( void* data, size_t len, MODE mode, bool copy_buffer = false, Instance* instance = nullptr );
 	~File();
 
 	bool isOpened();
@@ -69,6 +70,7 @@ private:
 	uint64_t mBufferSize;
 	uint64_t mOffset;
 	bool mCopiedBuffer;
+	Instance* mInstance;
 };
 
 

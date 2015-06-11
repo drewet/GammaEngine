@@ -151,6 +151,11 @@ VK_RESULT vkCreateGraphicsPipeline(VK_DEVICE device, const VK_GRAPHICS_PIPELINE_
 
 	glUseProgram( 0 );
 
+	pipeline->renderMode = GL_TRIANGLES;
+	if ( pCreateInfo->iaState.topology == VK_TOPOLOGY_POINT_LIST ) {
+		pipeline->renderMode = GL_POINTS;
+	}
+
 	return VK_SUCCESS;
 }
 

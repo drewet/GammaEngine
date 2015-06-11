@@ -34,6 +34,7 @@ public:
 
 	void UpVector( const Vector3f& up );
 	void LookAt( const Vector3f& pos, const Vector3f& center );
+	void Translate( const Vector3f& t );
 	void WalkForward( float speed = 1.0f );
 	void WalkBackward( float speed = 1.0f );
 	void WalkLeft( float speed = 1.0f );
@@ -43,6 +44,9 @@ public:
 	void setInertia( const float inertia );
 	void setRotationInertia( const float inertia );
 
+	const Vector3f& position();
+	const Vector3f& lookPoint();
+	Vector3f direction();
 	float* data();
 
 protected:

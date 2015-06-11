@@ -24,8 +24,6 @@
 #include <vector>
 #include <map>
 
-#include <vulkan.h>
-
 #include "Vertex.h"
 #include "Matrix.h"
 
@@ -34,13 +32,14 @@ namespace GE {
 class Instance;
 class ObjectLoader;
 class File;
+class Image;
 
 class Object
 {
 public:
-	Object();
-	Object( const std::string filename );
-	~Object();
+	Object( Vertex* verts = nullptr, uint32_t nVerts = 0 );
+	Object( const std::string filename, Instance* instance = nullptr );
+	virtual ~Object();
 
 	uint32_t verticesCount();
 	uint32_t indicesCount();
@@ -48,11 +47,9 @@ public:
 	uint32_t* indices();
 	Matrix* matrix();
 
-	void UploadMatrix( Instance* instance, int devid );
-
-	VK_DESCRIPTOR_SET descriptorSet( Instance* instance, int devid );
-	VK_MEMORY_REF verticesRef( Instance* instance, int devid );
-	VK_MEMORY_REF indicesRef( Instance* instance, int devid );
+	virtual void setTexture( int unit, Image* texture ) = 0;
+	virtual void UpdateVertices( Instance* instance, Vertex* verts, uint32_t offset, uint32_t count ) = 0;
+	virtual void UploadMatrix( Instance* instance ) = 0;
 
 	void operator=( Object& other );
 	void operator=( Object* other );
@@ -66,12 +63,7 @@ protected:
 	uint32_t mIndicesCount;
 	Matrix* mMatrix;
 
-	// descriptorSet, descriptorMemRef, vertexDataMemRef, indexMemRef, matrixMemRef associated to <Instance*, devid>
-	std::map< std::pair< Instance*, int >, std::tuple< VK_DESCRIPTOR_SET, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF, VK_MEMORY_REF > > mVkRefs;
-
 	static std::vector< ObjectLoader* > mObjectLoaders;
-
-	void AllocateGpu( Instance* instance, int devid );
 };
 
 
@@ -90,7 +82,11 @@ public:
 	virtual std::vector< std::string > contentPatterns() = 0;
 	virtual std::vector< std::string > extensions() = 0;
 	virtual ObjectLoader* NewInstance() = 0;
-	virtual void Load( File* file ) = 0;
+	virtual void Load( Instance* instance, File* file ) = 0;
+
+	virtual void setTexture( int unit, Image* texture ){}
+	virtual void UpdateVertices( Instance* instance, Vertex* verts, uint32_t offset, uint32_t count ){}
+	virtual void UploadMatrix( Instance* instance ){}
 };
 
 

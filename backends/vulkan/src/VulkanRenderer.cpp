@@ -20,29 +20,30 @@
 #include <fstream>
 #include <vector>
 
-#include "Instance.h"
-#include "Renderer.h"
+#include "VulkanInstance.h"
+#include "VulkanRenderer.h"
 #include "Object.h"
 #include "Debug.h"
 #include "File.h"
 #include "Camera.h"
-#include "gememory.h"
 
-namespace GE {
+extern "C" GE::Renderer* CreateRenderer( GE::Instance* instance ) {
+	return new VulkanRenderer( instance );
+}
 
 
-Renderer::Renderer( Instance* instance, int devid )
+VulkanRenderer::VulkanRenderer( Instance* instance )
 	: mReady( false )
 	, mInstance( instance ? instance : Instance::baseInstance() )
-	, mDevId( devid )
 	, mPipeline( 0 )
+	, mRenderMode( VK_TOPOLOGY_TRIANGLE_LIST )
 {
 	VK_CMD_BUFFER_CREATE_INFO info;
 
 	info.queueType = 0;
 	info.flags = VK_CMD_BUFFER_OPTIMIZE_DESCRIPTOR_SET_SWITCH | VK_CMD_BUFFER_OPTIMIZE_GPU_SMALL_BATCH;
 
-	vkCreateCommandBuffer( mInstance->device( mDevId ), &info, &mCmdBuffer );
+	vkCreateCommandBuffer( mInstance->device(), &info, &mCmdBuffer );
 
 	mMatrixProjection = new Matrix();
 	mMatrixProjection->Perspective( 60.0f, 16.0f / 9.0f, 0.01f, 1000.0f );
@@ -51,36 +52,42 @@ Renderer::Renderer( Instance* instance, int devid )
 }
 
 
-Renderer::~Renderer()
+VulkanRenderer::~VulkanRenderer()
 {
 }
 
 
-int Renderer::LoadVertexShader( const std::string& file )
+int VulkanRenderer::LoadVertexShader( const std::string& file )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
 	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );
 
-	vkCreateShader( mInstance->device( mDevId ), &vsInfo, &mVertexShader );
+	vkCreateShader( mInstance->device(), &vsInfo, &mVertexShader );
 
 	mReady = false;
 	return 0;
 }
 
 
-int Renderer::LoadFragmentShader( const std::string& file )
+int VulkanRenderer::LoadFragmentShader( const std::string& file )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
 	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );
 
-	vkCreateShader( mInstance->device( mDevId ), &vsInfo, &mFragmentShader );
+	vkCreateShader( mInstance->device(), &vsInfo, &mFragmentShader );
 
 	mReady = false;
 	return 0;
 }
 
 
-void Renderer::createPipeline()
+void VulkanRenderer::setRenderMode( int mode )
+{
+	mRenderMode = mode;
+}
+
+
+void VulkanRenderer::createPipeline()
 {
 	if ( mPipeline ) {
 		// TODO : Free existing pipeline
@@ -129,7 +136,7 @@ void Renderer::createPipeline()
 	pipelineCreateInfo.ps.descriptorSetMapping[0].descriptorCount = 2;
 	pipelineCreateInfo.ps.descriptorSetMapping[0].pDescriptorInfo = psDescriptorSlots;
 
-	pipelineCreateInfo.iaState.topology = VK_TOPOLOGY_TRIANGLE_LIST;
+	pipelineCreateInfo.iaState.topology = mRenderMode;
 	pipelineCreateInfo.iaState.disableVertexReuse = VK_FALSE;
 	pipelineCreateInfo.rsState.depthClipEnable = VK_FALSE;
 
@@ -141,20 +148,26 @@ void Renderer::createPipeline()
 	pipelineCreateInfo.dbState.format.channelFormat = VK_CH_FMT_R4G4B4A4;
 	pipelineCreateInfo.dbState.format.numericFormat = VK_NUM_FMT_UNDEFINED;
 
-	vkCreateGraphicsPipeline( mInstance->device( mDevId ), &pipelineCreateInfo, &mPipeline );
-	mPipelineRef = mInstance->AllocateObject( mDevId, mPipeline );
+	vkCreateGraphicsPipeline( mInstance->device(), &pipelineCreateInfo, &mPipeline );
+	mPipelineRef = ((VulkanInstance*)mInstance)->AllocateObject( mPipeline );
 
 	mReady = true;
 }
 
 
-void Renderer::AddObject( Object* obj )
+void VulkanRenderer::AddObject( Object* obj )
 {
-	mObjects.emplace_back( obj );
+	mObjects.emplace_back( (VulkanObject*)obj );
 }
 
 
-void Renderer::Compute()
+void VulkanRenderer::AddLight( Light* light )
+{
+	mLights.emplace_back( light );
+}
+
+
+void VulkanRenderer::Compute()
 {
 	if ( !mReady ) {
 		createPipeline();
@@ -172,46 +185,49 @@ void Renderer::Compute()
 	vkCmdBindPipeline( mCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline );
 
 	for ( decltype(mObjects)::iterator it = mObjects.begin(); it != mObjects.end(); ++it ) {
-		vkCmdBindDescriptorSet( mCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 0, (*it)->descriptorSet( mInstance, mDevId ), 0 );
-		vkCmdBindVertexBuffer( mCmdBuffer, (*it)->verticesRef( mInstance, mDevId ).mem, 0, 0 ); // TESTING
-		vkCmdBindIndexData( mCmdBuffer, (*it)->indicesRef( mInstance, mDevId ).mem, 0, VK_INDEX_32 );
-		vkCmdDrawIndexed( mCmdBuffer, 0, (*it)->indicesCount(), 0, 0, 1 );
-// 		vkCmdDraw( mCmdBuffer, 0, (*it)->verticesCount(), 0, 1 );
+		vkCmdBindDescriptorSet( mCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 0, (*it)->descriptorSet( mInstance ), 0 );
+		vkCmdBindVertexBuffer( mCmdBuffer, (*it)->verticesRef( mInstance ).mem, 0, 0 ); // TESTING
+		if ( (*it)->indicesCount() != 0 ) {
+			vkCmdBindIndexData( mCmdBuffer, (*it)->indicesRef( mInstance ).mem, 0, VK_INDEX_32 );
+			vkCmdDrawIndexed( mCmdBuffer, 0, (*it)->indicesCount(), 0, 0, 1 );
+		} else {
+			vkCmdDraw( mCmdBuffer, 0, (*it)->verticesCount(), 0, 1 );
+		}
 	}
 
 	vkEndCommandBuffer( mCmdBuffer );
 }
 
 
-void Renderer::Draw()
+void VulkanRenderer::Draw()
 {
 	if ( !mReady ) {
-		return;
+		Compute();
 	}
 
 	for ( decltype(mObjects)::iterator it = mObjects.begin(); it != mObjects.end(); ++it ) {
-		(*it)->UploadMatrix( mInstance, mDevId );
+		(*it)->UploadMatrix( mInstance );
 	}
 
-	mInstance->QueueSubmit( mDevId, mCmdBuffer, 0, 0 );
+	((VulkanInstance*)mInstance)->QueueSubmit( mCmdBuffer, 0, 0 );
 }
 
 
-void Renderer::Look( Camera* cam )
+void VulkanRenderer::Look( Camera* cam )
 {
 	memcpy( mMatrixView->data(), cam->data(), sizeof( float ) * 16 );
 	// TODO / TBD : upload matrix to shader
 }
 
 
-uint8_t* Renderer::loadShader( const std::string& filename, size_t* sz )
+uint8_t* VulkanRenderer::loadShader( const std::string& filename, size_t* sz )
 {
 	File* file = new File( filename, File::READ );
 
 	size_t size = file->Seek( 0, File::END );
 	file->Rewind();
 
-	uint8_t* data = (uint8_t*)geMalloc( size );
+	uint8_t* data = (uint8_t*)mInstance->Malloc( size );
 
 	file->Read( data, size );
 	delete file;
@@ -219,5 +235,3 @@ uint8_t* Renderer::loadShader( const std::string& filename, size_t* sz )
 	*sz = size;
 	return data;
 }
-
-} // namespace GE

@@ -33,7 +33,7 @@ public:
 	virtual std::vector< std::string > contentPatterns();
 	virtual std::vector< std::string > extensions();
 	virtual ImageLoader* NewInstance();
-	virtual void Load( File* file, uint32_t pref_w, uint32_t pref_h );
+	virtual void Load( Instance* instance, File* file, uint32_t pref_w, uint32_t pref_h );
 
 private:
 	static ImageLoaderPng* mBaseInstance;

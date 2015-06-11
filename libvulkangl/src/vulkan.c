@@ -53,6 +53,7 @@ VK_RESULT vkWsiX11AssociateConnection(VK_PHYSICAL_GPU pGpu, VK_CONNECTION_INFO* 
 	glXMakeCurrent( gpu->dpy, pConnectionInfo->window, gpu->ctx );
 
 	glEnable( GL_DEPTH_TEST );
+	glPointSize( 4.0f );
 
 	return VK_SUCCESS;
 }

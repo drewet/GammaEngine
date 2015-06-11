@@ -22,7 +22,7 @@
 
 #include <string>
 #include <thread>
-#include <vulkan.h>
+// #include <vulkan.h>
 #include "Vector.h"
 
 #ifndef BASEWINDOW_CPP
@@ -44,7 +44,7 @@ class Instance;
 class BaseWindow
 {
 public:
-	BaseWindow( Instance* instance, int devid, const std::string& title, int width, int height, uint32_t flags );
+	BaseWindow( Instance* instance, const std::string& title, int width, int height, uint32_t flags );
 	~BaseWindow();
 
 	int width();
@@ -58,16 +58,16 @@ protected:
 	void pEventThread();
 
 	Instance* mInstance;
-	int mDevId;
 	int mWidth;
 	int mHeight;
+	bool mHasResized;
 	uint64_t mWindow;
 	std::thread* mEventThread;
 	bool mKeys[512];
 	Vector2i mCursor;
 	Vector2i mCursorWarp;
 
-private:
+protected://private:
 	Display* mDisplay;
 	int mScreen;
 	XVisualInfo* mVisualInfo;

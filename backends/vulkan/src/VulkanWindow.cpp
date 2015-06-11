@@ -18,14 +18,15 @@
  */
 
 #include <string.h>
-#include "Window.h"
-#include "Instance.h"
+#include "VulkanWindow.h"
+#include "VulkanInstance.h"
 
-namespace GE {
+extern "C" GE::Window* CreateWindow( GE::Instance* instance, const std::string& title, int width, int height, VulkanWindow::Flags flags ) {
+	return new VulkanWindow( instance, title, width, height, flags );
+}
 
-
-Window::Window( Instance* instance, int devid, const std::string& title, int width, int height, Flags flags )
-	: BaseWindow( instance, devid, title, width, height, (uint32_t)flags )
+VulkanWindow::VulkanWindow( Instance* instance, const std::string& title, int width, int height, Flags flags )
+	: Window( instance, title, width, height, flags )
 	, mColorImage( 0 )
 	, mColorImageMemRef( {} )
 	, mImageColorRange( {} )
@@ -38,22 +39,32 @@ Window::Window( Instance* instance, int devid, const std::string& title, int wid
 	, mClearCmdBuffer( 0 )
 	, mClearColor( 0 )
 {
+
+#ifdef GE_WIN32
+#else
+	VK_CONNECTION_INFO connectionInfo;
+	connectionInfo.dpy = mDisplay;
+	connectionInfo.screen = mScreen;
+	connectionInfo.window = mWindow;
+	vkWsiX11AssociateConnection( instance->gpu(), &connectionInfo );
+#endif
+
 	InitPresentableImage();
 }
 
 
-Window::~Window()
+VulkanWindow::~VulkanWindow()
 {
 }
 
 
-VK_IMAGE Window::colorImage()
+VK_IMAGE VulkanWindow::colorImage()
 {
 	return mColorImage;
 }
 
 
-void Window::InitPresentableImage()
+void VulkanWindow::InitPresentableImage()
 {
 	VK_WSI_WIN_PRESENTABLE_IMAGE_CREATE_INFO imageCreateInfo = {};
 	imageCreateInfo.format = {
@@ -62,7 +73,7 @@ void Window::InitPresentableImage()
 	};
 	imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_TARGET;
 	imageCreateInfo.extent = { mWidth, mHeight };
-	vkWsiWinCreatePresentableImage( mInstance->device( mDevId ), &imageCreateInfo, &mColorImage, &mColorImageMemRef.mem );
+	vkWsiWinCreatePresentableImage( mInstance->device(), &imageCreateInfo, &mColorImage, &mColorImageMemRef.mem );
 
 	imageCreateInfo.format = {
 		VK_CH_FMT_R8,
@@ -70,7 +81,7 @@ void Window::InitPresentableImage()
 	};
 	imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL;
 	imageCreateInfo.extent = { mWidth, mHeight };
-	vkWsiWinCreatePresentableImage( mInstance->device( mDevId ), &imageCreateInfo, &mDepthImage, &mDepthImageMemRef.mem );
+	vkWsiWinCreatePresentableImage( mInstance->device(), &imageCreateInfo, &mDepthImage, &mDepthImageMemRef.mem );
 
 	mImageColorRange.aspect = VK_IMAGE_ASPECT_COLOR;
 	mImageColorRange.baseMipLevel = 0;
@@ -86,7 +97,7 @@ void Window::InitPresentableImage()
 
 	VK_CMD_BUFFER initCmdBuffer;
 	VK_CMD_BUFFER_CREATE_INFO bufferCreateInfo = { 0, 0 };
-	vkCreateCommandBuffer( mInstance->device( mDevId ), &bufferCreateInfo, &initCmdBuffer );
+	vkCreateCommandBuffer( mInstance->device(), &bufferCreateInfo, &initCmdBuffer );
 
 	vkBeginCommandBuffer( initCmdBuffer, 0 );
 		VK_IMAGE_STATE_TRANSITION initTransition = {};
@@ -104,7 +115,7 @@ void Window::InitPresentableImage()
 	vkEndCommandBuffer( initCmdBuffer );
 
 	VK_MEMORY_REF refs[2] = { mColorImageMemRef, mDepthImageMemRef };
-	mInstance->QueueSubmit( mDevId, initCmdBuffer, refs, 2 );
+	((VulkanInstance*)mInstance)->QueueSubmit( initCmdBuffer, refs, 2 );
 
 
 
@@ -115,13 +126,13 @@ void Window::InitPresentableImage()
 	colorTargetViewCreateInfo.mipLevel = 0;
 	colorTargetViewCreateInfo.format.channelFormat = VK_CH_FMT_R8G8B8A8;
 	colorTargetViewCreateInfo.format.numericFormat = VK_NUM_FMT_UNORM;
-	vkCreateColorTargetView( mInstance->device( mDevId ), &colorTargetViewCreateInfo, &mColorTargetView );
+	vkCreateColorTargetView( mInstance->device(), &colorTargetViewCreateInfo, &mColorTargetView );
 
 	// TODO : vkCreateDepthStencilView
 }
 
 
-void Window::Clear( uint32_t color )
+void VulkanWindow::Clear( uint32_t color )
 {
 	VK_CMD_BUFFER_CREATE_INFO bufferCreateInfo = { 0, 0 };
 
@@ -129,7 +140,7 @@ void Window::Clear( uint32_t color )
 		mClearColor = color;
 
 		if ( mClearCmdBuffer == 0 ) {
-			vkCreateCommandBuffer( mInstance->device( mDevId ), &bufferCreateInfo, &mClearCmdBuffer );
+			vkCreateCommandBuffer( mInstance->device(), &bufferCreateInfo, &mClearCmdBuffer );
 		}
 
 		vkBeginCommandBuffer( mClearCmdBuffer, 0 );
@@ -154,15 +165,15 @@ void Window::Clear( uint32_t color )
 		vkEndCommandBuffer( mClearCmdBuffer );
 	}
 
-	mInstance->QueueSubmit( mDevId, mClearCmdBuffer, &mColorImageMemRef, 1 );
+	((VulkanInstance*)mInstance)->QueueSubmit( mClearCmdBuffer, &mColorImageMemRef, 1 );
 }
 
 
-void Window::BindTarget()
+void VulkanWindow::BindTarget()
 {
 	if ( mBindCmdBuffer == 0 ) {
 		VK_CMD_BUFFER_CREATE_INFO info = { 0, 0 };
-		vkCreateCommandBuffer( mInstance->device( mDevId ), &info, &mBindCmdBuffer );
+		vkCreateCommandBuffer( mInstance->device(), &info, &mBindCmdBuffer );
 		vkBeginCommandBuffer( mBindCmdBuffer, 0 );
 			VK_COLOR_TARGET_BIND_INFO colorTargetBindInfo;
 			colorTargetBindInfo.view = mColorTargetView;
@@ -175,27 +186,24 @@ void Window::BindTarget()
 		vkEndCommandBuffer( mBindCmdBuffer );
 	}
 
-	mInstance->QueueSubmit( mDevId, mBindCmdBuffer, &mColorImageMemRef, 1 );
+	((VulkanInstance*)mInstance)->QueueSubmit( mBindCmdBuffer, &mColorImageMemRef, 1 );
 }
 
 
-void Window::SwapBuffers()
+void VulkanWindow::SwapBuffers()
 {
 	VK_WSI_WIN_PRESENT_INFO presentInfo = {};
 	presentInfo.hWndDest = mWindow;
 	presentInfo.srcImage = mColorImage;
 	presentInfo.presentMode = VK_WSI_WIN_PRESENT_MODE_WINDOWED;
 
-	vkWsiWinQueuePresent( mInstance->queue( mDevId ), &presentInfo );
+	vkWsiWinQueuePresent( mInstance->queue(), &presentInfo );
 
 	SwapBuffersBase();
 }
 
 
-void Window::ReadKeys( bool* keys )
+void VulkanWindow::ReadKeys( bool* keys )
 {
 	memcpy( keys, mKeys, sizeof( mKeys ) );
 }
-
-
-} // namespace GE 

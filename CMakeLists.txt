@@ -10,30 +10,35 @@ include_directories(include)
 # include_directories(fake)
 include_directories(/usr/local/include/vulkangl)
 
+add_subdirectory(backends/vulkan)
+add_subdirectory(backends/opengl43)
+
 add_executable(gammaengine
 	src/main.cpp
-	src/gememory.cpp
+# 	src/gememory.cpp
 	src/Instance.cpp
-	src/Renderer.cpp
+	src/Light.cpp
 	src/Scene.cpp
 	src/Camera.cpp
-	src/PhysicalObject.cpp
+	src/PhysicalBody.cpp
+	src/PhysicalGraph.cpp
+	src/PhysicalCollider.cpp
 	src/Object.cpp
 	src/ObjectLoaderObj.cpp
 	src/Image.cpp
 	src/ImageLoaderPng.cpp
 	src/Vertex.cpp
 	src/Vector.cpp
+	src/Quaternion.cpp
 	src/Matrix.cpp
 	src/File.cpp
 	src/Time.cpp
 	src/Input.cpp
 	src/Debug.cpp
-	src/Window.cpp
 	src/linux/BaseWindow.cpp
 # 	fake/dummy_vk.cpp
 )
 
-target_link_libraries(gammaengine ${PNG_LIBRARIES} ${OPENGL_LIBRARIES} -lvulkangl -lX11 -pthread)
+target_link_libraries(gammaengine -lge ${PNG_LIBRARIES} ${OPENGL_LIBRARIES} -lvulkangl -lX11 -pthread -ldl)
 
 install(TARGETS gammaengine RUNTIME DESTINATION bin)

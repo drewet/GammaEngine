@@ -27,7 +27,9 @@ namespace GE {
 class Time {
 public:
 	Time();
+	void setTimeParent( Time* t );
 
+	static void setTime( int64_t t );
 	static void GlobalSync();
 	static double Delta();
 	static uint32_t GetTick();
@@ -37,10 +39,15 @@ public:
 
 protected:
 	double Sync();
+	double SlowSync( double min );
 
 private:
-	static uint32_t sTime;
+	static int64_t sTime;
 	static double sDt;
+
+	double mDt;
+	double mSlowDt;
+	Time* mParent;
 };
 
 } // namespace GE

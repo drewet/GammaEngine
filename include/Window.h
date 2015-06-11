@@ -21,7 +21,6 @@
 #define WINDOW_H
 
 #include <string>
-
 #include "linux/BaseWindow.h"
 
 namespace GE {
@@ -33,37 +32,19 @@ class Window : public BaseWindow
 public:
 	typedef enum {
 		Nil = 0,
-		Resizable,
-		Fullscreen,
+		Resizable = 1,
+		Fullscreen = 2,
 	} Flags;
-	Window( Instance* instance, int devid, const std::string& title, int width, int height, Flags flags = Nil );
-	~Window();
+	Window( Instance* instance, const std::string& title, int width, int height, Flags flags = Nil ) : BaseWindow( instance, title, width, height, (uint32_t)flags ) {}
+	virtual ~Window(){};
 
-	void Clear( uint32_t color = 0xFF000000 );
-	void BindTarget();
-	void SwapBuffers();
+	virtual void Clear( uint32_t color = 0xFF000000 ) = 0;
+	virtual void BindTarget() = 0;
+	virtual void SwapBuffers() = 0;
 
-	VK_IMAGE colorImage();
+	virtual uint64_t colorImage() = 0;
 
-	void ReadKeys( bool* keys );
-
-private:
-	void InitPresentableImage();
-
-	VK_IMAGE mColorImage;
-	VK_MEMORY_REF mColorImageMemRef;
-	VK_IMAGE_SUBRESOURCE_RANGE mImageColorRange;
-	VK_COLOR_TARGET_VIEW mColorTargetView;
-
-	VK_IMAGE mDepthImage;
-	VK_MEMORY_REF mDepthImageMemRef;
-	VK_IMAGE_SUBRESOURCE_RANGE mImageDepthRange;
-	VK_DEPTH_STENCIL_VIEW mDepthTargetView;
-
-	VK_CMD_BUFFER mBindCmdBuffer;
-	VK_CMD_BUFFER mClearCmdBuffer;
-
-	uint32_t mClearColor;
+	virtual void ReadKeys( bool* keys ) = 0;
 };
 
 

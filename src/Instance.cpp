@@ -17,13 +17,19 @@
  *
  */
 
+#include <dlfcn.h>
+
 #include "Instance.h"
 #include "Debug.h"
-#include "gememory.h"
+
+#ifndef ALIGN
+	#define ALIGN(x, align) (((x)+((align)-1))&~((align)-1))
+#endif
 
 namespace GE {
 
 Instance* Instance::mBaseInstance = nullptr;
+void* Instance::sBackend = nullptr;
 
 Instance* Instance::baseInstance()
 {
@@ -31,184 +37,178 @@ Instance* Instance::baseInstance()
 }
 
 
-Instance::Instance( const char* appName, uint32_t appVersion, bool easy_instance )
+void* Instance::backend()
 {
-	fDebug( appName, appVersion, easy_instance );
+	return sBackend;
+}
 
-	if ( !mBaseInstance ) {
-		mBaseInstance = this;
+
+Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance )
+{
+	if ( !sBackend ) {
+// 		sBackend = dlopen( "build/backends/vulkan/backend_vulkan.so", RTLD_LAZY );
+		sBackend = dlopen( "build/backends/opengl43/backend_opengl43.so", RTLD_LAZY );
+// 		gDebug() << "sBackend = " << sBackend << " (" << dlerror() << ")\n";
 	}
 
-
-	mAppInfo.pAppName = appName;
-	mAppInfo.appVersion = appVersion;
-	mAppInfo.pEngineName = "Gamma Engine";
-	mAppInfo.engineVersion = 0x00020000;
-	mAppInfo.apiVersion = VK_API_VERSION;
-
-	mAllocCb.pfnAlloc = &Instance::sAlloc;
-	mAllocCb.pfnFree = &Instance::sFree;
-
-	vkCreateInstance( &mAppInfo, &mAllocCb, &mInstance );
-
+	typedef Instance* (*f_type)( const char*, uint32_t );
+	f_type fCreateInstance = (f_type)dlsym( backend(), "CreateInstance" );
 	if ( easy_instance ) {
-		EnumerateGpus();
-		CreateDevice( 0, 1 );
-	}
-}
-
-
-void* Instance::sAlloc( size_t size, size_t align, int32_t allocType )
-{
-	fDebug( size, align, allocType );
-
-	return geMemalign( size, align, false );
-}
-
-
-void Instance::sFree( void* pMem )
-{
-	fDebug( pMem );
-
-	if ( pMem ) {
-		geFree( pMem );
-	}
-}
-
-
-Instance::~Instance()
-{
-}
-
-
-int Instance::EnumerateGpus()
-{
-	fDebug0();
-
-	vkEnumerateGpus( mInstance, sizeof(mGpus) / sizeof(mGpus[0]), &mGpuCount, mGpus );
-	return mGpuCount;
-}
-
-
-void Instance::CreateDevice( int devid, int queueCount )
-{
-	fDebug( devid, queueCount );
-
-	VK_DEVICE_QUEUE_CREATE_INFO queueInfo = {};
-	queueInfo.queueType = 0;
-	queueInfo.queueCount = queueCount;
-
-	VK_DEVICE_CREATE_INFO deviceInfo = {};
-	deviceInfo.queueRecordCount = 1;
-	deviceInfo.pRequestedQueues = &queueInfo;
-	deviceInfo.extensionCount = 0; // TODO
-	deviceInfo.ppEnabledExtensionNames = nullptr; // TODO
-	deviceInfo.flags |= VK_DEVICE_CREATE_VALIDATION;
-	deviceInfo.maxValidationLevel = VK_VALIDATION_LEVEL_4;
-
-	vkCreateDevice( mGpus[devid], &deviceInfo, &mDevices[devid] );
-
-	vkGetDeviceQueue( mDevices[devid], 0, 0, &mQueues[devid] );
-
-	VK_FENCE_CREATE_INFO fenceCreateInfo = {};
-	vkCreateFence( mDevices[devid], &fenceCreateInfo, &mFences[devid] );
-}
-
-
-VK_MEMORY_REF Instance::AllocateObject( int devid, VK_OBJECT object )
-{
-	VK_MEMORY_REF ret = {};
-
-	VK_MEMORY_REQUIREMENTS memReqs = {};
-	VK_SIZE memReqsSize = sizeof(memReqs);
-	vkGetObjectInfo( object, VK_INFO_TYPE_MEMORY_REQUIREMENTS, &memReqsSize, &memReqs );
-
-	VK_MEMORY_HEAP_PROPERTIES heapProps = {};
-	VK_SIZE heapPropsSize = sizeof(heapProps);
-	vkGetMemoryHeapInfo( mDevices[devid], memReqs.heaps[0], VK_INFO_TYPE_MEMORY_HEAP_PROPERTIES, &heapPropsSize, &heapProps );
-
-	if ( heapProps.pageSize <= 0 ) {
-		VK_MEMORY_REF ret = { 0 };
-		return ret;
-	}
-
-	VK_MEMORY_ALLOC_INFO allocInfo = {};
-	VK_GPU_MEMORY memory;
-	allocInfo.size = ( 1 + memReqs.size / heapProps.pageSize ) * heapProps.pageSize;
-	allocInfo.alignment = 0; // TESTING/TODO : 16/32/64 perf improv ??
-	allocInfo.memPriority = VK_MEMORY_PRIORITY_HIGH;
-	allocInfo.heapCount = 1;
-	allocInfo.heaps[0] = memReqs.heaps[0];
-	vkAllocMemory( mDevices[devid], &allocInfo, &memory );
-
-	vkBindObjectMemory( object, memory, 0 );
-	ret.mem = memory;
-
-	return ret;
-}
-
-
-VK_MEMORY_REF Instance::AllocateMappableBuffer( int devid, size_t size )
-{
-	VK_MEMORY_REF ret = {};
-
-	// Find CPU visible (mappable) heap
-	VK_UINT heapCount;
-	vkGetMemoryHeapCount( mDevices[devid], &heapCount );
-	VK_MEMORY_HEAP_PROPERTIES heapProps = {};
-	VK_SIZE heapPropsSize = sizeof( heapProps );
-	VK_UINT suitableHeap = -1;
-	for ( VK_UINT i = 0; i < heapCount; i++ ) {
-		vkGetMemoryHeapInfo( mDevices[devid], i, VK_INFO_TYPE_MEMORY_HEAP_PROPERTIES, &heapPropsSize, &heapProps );
-		if ( heapProps.flags & VK_MEMORY_HEAP_CPU_VISIBLE ) {
-			suitableHeap = i;
-			break;
+		if ( !mBaseInstance ) {
+			mBaseInstance = fCreateInstance( appName, appVersion );
 		}
-	}
-
-
-	if ( heapProps.pageSize <= 0 ) {
-		ret = { 0 };
+		Instance* ret = mBaseInstance->CreateDevice( 0, 1 );
+		if ( !mBaseInstance || mBaseInstance->device() == 0 ) {
+			mBaseInstance = ret;
+		}
 		return ret;
 	}
-
-	VK_MEMORY_ALLOC_INFO allocInfo = {};
-	VK_GPU_MEMORY memory;
-	allocInfo.size = ( 1 + size / heapProps.pageSize ) * heapProps.pageSize;
-	allocInfo.alignment = 0;
-	allocInfo.memPriority = VK_MEMORY_PRIORITY_HIGH;
-	allocInfo.heapCount = 1;
-	allocInfo.heaps[0] = suitableHeap;
-	vkAllocMemory( mDevices[devid], &allocInfo, &memory );
-
-	ret.mem = memory;
-	return ret;
+	return fCreateInstance( appName, appVersion );
 }
 
 
-void Instance::QueueSubmit( int devid, VK_CMD_BUFFER buf, VK_MEMORY_REF* refs, int nRefs )
+Window* Instance::CreateWindow( const std::string& title, int width, int height, int flags )
 {
-	vkQueueSubmit( mQueues[devid], 1, &buf, nRefs, refs, mFences[devid] );
-
-// 	vkWaitForFences( mDevices[devid], 1, &mFences[devid], true, 0.0f ); // TESTING
+	typedef Window* (*f_type)( Instance*, const std::string&, int, int, int );
+	f_type fCreateWindow = (f_type)dlsym( backend(), "CreateWindow" );
+	return fCreateWindow( this, title, width, height, flags );
 }
 
 
-VK_PHYSICAL_GPU Instance::gpu( int devid )
+Renderer* Instance::CreateRenderer()
 {
-	return mGpus[ devid ];
+	typedef Renderer* (*f_type)( Instance* );
+	f_type fCreateRenderer = (f_type)dlsym( backend(), "CreateRenderer" );
+	return fCreateRenderer( this );
 }
 
 
-VK_DEVICE Instance::device( int devid )
+Object* Instance::CreateObject( Vertex* verts, uint32_t nVert )
 {
-	return mDevices[devid];
+	typedef Object* (*f_type)( Vertex*, uint32_t );
+	f_type fCreateObject = (f_type)dlsym( backend(), "CreateObject" );
+	return fCreateObject( verts, nVert );
 }
 
 
-VK_QUEUE Instance::queue( int devid )
+Object* Instance::LoadObject( const std::string& filename )
 {
-	return mQueues[devid];
+	typedef Object* (*f_type)( const std::string&, Instance* );
+	f_type fLoadObject = (f_type)dlsym( backend(), "LoadObject" );
+	return fLoadObject( filename, this );
+}
+
+
+static uintptr_t _ge_AllocMemBlock( uintptr_t size )
+{
+	return (uintptr_t)malloc( size );
+}
+
+
+void* Instance::Memalign( uintptr_t size, uintptr_t align, bool clear_mem )
+{
+	uintptr_t block_sz = sizeof(uintptr_t) * 2;
+	size_t fullSize = size + ( align > block_sz ? align : block_sz ) + align;
+	uintptr_t addr = _ge_AllocMemBlock( fullSize );
+	uintptr_t* var = (uintptr_t*)( ALIGN( addr + ( align > block_sz ? align : block_sz ), align ) - block_sz );
+	var[0] = addr;
+// 	var[1] = size;
+	var[1] = fullSize;
+	memset( (void*)(uintptr_t)&var[2], 0x0, size );
+// 	mCpuRamCounter += size;
+	mCpuRamCounter += fullSize;
+	return (void*)(uintptr_t)&var[2];
+}
+
+
+void* Instance::Malloc( uintptr_t size, bool clear_mem )
+{
+	if ( size <= 0 ) {
+		return NULL;
+	}
+	return Memalign( size, 16, clear_mem );
+}
+
+
+void Instance::Free( void* data )
+{
+	if ( data != NULL && data != (void*)0xDEADBEEF && data != (void*)0xBAADF00D ) {
+		uintptr_t* var = (uintptr_t*)data;
+		uintptr_t addr = var[-2];
+		size_t size = var[-1];
+		free( (void*)addr );
+		mCpuRamCounter -= size;
+	}
+}
+
+
+void* Instance::Realloc( void* last, uintptr_t size, bool clear_mem )
+{
+	if ( size <= 0 ) {
+		Free( last );
+		return NULL;
+	}
+	if ( last == NULL || last == (void*)0xDEADBEEF || last == (void*)0xBAADF00D ) {
+		return Malloc( size, clear_mem );
+	}
+	uintptr_t last_size = ((uintptr_t*)last)[-1];
+	
+	const int align = 16;
+	uintptr_t block_sz = sizeof(uintptr_t) * 2;
+	size_t fullSize = size + ( align > block_sz ? align : block_sz ) + align;
+	uintptr_t addr = _ge_AllocMemBlock( fullSize );
+	uintptr_t* var = (uintptr_t*)( ALIGN( addr + ( align > block_sz ? align : block_sz ), align ) - block_sz );
+// 	size_t fullSize = size + sizeof(uintptr_t) * 2 + 16;
+// 	uintptr_t addr = _ge_AllocMemBlock( fullSize );
+// 	uintptr_t* var = (uintptr_t*)(ALIGN(addr + sizeof(uintptr_t) * 2, 16 ) - sizeof(uintptr_t) * 2 );
+	var[0] = addr;
+	var[1] = size;
+	void* new_ptr = (void*)&var[2];
+	if ( clear_mem ) {
+		memset( (void*)(uintptr_t)&var[2], 0x0, size );
+	}
+
+	uintptr_t sz_copy = last_size < size ? last_size : size;
+	memcpy(new_ptr, last, sz_copy);
+
+	var = (uintptr_t*)last;
+	size_t lastSize = var[-1];
+	free((void*)var[-2]);
+
+	mCpuRamCounter -= lastSize;
+	mCpuRamCounter += size;
+
+	return new_ptr;
+}
+
+
+uint64_t Instance::cpuRamCounter()
+{
+	return mCpuRamCounter;
+}
+
+
+uint64_t Instance::gpuRamCounter()
+{
+	return mGpuRamCounter;
+}
+
+
+uint64_t Instance::gpu()
+{
+	return mGpus[ mDevId ];
+}
+
+
+uint64_t Instance::device()
+{
+	return mDevices[mDevId];
+}
+
+
+uint64_t Instance::queue()
+{
+	return mQueues[mDevId];
 }
 
 } // namespace GE

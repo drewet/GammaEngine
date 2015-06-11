@@ -19,7 +19,7 @@
 
 #include "File.h"
 #include "Debug.h"
-#include "gememory.h"
+#include "Instance.h"
 #include <errno.h>
 #include <string.h>
 
@@ -69,13 +69,14 @@ File::File( File* side, std::string filename, File::MODE mode )
 }
 
 
-File::File( void* data, size_t len, MODE mode, bool copy_buffer )
+File::File( void* data, size_t len, MODE mode, bool copy_buffer, Instance* instance )
 	: mType( BUFFER )
 	, mMode( mode )
 	, mCopiedBuffer( copy_buffer )
+	, mInstance( instance ? instance : Instance::baseInstance() )
 {
 	if ( copy_buffer ) {
-		mBuffer = ( unsigned char* )geMalloc( len, false );
+		mBuffer = ( unsigned char* )mInstance->Malloc( len, false );
 		memcpy( mBuffer, data, len );
 	} else {
 		mBuffer = ( unsigned char* )data;
@@ -93,7 +94,7 @@ File::~File()
 {
 	if ( mType == BUFFER ) {
 		if ( mCopiedBuffer ) {
-			geFree( mBuffer );
+			mInstance->Free( mBuffer );
 		}
 	} else if ( mType == FILE ) {
 		mStream->close();

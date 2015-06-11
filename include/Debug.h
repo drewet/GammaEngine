@@ -101,10 +101,12 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 	fDebug_base( end, false, args... );
 }
 
-#define fDebug( args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "( "; fDebug_base( ")\n", true, args )
-#define fDebug0() std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "()\n"
+#define fDebug( args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "( " << std::flush; fDebug_base( ")\n", true, args )
+#define fDebug0() std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "()\n" << std::flush
 
 #define aDebug( name, args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
+
+#define vDebug( name, args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); std::cout << ""
 
 #endif // __DBG_CLASS
 

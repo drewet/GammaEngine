@@ -20,7 +20,7 @@
 #include "ImageLoaderPng.h"
 #include "File.h"
 #include "Debug.h"
-#include "gememory.h"
+#include "Instance.h"
 
 namespace GE {
 
@@ -80,40 +80,45 @@ void ImageLoaderPng::png_read_from_File( png_structp png_ptr, png_bytep data, pn
 // So we store real malloc'ed address in a structure list
 png_voidp ImageLoaderPng::ge_png_malloc( png_structp png_ptr, png_size_t size )
 {
-	return geMalloc(size);
-/*
-	uintptr_t* buf = ( uintptr_t* )geMalloc( size * 4 );
+	Instance* instance = (Instance*)png_ptr;
+// 	return instance->Malloc(size);
+
+	uintptr_t* buf = ( uintptr_t* )instance->Malloc( size * 4 );
 	uintptr_t ptr = (uintptr_t)buf;
 
 	mPngAllocs.insert( std::pair< uintptr_t, std::pair< uintptr_t, uintptr_t > >( ptr, std::pair< uintptr_t, uintptr_t >( buf[-2], buf[-1] ) ) );
 
 	return (void*)buf;
-*/
+
 }
 
 
 void ImageLoaderPng::ge_png_free( png_structp png_ptr, png_voidp data )
 {
-	geFree(data);
-/*
-	return;
+	Instance* instance = (Instance*)png_ptr;
+// 	instance->Free(data);
+
+// 	return;
 	decltype(mPngAllocs)::iterator it = mPngAllocs.find( (uintptr_t)data );
 
 	if ( it != mPngAllocs.end() ) {
 		((uintptr_t*)data)[-2] = (*it).second.first;
 		((uintptr_t*)data)[-1] = (*it).second.second;
-		geFree( data );
+		instance->Free( data );
 		mPngAllocs.erase( it );
 	} else {
 		gDebug() << "err\n";
 	}
-*/
+
 }
 
 
-void ImageLoaderPng::Load( File* file, uint32_t pref_w, uint32_t pref_h )
+void ImageLoaderPng::Load( Instance* instance, File* file, uint32_t pref_w, uint32_t pref_h )
 {
-	fDebug( file, pref_w, pref_h );
+	fDebug( instance, file, pref_w, pref_h );
+	if ( !instance ) {
+		instance = Instance::baseInstance();
+	}
 
 	png_structp png_ptr;
 	png_infop info_ptr;
@@ -152,9 +157,9 @@ void ImageLoaderPng::Load( File* file, uint32_t pref_w, uint32_t pref_h )
 	mWidth = ( pref_w > 0 ) ? pref_w : width;
 	mHeight = ( pref_h > 0 ) ? pref_h : height;
 
-	mData = ( uint32_t* ) geMalloc( mWidth * mHeight * sizeof( uint32_t ) );
+	mData = ( uint32_t* ) instance->Malloc( mWidth * mHeight * sizeof( uint32_t ) );
 	if ( !mData ) {
-		geFree( mData );
+		instance->Free( mData );
 		png_destroy_read_struct( &png_ptr, nullptr, nullptr );
 		return;
 	}
@@ -166,9 +171,9 @@ void ImageLoaderPng::Load( File* file, uint32_t pref_w, uint32_t pref_h )
 	if ( png_get_valid( png_ptr, info_ptr, PNG_INFO_tRNS ) ) png_set_tRNS_to_alpha( png_ptr );
 	png_set_filler( png_ptr, 0xff, PNG_FILLER_AFTER );
 
-	line = ( png_uint_32* ) geMalloc( width * sizeof( png_uint_32 ) );
+	line = ( png_uint_32* ) instance->Malloc( width * sizeof( png_uint_32 ) );
 	if ( !line ) {
-		geFree( mData );
+		instance->Free( mData );
 		png_destroy_read_struct( &png_ptr, nullptr, nullptr );
 		return;
 	}
@@ -176,18 +181,18 @@ void ImageLoaderPng::Load( File* file, uint32_t pref_w, uint32_t pref_h )
 	for ( y = 0; y < height; y++ ) {
 		png_read_row( png_ptr, ( uint8_t* ) line, nullptr );
 		for ( x = 0; x < width; x++ ) {
-			uint32_t color = line[x];
+			uint32_t color = line[x/2];
 			uint32_t x2, y2;
 			for( y2=( y*mHeight/height ); y2<( ( y+1 )*mHeight/height ); y2++ ){
 				for( x2=( x*mWidth/width ); x2<( ( x+1 )*mWidth/width ); x2++ ){
 					mData[ x2 + y2 * mWidth ] = color;
 				}
 			}
-			//image->data[( x * w / width ) + ( y * h / height ) * image->textureWidth] = color;
+// 			mData[ x + y * mWidth] = color;
 		}
 	}
 
-	geFree( line );
+	instance->Free( line );
 	png_read_end( png_ptr, info_ptr );
 	png_destroy_read_struct( &png_ptr, &info_ptr, nullptr );
 }

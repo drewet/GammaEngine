@@ -30,38 +30,4 @@ Vertex::Vertex()
 }
 
 
-void Vertex::UpdateDescriptorSet( VK_DESCRIPTOR_SET descriptorSet, VK_MEMORY_VIEW_ATTACH_INFO* memoryViewAttachInfo )
-{
-	memoryViewAttachInfo->stride = sizeof( Vertex );
-
-	// U, V, W, align1
-	memoryViewAttachInfo->offset = 0;
-	memoryViewAttachInfo->format.channelFormat = VK_CH_FMT_R32G32B32A32;
-	memoryViewAttachInfo->format.numericFormat = VK_NUM_FMT_FLOAT;
-	vkAttachMemoryViewDescriptors( descriptorSet, 0, 1, memoryViewAttachInfo );
-
-	// COLOR
-	memoryViewAttachInfo->offset = sizeof( float ) * 4;
-// 		memoryViewAttachInfo->format.channelFormat = VK_CH_FMT_R8G8B8A8;
-// 		memoryViewAttachInfo->format.numericFormat = VK_NUM_FMT_SRGB;
-	memoryViewAttachInfo->format.channelFormat = VK_CH_FMT_R32G32B32A32;
-	memoryViewAttachInfo->format.numericFormat = VK_NUM_FMT_FLOAT;
-	vkAttachMemoryViewDescriptors( descriptorSet, 1, 1, memoryViewAttachInfo );
-
-	// NX, NY, NZ, align2
-// 		memoryViewAttachInfo->offset = sizeof( float ) * 4 + sizeof( uint32_t );
-	memoryViewAttachInfo->offset = sizeof( float ) * 4 + sizeof( float ) * 4;
-	memoryViewAttachInfo->format.channelFormat = VK_CH_FMT_R32G32B32A32;
-	memoryViewAttachInfo->format.numericFormat = VK_NUM_FMT_FLOAT;
-	vkAttachMemoryViewDescriptors( descriptorSet, 2, 1, memoryViewAttachInfo );
-
-	// X, Y, Z, weight
-// 		memoryViewAttachInfo->offset = sizeof( float ) * 4 + sizeof( uint32_t ) + sizeof( float ) * 4;
-	memoryViewAttachInfo->offset = sizeof( float ) * 4 + sizeof( float ) * 4 + sizeof( float ) * 4;
-	memoryViewAttachInfo->format.channelFormat = VK_CH_FMT_R32G32B32A32;
-	memoryViewAttachInfo->format.numericFormat = VK_NUM_FMT_FLOAT;
-	vkAttachMemoryViewDescriptors( descriptorSet, 3, 1, memoryViewAttachInfo );
-}
-
-
 } // namespace GE

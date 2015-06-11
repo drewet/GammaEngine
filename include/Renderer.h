@@ -21,47 +21,30 @@
 #define RENDERER_H
 
 #include <vector>
-#include "vulkan.h"
 
 namespace GE {
 
 class Instance;
 class Object;
+class Light;
 class Camera;
 class Matrix;
 
 class Renderer
 {
 public:
-	Renderer( Instance* instance = nullptr, int devid = 0 );
-	~Renderer();
+	virtual ~Renderer(){};
 
-	int LoadVertexShader( const std::string& file );
-	int LoadFragmentShader( const std::string& file );
+	virtual int LoadVertexShader( const std::string& file ) = 0;
+	virtual int LoadFragmentShader( const std::string& file ) = 0;
+	virtual void setRenderMode( int mode ) = 0;
 
-	void AddObject( Object* obj );
+	virtual void AddObject( Object* obj ) = 0;
+	virtual void AddLight( Light* light ) = 0;
 
-	void Compute();
-	void Draw();
-	void Look( Camera* cam );
-
-private:
-	uint8_t* loadShader( const std::string& filename, size_t* sz );
-	void createPipeline();
-
-	bool mReady;
-	Instance* mInstance;
-	int mDevId;
-
-	Matrix* mMatrixProjection;
-	Matrix* mMatrixView;
-	std::vector< Object* > mObjects;
-
-	VK_CMD_BUFFER mCmdBuffer;
-	VK_PIPELINE mPipeline;
-	VK_MEMORY_REF mPipelineRef;
-	VK_SHADER mVertexShader;
-	VK_SHADER mFragmentShader;
+	virtual void Compute() = 0;
+	virtual void Draw() = 0;
+	virtual void Look( Camera* cam ) = 0;
 };
 
 } // namespace GE

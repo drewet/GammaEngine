@@ -20,68 +20,67 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <cmath>
+
 namespace GE {
 
-
-class Vector2i
+template <typename T, int n> class Vector
 {
 public:
-	Vector2i( int x = 0, int y = 0 );
+	Vector( T x = 0, T y = 0, T z = 0, T w = 0 );
+	Vector( const Vector<T,1>& v, T a = 0, T b = 0, T c = 0 ) : x(v.x), y(a), z(b), w(c) {}
+	Vector( T a, const Vector<T,1>& v, T b = 0, T c = 0 ) : x(a), y(v.x), z(b), w(c) {}
+	Vector( T a, T b, const Vector<T,1>& v, T c = 0 ) : x(a), y(b), z(v.x), w(c) {}
+	Vector( T a, T b, T c, const Vector<T,1>& v ) : x(a), y(b), z(c), w(v.x) {}
+	Vector( const Vector<T,2>& v, T a = 0, T b = 0 ) : x(v.x), y(v.z), z(a), w(b) {}
+	Vector( T a, const Vector<T,2>& v, T b = 0 ) : x(a), y(v.x), z(v.y), w(b) {}
+	Vector( T a, T b, const Vector<T,2>& v ) : x(a), y(b), z(v.x), w(v.y) {}
+	Vector( const Vector<T,3>& v, T a = 0 ) : x(v.x), y(v.y), z(v.z), w(a) {}
+	Vector(T a, const Vector<T,3>& v ) : x(a), y(v.x), z(v.y), w(v.z) {}
+	Vector( const Vector<T,4>& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 
 	void normalize();
+	T length();
+	Vector<T,3> xyz() const { return Vector<T,3>( x, y, z ); }
+	Vector<T,3> zyx() const { return Vector<T,3>( z, y, x ); }
+	Vector<T,2> xy() const { return Vector<T,2>( x, y ); }
+	Vector<T,2> xz() const { return Vector<T,2>( x, z ); }
+	Vector<T,2> yz() const { return Vector<T,2>( y, z ); }
 
-	Vector2i operator+( const Vector2i& v );
-	Vector2i operator-( const Vector2i& v );
-	int operator*( const Vector2i& v );
+	T operator[]( int i ) const;
+	Vector<T,n> operator-() const;
+ 	void operator+=( const Vector<T,n>& v );
+ 	void operator-=( const Vector<T,n>& v );
+	void operator*=( T v );
+
+	Vector<T,n> operator+( const Vector<T,n>& v ) const;
+	Vector<T,n> operator-( const Vector<T,n>& v ) const;
+	Vector<T,n> operator*( T im ) const;
+	T operator*( const Vector<T,n>& v ) const;
+	Vector<T,n> operator^( const Vector<T,n>& v ) const;
 
 public:
-	int x;
-	int y;
+	T x;
+	T y;
+	T z;
+	T w;
 } __attribute__((packed));
 
-
-class Vector2f
-{
-public:
-	Vector2f( float x = 0.0f, float y = 0.0f );
-
-	void normalize();
-
-	Vector2f operator+( const Vector2f& v );
-	Vector2f operator-( const Vector2f& v );
-	float operator*( const Vector2f& v );
-	void operator*=( float v );
-
-public:
-	float x;
-	float y;
-} __attribute__((packed));
+template <typename T, int n> Vector<T, n> operator*( T im, const Vector<T, n>& v );
+template <typename T, int n> bool operator==( const Vector<T,n>& v1, const Vector<T,n>& v2 );
 
 
-class Vector3f
-{
-public:
-	Vector3f( float x = 0.0f, float y = 0.0f, float z = 0.0f );
+typedef Vector<int, 2> Vector2i;
+typedef Vector<int, 3> Vector3i;
+typedef Vector<int, 4> Vector4i;
 
-	void normalize();
+typedef Vector<float, 2> Vector2f;
+typedef Vector<float, 3> Vector3f;
+typedef Vector<float, 4> Vector4f;
 
-	Vector3f operator-();
-	Vector3f operator+( const Vector3f& v );
-	Vector3f operator-( const Vector3f& v );
-	Vector3f operator^( const Vector3f& v );
-	float operator*( const Vector3f& v );
-	void operator+=( const Vector3f& v );
-	void operator*=( float v );
-
-// Attributes defined as public for fast access
-public:
-	float x;
-	float y;
-	float z;
-} __attribute__((packed));
-
-
-Vector3f operator*( float f, const Vector3f& v );
+typedef Vector<double, 2> Vector2d;
+typedef Vector<double, 3> Vector3d;
+typedef Vector<double, 4> Vector4d;
 
 
 } // namespace GE

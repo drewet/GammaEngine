@@ -1,100 +1,45 @@
-#version 430
-/*
-struct s_strided_0 {
-	vec4 value;
-	vec4 stride1;
-	vec4 stride2;
-	vec4 stride3;
-};
-struct s_strided_1 {
-	vec4 stride1;
-	vec4 value;
-	vec4 stride2;
-	vec4 stride3;
-};
-struct s_strided_2 {
-	vec4 stride1;
-	vec4 stride2;
-	vec4 value;
-	vec4 stride3;
-};
-struct s_strided_3 {
-	vec4 stride1;
-	vec4 stride2;
-	vec4 stride3;
-	vec4 value;
-};
+// /!\ Shader designed for OpenGL43 backend /!\
 
+#version 420 core
+#extension GL_ARB_shader_draw_parameters : require
+#extension GL_ARB_bindless_texture : require
 
-layout( std140, binding = 0 ) buffer _VertexTexcoord {
-    s_strided_0 ge_VertexTexcoord[];
-};
-
-layout( std140, binding = 1 ) buffer _VertexColor {
-    s_strided_1 ge_VertexColor[];
-};
-
-layout( std140, binding = 2 ) buffer _VertexNormal {
-    s_strided_2 ge_VertexNormal[];
-};
-
-layout( std140, binding = 3 ) buffer _VertexPosition {
-    s_strided_3 ge_VertexPosition[];
-};
-
-layout( std140, binding = 10 ) uniform _ProjectionMatrix {
-	mat4 ge_ProjectionMatrix;
-};
-
-layout( std140, binding = 11 ) uniform _ViewMatrix {
-	mat4 ge_ViewMatrix;
-};
-
-layout( std140, binding = 12 ) buffer _ObjectMatrix {
-	mat4 ge_ObjectMatrix[];
-};
-
-
-out vec4 ge_Color;
-
-void main()
-{
-// 	ge_Color = ge_Vertex[gl_VertexID].color;
-	ge_Color = ge_VertexColor[gl_VertexID].value;
-
-// 	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix[gl_InstanceID] * vec4(ge_Vertex[gl_VertexID].position.xyz, 1.0);
-	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix[0] * vec4(ge_VertexPosition[gl_VertexID].value.xyz, 1.0);
-	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * vec4(ge_VertexPosition[gl_VertexID].value.xyz, 1.0);
-}
-*/
+#define geTexture2D(x) sampler2D( ge_Textures[ ge_TextureBase + x ].xy )
+#define geTexture3D(x) sampler3D( ge_Textures[ ge_TextureBase + x ].xy )
 
 layout(location = 0) in vec3 ge_VertexTexcoord;
 layout(location = 1) in vec4 ge_VertexColor;
 layout(location = 2) in vec3 ge_VertexNormal;
 layout(location = 3) in vec3 ge_VertexPosition;
+layout(location = 7 /* 8 9 10 */) in mat4 ge_ObjectMatrix;
+layout(location = 11) in int ge_TextureBase;
 
-layout (binding=10, std140) uniform ge_Matrices_0
+layout (binding=0, std140) uniform ge_Matrices_0
 {
 	mat4 ge_ProjectionMatrix;
 };
 
-layout (binding=11, std140) uniform ge_Matrices_1
+layout (binding=1, std140) uniform ge_Matrices_1
 {
 	mat4 ge_ViewMatrix;
 };
 
-layout (std140, binding=12) uniform ge_Matrices_2
+layout (binding=2, std140) uniform ge_Textures_0
 {
-	mat4 ge_ObjectMatrix[];
+	uvec4 ge_Textures[256];
 };
 
-
+flat out sampler2D ge_Texture0;
+flat out int ge_Texture0Base;
 out vec4 ge_Color;
+out vec3 ge_TextureCoord;
 
 void main()
 {
+	ge_Texture0Base = ge_TextureBase;
+	ge_Texture0 = geTexture2D(0);
 	ge_Color = ge_VertexColor;
+	ge_TextureCoord = ge_VertexTexcoord;
 
-	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix[0] * vec4(ge_VertexPosition, 1.0);
-// 	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * vec4(ge_VertexPosition, 1.0);
+	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition, 1.0);
 }

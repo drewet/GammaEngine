@@ -17,6 +17,7 @@
  *
  */
 
+#include <cmath>
 #include <unistd.h>
 #include <time.h>
 #include "Time.h"
@@ -24,12 +25,29 @@
 namespace GE {
 
 
-uint32_t Time::sTime = 0;
+int64_t Time::sTime = 0;
 double Time::sDt = 0.0;
 
 
 Time::Time()
+	: mDt( 0.0 )
+	, mSlowDt( 0.0 )
+	, mParent( nullptr )
 {
+}
+
+
+void Time::setTimeParent( Time* t )
+{
+	mParent = t;
+}
+
+
+void Time::setTime( int64_t t )
+{
+	int64_t dt = t - sTime;
+	sDt = ( (double)dt ) / 1000.0;
+	sTime = t;
 }
 
 
@@ -39,7 +57,7 @@ void Time::GlobalSync()
 		sTime = GetTick();
 	}
 
-	uint32_t dt = GetTick() - sTime;
+	int64_t dt = GetTick() - sTime;
 	sDt = ( (double)dt ) / 1000.0;
 	sTime = GetTick();
 }
@@ -53,16 +71,33 @@ double Time::Delta()
 
 double Time::Sync()
 {
+	if ( mParent ) {
+		return mParent->mDt;
+	}
+
 // 	uint32_t nTime = GetTick();
 
 	if ( sTime == 0 ) {
 		GlobalSync();
 	}
 
-	return sDt;
+	mDt = sDt;
+	return mDt;
 
 // 	uint32_t dt = GetTick() - sTime;
 // 	return ( (float)dt ) / 1000.0f;
+}
+
+
+double Time::SlowSync( double min )
+{
+	mSlowDt += Sync();
+	if ( std::abs( mSlowDt ) >= min ) {
+		mDt = mSlowDt;
+		mSlowDt = 0.0;
+		return mDt;
+	}
+	return 0.0;
 }
 
 

@@ -90,6 +90,7 @@ typedef struct vk_Pipeline {
 	GLuint glProgram;
 	vk_ConstBuffer* constBuffers;
 	uint32_t nConstBuffers;
+	int renderMode;
 } vk_Pipeline;
 
 typedef struct vk_DescriptorSetAttrib {

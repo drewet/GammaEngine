@@ -17,6 +17,7 @@
  *
  */
 
+#include "Debug.h"
 #include "Vector.h"
 #include <cmath>
 
@@ -24,211 +25,204 @@ namespace GE {
 
 
 
+template <typename T, int n> Vector<T,n>::Vector( T x, T y, T z, T w ) : x( x ), y( y ), z( z ), w( w ) {}
 
-Vector2i::Vector2i( int x, int y )
-	: x( x )
-	, y( y )
-{
-}
-
-
-void Vector2i::normalize()
-{
-	float l = std::sqrt( x * x + y * y );
+template <typename T, int n> void Vector<T,n>::normalize() {
+	T add = 0;
+	for ( int i = 0; i < n; i++ ) {
+		add += ( &x )[i] * ( &x )[i];
+	}
+	T l = std::sqrt( add );
 	if ( l > 0.00001f ) {
-		float il = 1.0f / l;
-		x *= il;
-		y *= il;
+		T il = 1 / l;
+		for ( int i = 0; i < n; i++ ) {
+			( &x )[i] *= il;
+		}
 	}
 }
 
 
-Vector2i Vector2i::operator+( const Vector2i& v )
+template <typename T, int n> T Vector<T,n>::length() {
+	T add = 0;
+	for ( int i = 0; i < n; i++ ) {
+		add += ( &x )[i] * ( &x )[i];
+	}
+	return std::sqrt( add );
+}
+
+
+template <typename T, int n> T Vector<T,n>::operator[]( int i ) const
 {
-	Vector2i ret;
+	return ( &x )[i];
+}
 
-	ret.x = x + v.x;
-	ret.y = y + v.y;
 
+template <typename T, int n> Vector<T,n> Vector<T,n>::operator-() const
+{
+	Vector<T, n> ret;
+	for ( int i = 0; i < n; i++ ) {
+		( &ret.x )[i] = -( &x )[i];
+	}
 	return ret;
 }
 
 
-Vector2i Vector2i::operator-( const Vector2i& v )
-{
-	Vector2i ret;
-
-	ret.x = x - v.x;
-	ret.y = y - v.y;
-
-	return ret;
-}
-
-
-int Vector2i::operator*( const Vector2i& v )
-{
-	return x * v.x + y * v.y;
-}
-
-
-
-
-
-Vector2f::Vector2f( float x, float y )
-	: x( x )
-	, y( y )
-{
-}
-
-
-void Vector2f::normalize()
-{
-	float l = std::sqrt( x * x + y * y );
-	if ( l > 0.00001f ) {
-		float il = 1.0f / l;
-		x *= il;
-		y *= il;
+template <typename T, int n> void Vector<T,n>::operator+=( const Vector<T,n>& v ) {
+	for ( int i = 0; i < n; i++ ) {
+		( &x )[i] += ( &v.x )[i];
 	}
 }
 
 
-Vector2f Vector2f::operator+( const Vector2f& v )
-{
-	Vector2f ret;
-
-	ret.x = x + v.x;
-	ret.y = y + v.y;
-
-	return ret;
+template <typename T, int n> void Vector<T,n>::operator-=( const Vector<T,n>& v ) {
+	for ( int i = 0; i < n; i++ ) {
+		( &x )[i] -= ( &v.x )[i];
+	}
 }
 
-
-Vector2f Vector2f::operator-( const Vector2f& v )
-{
-	Vector2f ret;
-
-	ret.x = x - v.x;
-	ret.y = y - v.y;
-
-	return ret;
-}
-
-
-float Vector2f::operator*( const Vector2f& v )
-{
-	return x * v.x + y * v.y;
-}
-
-
-void Vector2f::operator*=( float v )
-{
-	x *= v;
-	y *= v;
-}
-
-
-
-
-
-Vector3f::Vector3f( float x, float y, float z )
-	: x( x )
-	, y( y )
-	, z( z )
-{
-}
-
-
-void Vector3f::normalize()
-{
-	float l = std::sqrt( x * x + y * y + z * z );
-	if ( l > 0.00001f ) {
-		float il = 1.0f / l;
-		x *= il;
-		y *= il;
-		z *= il;
+template <typename T, int n> void Vector<T,n>::operator*=( T v ) {
+	for ( int i = 0; i < n; i++ ) {
+		( &x )[i] *= v;
 	}
 }
 
 
-Vector3f Vector3f::operator-()
-{
-	Vector3f ret;
+template <typename T, int n> Vector<T,n> Vector<T,n>::operator+( const Vector<T,n>& v ) const {
+	Vector<T, n> ret;
+	for ( int i = 0; i < n; i++ ) {
+		( &ret.x )[i] = ( &x )[i] + ( &v.x )[i];
+	}
+	return ret;
+}
 
-	ret.x = -x;
-	ret.y = -y;
-	ret.z = -z;
+template <typename T, int n> Vector<T,n> Vector<T,n>::operator-( const Vector<T,n>& v ) const {
+	Vector<T, n> ret;
+	for ( int i = 0; i < n; i++ ) {
+		( &ret.x )[i] = ( &x )[i] - ( &v.x )[i];
+	}
+	return ret;
+}
 
+template <typename T, int n> Vector<T,n> Vector<T,n>::operator*( T im ) const {
+	Vector<T, n> ret;
+	for ( int i = 0; i < n; i++ ) {
+		( &ret.x )[i] = ( &x )[i] * im;
+	}
+	return ret;
+}
+
+template <typename T, int n> T Vector<T,n>::operator*( const Vector<T,n>& v ) const {
+	T ret = 0;
+	for ( int i = 0; i < n; i++ ) {
+		ret += ( &x )[i] * ( &v.x )[i];
+	}
+	return ret;
+}
+
+template <typename T, int n> Vector<T,n> Vector<T,n>::operator^( const Vector<T,n>& v ) const {
+	Vector<T, n> ret;
+	for ( int i = 0; i < n; i++ ) {
+		T a = ( &x )[ ( i + 1 ) % n ];
+		T b = ( &v.x )[ ( i + 2 ) % n ];
+		T c = ( &x )[ ( i + 2 ) % n ];
+		T d = ( &v.x )[ ( i + 1 ) % n ];
+		( &ret.x )[i] = a * b - c * d;
+	}
+	return ret;
+}
+
+template <typename T, int n> Vector<T, n> operator*( T im, const Vector<T, n>& v ) {
+	Vector<T, n> ret;
+	for ( int i = 0; i < n; i++ ) {
+		( &ret.x )[i] = ( &v.x )[i] * im;
+	}
 	return ret;
 }
 
 
-Vector3f Vector3f::operator+( const Vector3f& v )
-{
-	Vector3f ret;
-
-	ret.x = x + v.x;
-	ret.y = y + v.y;
-	ret.z = z + v.z;
-
+template <typename T, int n> bool operator==( const Vector<T, n>& v1, const Vector<T,n>& v2 ) {
+	bool ret = true;
+	for ( int i = 0; i < n; i++ ) {
+		ret = ret && ( ( &v1.x )[i] == ( &v2.x )[i] );
+	}
 	return ret;
 }
 
-
-Vector3f Vector3f::operator-( const Vector3f& v )
+static void dummy_vectors()
 {
-	Vector3f ret;
-
-	ret.x = x - v.x;
-	ret.y = y - v.y;
-	ret.z = z - v.z;
-
-	return ret;
-}
-
-
-Vector3f Vector3f::operator^( const Vector3f& v )
-{
-	Vector3f ret;
-
-	ret.x = y * v.z - z * v.y;
-	ret.y = z * v.x - x * v.z;
-	ret.z = x * v.y - y * v.x;
-
-	return ret;
-}
-
-
-float Vector3f::operator*( const Vector3f& v )
-{
-	return x * v.x + y * v.y + z * v.z;
-}
-
-
-void Vector3f::operator+=( const Vector3f& v )
-{
-	x += v.x;
-	y += v.y;
-	z += v.z;
-}
-
-
-void Vector3f::operator*=( float v )
-{
-	x *= v;
-	y *= v;
-	z *= v;
-}
-
-
-Vector3f operator*( float f, const Vector3f& v )
-{
-	Vector3f ret = v;
-
-	ret.x *= f;
-	ret.y *= f;
-	ret.z *= f;
-
-	return ret;
+	dummy_vectors();
+	{
+		Vector2i v;
+		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector3i v;
+		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector4i v;
+		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector2f v;
+		v += -v + ( v ^ v ) - v * ( 0.0f * v ) + v * 0.0f;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector3f v;
+		v += -v + ( v ^ v ) - v * ( 0.0f * v ) + v * 0.0f;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector4f v;
+		v += -v + ( v ^ v ) - v * ( 0.0f * v ) + v * 0.0f;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector2d v;
+		v += -v + ( v ^ v ) - v * ( 0.0 * v ) + v * 0.0;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector3d v;
+		v += -v + ( v ^ v ) - v * ( 0.0 * v ) + v * 0.0;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
+	{
+		Vector4d v;
+		v += -v + ( v ^ v ) - v * ( 0.0 * v ) + v * 0.0;
+		v.normalize();
+		v *= 0 * v.length();
+		v.x = v[0];
+		v -= v * (v == v);
+	}
 }
 
 } // namespace GE

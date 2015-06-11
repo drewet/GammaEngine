@@ -20,44 +20,59 @@
 #ifndef INSTANCE_H
 #define INSTANCE_H
 
-#include "vulkan.h"
+#include <string>
 
 namespace GE {
+
+class Window;
+class Renderer;
+class Vertex;
+class Object;
 
 class Instance
 {
 public:
-	Instance( const char* appName, uint32_t appVersion, bool easy_instance = true );
-	~Instance();
+// 	Instance( const char* appName, uint32_t appVersion, bool easy_instance = true );
+	Instance() : mDevId(0), mGpuCount(0), mGpus{0}, mDevices{0}, mQueues{0}, mFences{0}, mCpuRamCounter(0), mGpuRamCounter(0) {}
+	virtual ~Instance(){}
 
-	int EnumerateGpus();
-	void CreateDevice( int devid, int queueCount );
+	static Instance* Create( const char* appName, uint32_t appVersion, bool easy_instance = true );
+	virtual int EnumerateGpus() = 0;
+	virtual Instance* CreateDevice( int devid, int queueCount = 1 ) = 0;
 
-	VK_MEMORY_REF AllocateObject( int devid, VK_OBJECT object );
-	VK_MEMORY_REF AllocateMappableBuffer( int devid, size_t size );
+	Window* CreateWindow( const std::string& title, int width, int height, int flags = 0 );
+	Renderer* CreateRenderer();
+	Object* CreateObject( Vertex* verts = nullptr, uint32_t nVerts = 0 );
+	Object* LoadObject( const std::string& filename );
 
-	void QueueSubmit( int devid, VK_CMD_BUFFER buf, VK_MEMORY_REF* refs, int nRefs );
+	void* Memalign( uintptr_t size, uintptr_t align, bool clear_mem = true );
+	void* Realloc( void* last, uintptr_t size, bool clear_mem = true );
+	void* Malloc( uintptr_t size, bool clear_mem = true );
+	void Free( void* data );
 
-	VK_PHYSICAL_GPU gpu( int devid );
-	VK_DEVICE device( int devid );
-	VK_QUEUE queue( int devid );
+	uint64_t gpu();
+	uint64_t device();
+	uint64_t queue();
+
+	uint64_t cpuRamCounter();
+	uint64_t gpuRamCounter();
 
 	static Instance* baseInstance();
+	static void* backend();
 
-private:
-	static void* sAlloc( size_t size, size_t align, int32_t allocType );
-	static void sFree( void* pMem );
+protected:
 	static Instance* mBaseInstance;
+	static void* sBackend;
 
-	VK_APPLICATION_INFO mAppInfo;
-	VK_ALLOC_CALLBACKS mAllocCb;
-	VK_INSTANCE mInstance;
-	VK_DEVICE mDevices[VK_MAX_PHYSICAL_GPUS];
-	VK_QUEUE mQueues[VK_MAX_PHYSICAL_GPUS];
-	VK_FENCE mFences[VK_MAX_PHYSICAL_GPUS];
-
+	int mDevId;
 	uint32_t mGpuCount;
-	VK_PHYSICAL_GPU mGpus[VK_MAX_PHYSICAL_GPUS];
+	uint64_t mGpus[4];
+	uint64_t mDevices[4];
+	uint64_t mQueues[4];
+	uint64_t mFences[4];
+
+	uint64_t mCpuRamCounter;
+	uint64_t mGpuRamCounter;
 };
 
 } // namespace GE

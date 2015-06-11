@@ -35,11 +35,11 @@
 namespace GE {
 
 
-BaseWindow::BaseWindow( Instance* instance, int devid, const std::string& title, int width, int height, uint32_t _flags )
+BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width, int height, uint32_t _flags )
 	: mInstance( instance )
-	, mDevId( devid )
 	, mWidth( width )
 	, mHeight( height )
+	, mHasResized( false )
 	, mWindow( 0 )
 	, mKeys{ false }
 	, mDisplay( 0 )
@@ -62,7 +62,7 @@ BaseWindow::BaseWindow( Instance* instance, int devid, const std::string& title,
 	mVisualInfo = glXChooseVisual( mDisplay, mScreen, (int*)attributes );
 
 	mColorMap = XCreateColormap( mDisplay, RootWindow( mDisplay, mScreen ), mVisualInfo->visual, AllocNone );
-	mWindowAttributes = (XSetWindowAttributes*)geMalloc( sizeof(XSetWindowAttributes) );
+	mWindowAttributes = (XSetWindowAttributes*)mInstance->Malloc( sizeof(XSetWindowAttributes) );
 	mWindowAttributes->colormap = mColorMap;
 	mWindowAttributes->border_pixel = 0;
 	mWindowAttributes->background_pixmap = None;
@@ -96,6 +96,7 @@ BaseWindow::BaseWindow( Instance* instance, int devid, const std::string& title,
 	XMapRaised( mDisplay, mWindow );
 
 	if ( flags & Window::Fullscreen ) {
+		printf("fs\n");
 		Atom wm_fullscreen = XInternAtom( mDisplay, "_NET_WM_STATE_FULLSCREEN", true );
 		XChangeProperty( mDisplay, mWindow, XInternAtom( mDisplay, "_NET_WM_STATE", true), XA_ATOM, 32, PropModeReplace, (unsigned char *)&wm_fullscreen, 1 );
 	}
@@ -115,12 +116,6 @@ BaseWindow::BaseWindow( Instance* instance, int devid, const std::string& title,
 	invisible_cursor = XCreatePixmapCursor( mDisplay, bm_no, bm_no, &black, &black, 0, 0 );
 	if (bm_no!=None)XFreePixmap( mDisplay, bm_no);
 */
-
-	VK_CONNECTION_INFO connectionInfo;
-	connectionInfo.dpy = mDisplay;
-	connectionInfo.screen = mScreen;
-	connectionInfo.window = mWindow;
-	vkWsiX11AssociateConnection( instance->gpu( mDevId ), &connectionInfo );
 
 // 	mEventThread = new std::thread( &BaseWindow::pEventThread, this );
 
@@ -206,7 +201,9 @@ void BaseWindow::pEventThread()
 					}
 					break;
 				case ConfigureNotify:
-					// TODO : inter-thread call "Resize"
+					mWidth = event.xconfigure.width;
+					mHeight = event.xconfigure.height;
+					mHasResized = true;
 					break;
 				case KeymapNotify:
 					XRefreshKeyboardMapping( &event.xmapping );
@@ -239,13 +236,16 @@ void BaseWindow::pEventThread()
 					}
 					break;
 				case ButtonPress:
-					
 					if ( event.xbutton.button == 4 ) { // wheel up
 						// TODO
 					} else if ( event.xbutton.button == 5 ) { // wheel down
 						// TODO
-					} else {
-						mKeys[ Input::LBUTTON + event.xbutton.button - 1 ] = true;
+					} else if ( event.xbutton.button == 1 ) {
+						mKeys[ Input::LBUTTON ] = true;
+					} else if ( event.xbutton.button == 2 ) {
+						mKeys[ Input::MBUTTON ] = true;
+					} else if ( event.xbutton.button == 3 ) {
+						mKeys[ Input::RBUTTON ] = true;
 					}
 					break;
 				case ButtonRelease:
@@ -253,8 +253,12 @@ void BaseWindow::pEventThread()
 						// TODO
 					} else if ( event.xbutton.button == 5 ) { // wheel down
 						// TODO
-					} else {
-						mKeys[ Input::LBUTTON + event.xbutton.button - 1 ] = false;
+					} else if ( event.xbutton.button == 1 ) {
+						mKeys[ Input::LBUTTON ] = false;
+					} else if ( event.xbutton.button == 2 ) {
+						mKeys[ Input::MBUTTON ] = false;
+					} else if ( event.xbutton.button == 3 ) {
+						mKeys[ Input::RBUTTON ] = false;
 					}
 					break;
 				default:
@@ -264,6 +268,7 @@ void BaseWindow::pEventThread()
 		if ( finished ) {
 			mClosing = true;
 			finished = false;
+			exit(0); // TODO : cleaner way to exit
 			return;
 		}
 // 		ticks = Time::WaitTick( 1000 / 120, ticks );

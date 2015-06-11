@@ -17,56 +17,37 @@
  *
  */
 
-#ifndef GE_PHYSICALOBJECT_H
-#define GE_PHYSICALOBJECT_H
+#ifndef GE_LIGHT_H
+#define GE_LIGHT_H
 
 #include "Vector.h"
-#include "Matrix.h"
-#include "Time.h"
 
 namespace GE
 {
 
-/*
- * PhysicalObject :
- *   - using RK4 to calculate forces
- *   - mass is in kg
- *   - distances are in meters
- *   - velocity is in m/s
- */
-
-class PhysicalObject : protected Time
+class Light
 {
 public:
-	PhysicalObject( float mass = 1.0f );
-	~PhysicalObject();
+	typedef enum Type {
+		Point,
+		Spot,
+	} Type;
 
-	void setMass( float m );
-	Vector3f& velocity();
+	Light( Type type, const Vector3f& position, const Vector3f& direction = Vector3f(), float angle = 70.0f );
+	~Light();
 
-	void ApplyForce( const Vector3f& f );
-	void ApplyGravity( PhysicalObject* other );
-	void Update();
+	Type type();
+	const Vector3f& position();
+	const Vector3f& direction();
+	float angle();
 
-protected:
-	typedef struct RK4Deriv {
-		Vector3f velocity;	// m/s
-		Vector3f force;		// N
-	} RK4Deriv;
-
-	void RK4Recalculate();
-	RK4Deriv RK4Evaluate();
-	RK4Deriv RK4Evaluate( double dt, RK4Deriv d );
-	void RK4Integrate( double dt );
-
+private:
+	Type mType;
 	Vector3f mPosition;
-	Vector3f mForce;
-	Vector3f mMomentum;
-	Vector3f mVelocity;
-	float mMass;
+	Vector3f mDirection;
+	float mAngle;
 };
 
+} // namespace GE
 
-}
-
-#endif // GE_PHYSICALOBJECT_H
+#endif // GE_LIGHT_H

@@ -200,7 +200,7 @@ void fCmdDrawIndexed(vk_CmdReadBuf* buf)
 
 	size_t offset = ( indicesType == GL_UNSIGNED_INT ? 4 : 2 ) * firstIndex + indicesOffset;
 
-	glDrawElements( GL_TRIANGLES/*TODO*/, indexCount, indicesType, (void*)offset );
+	glDrawElements( boundPipeline->renderMode, indexCount, indicesType, (void*)offset );
 }
 
 void fCmdDraw(vk_CmdReadBuf* buf)
@@ -217,7 +217,7 @@ void fCmdDraw(vk_CmdReadBuf* buf)
 	(void)firstInstance;
 	(void)instanceCount;
 
-	glDrawArrays( GL_TRIANGLES/*TODO*/, firstVertex, vertexCount );
+	glDrawArrays( boundPipeline->renderMode, firstVertex, vertexCount );
 }
 
 void fCmdClearColorImage(vk_CmdReadBuf* buf)

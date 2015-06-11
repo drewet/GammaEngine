@@ -21,10 +21,10 @@
 #define MEMORY_H
 
 #include <stdint.h>
-
+/*
 void* geMemalign( uintptr_t size, uintptr_t align, bool clear_mem = true );
 void* geRealloc( void* last, uintptr_t size, bool clear_mem = true );
 void* geMalloc( uintptr_t size, bool clear_mem = true );
 void geFree( void* data );
-
+*/
 #endif // MEMORY_H

@@ -31,22 +31,32 @@ public:
 
 	void Identity();
 	void Perspective( float fov, float aspect, float zNear, float zFar );
-	void LookAt( Vector3f& eye, Vector3f& center, Vector3f& up );
-
+	void LookAt( const Vector3f& eye, const Vector3f& center, const Vector3f& up );
+	
+	void Translate( const Vector3f& v );
 	void Translate( float x, float y, float z );
 	void Scale( float x, float y, float z );
 	void RotateX( float a );
 	void RotateY( float a );
 	void RotateZ( float a );
 
+	void setDataPointer( float* d, bool keep_current_data = true );
 	float* data();
+	float* constData() const;
 
-	Matrix operator*( Matrix& other );
-	void operator*=( Matrix& other );
+// 	Matrix operator*( Matrix& other );
+	void operator*=( const Matrix& other );
+
+// protected:
+public:
+	float* m;
 
 protected:
-	float m[16];
+	bool mAllocedData;
 };
+
+Matrix operator*( const Matrix& m1, const Matrix& m2 );
+Vector4f operator*( const Matrix& m, const Vector4f& v );
 
 } // namespace GE
 

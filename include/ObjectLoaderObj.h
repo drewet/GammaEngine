@@ -38,7 +38,7 @@ public:
 	virtual std::vector< std::string > contentPatterns();
 	virtual std::vector< std::string > extensions();
 	virtual ObjectLoader* NewInstance();
-	virtual void Load( File* file );
+	virtual void Load( Instance* instance, File* file );
 
 private:
 	typedef struct Material {

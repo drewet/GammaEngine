@@ -21,7 +21,7 @@
 #include "File.h"
 #include "Vector.h"
 #include "Debug.h"
-#include "gememory.h"
+#include "Instance.h"
 
 #include <unordered_map>
 
@@ -75,7 +75,7 @@ ObjectLoader* ObjectLoaderObj::NewInstance()
 }
 
 
-void ObjectLoaderObj::Load( File* file )
+void ObjectLoaderObj::Load( Instance* instance, File* file )
 {
 	fDebug( file );
 
@@ -90,7 +90,9 @@ void ObjectLoaderObj::Load( File* file )
 	std::vector< Vector3f > verts;
 	std::vector< Vector3f > tex;
 	std::vector< Vector3f > norms;
-	Material* mat = nullptr;
+	Material base_mat;
+	base_mat.diffuse[0] = base_mat.diffuse[1] = base_mat.diffuse[2] = base_mat.diffuse[3]= 1.0f;
+	Material* mat = &base_mat;
 
 	uint32_t iVert = 0;
 	uint32_t iTex = 0;
@@ -101,14 +103,14 @@ void ObjectLoaderObj::Load( File* file )
 	tex.resize( 1024 );
 	norms.resize( 1024 );
 
-	Vertex* buff = ( Vertex* )geMalloc( sizeof( Vertex ) * 1024 );
+	Vertex* buff = ( Vertex* )instance->Malloc( sizeof( Vertex ) * 1024 * 128 );
 	uint32_t iBuff = 0;
-	uint32_t maxBuff = 1024;
+	uint32_t maxBuff = 1024 * 128;
 	std::unordered_map< std::string, uint32_t > elements;
 
-	uint32_t* indices = ( uint32_t* )geMalloc( sizeof( uint32_t ) * 128 * 3 );
+	uint32_t* indices = ( uint32_t* )instance->Malloc( sizeof( uint32_t ) * 128 * 3 * 256 );
 	uint32_t iIndices = 0;
-	uint32_t maxIndices = 128 * 3;
+	uint32_t maxIndices = 128 * 3 * 256;
 
 	while ( file->ReadLine( line ) )
 	{
@@ -125,7 +127,11 @@ void ObjectLoaderObj::Load( File* file )
 
 		if ( type == "usemtl" ) {
 			tokenizer >> str;
-			mat = mMaterials[ str ];
+			if ( mMaterials.find( str ) != mMaterials.end() ) {
+				mat = mMaterials[ str ];
+			} else {
+				mat = &base_mat;
+			}
 // 			gDebug() << "mat = " << mat << "\n";
 		}
 
@@ -173,7 +179,7 @@ void ObjectLoaderObj::Load( File* file )
 				if ( str == "" || str.length() <= 1 ) {
 					break;
 				}
-				gDebug() << "f[" << iFace << "][" << n << "] = '" << str << "'\n";
+// 				gDebug() << "f[" << iFace << "][" << n << "] = '" << str << "'\n";
 				if ( elements.find( str ) != elements.end() )
 				{
 					idx = elements[ str ];
@@ -204,24 +210,24 @@ void ObjectLoaderObj::Load( File* file )
 						buff[idx].nz = norms[point_indexes[2]].z;
 						memcpy( buff[idx].color, mat->diffuse, sizeof(float) * 4);
 // 						buff[idx].color = mat->diffuse;
-						aDebug( "buff[" << idx << "].xyz = ", buff[idx].x, buff[idx].y, buff[idx].z );
+// 						aDebug( "buff[" << idx << "].xyz = ", buff[idx].x, buff[idx].y, buff[idx].z );
 // 						aDebug( "buff[" << idx << "].uvw = ", buff[idx].u, buff[idx].v, buff[idx].w );
 // 						aDebug( "buff[" << idx << "].nnn = ", buff[idx].nx, buff[idx].ny, buff[idx].nz );
 					}
 
 					if ( iBuff + 1 >= maxBuff ) {
-						buff = ( Vertex* )geRealloc( buff, maxBuff + 1024 );
+						buff = ( Vertex* )instance->Realloc( buff, maxBuff + 1024 );
 						maxBuff += 1024;
 					}
 					iBuff++;
 				}
-				printf("idx = %d\n\n", idx);
+// 				printf("idx = %d\n\n", idx);
 				face_indices[n] = idx;
 				n++;
 			}
 			if ( n == 3 ) { // Triangle
 				if ( iIndices + 3 >= maxIndices ) {
-					indices = ( uint32_t* )geRealloc( indices, maxIndices + 128 * 3 );
+					indices = ( uint32_t* )instance->Realloc( indices, maxIndices + 128 * 3 );
 					maxIndices += 128 * 3;
 				}
 				memcpy( &indices[iIndices], face_indices, sizeof( uint32_t ) * 3 );
@@ -239,14 +245,14 @@ void ObjectLoaderObj::Load( File* file )
 	}
 
 	mVerticesCount = iBuff;
-	mVertices = ( Vertex* )geMalloc( sizeof( Vertex ) * iBuff, false );
+	mVertices = ( Vertex* )instance->Malloc( sizeof( Vertex ) * iBuff, false );
 	memcpy( mVertices, buff, sizeof( Vertex ) * iBuff );
-	geFree( buff );
+	instance->Free( buff );
 
 	mIndicesCount = iIndices;
-	mIndices = ( uint32_t* )geMalloc( sizeof( uint32_t ) * iIndices, false );
+	mIndices = ( uint32_t* )instance->Malloc( sizeof( uint32_t ) * iIndices, false );
 	memcpy( mIndices, indices, sizeof( uint32_t ) * iIndices );
-	geFree( indices );
+	instance->Free( indices );
 }
 
 
