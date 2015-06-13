@@ -19,8 +19,8 @@
 
 #include "ImageLoaderPng.h"
 #include "File.h"
-#include "Debug.h"
 #include "Instance.h"
+#include "Debug.h"
 
 namespace GE {
 

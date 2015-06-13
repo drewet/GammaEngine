@@ -8,6 +8,8 @@ add_library(backend_opengl43
 	SHARED
 	src/OpenGL43Object.cpp
 	src/OpenGL43Renderer.cpp
+	src/OpenGL43Renderer2D.cpp
+	src/OpenGL43DeferredRenderer.cpp
 	src/OpenGL43Window.cpp
 	src/OpenGL43Instance.cpp
 )

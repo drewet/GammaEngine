@@ -17,8 +17,9 @@
  *
  */
 
-#include "Debug.h"
+#include "Instance.h"
 #include "Quaternion.h"
+#include "Debug.h"
 
 using namespace GE;
 

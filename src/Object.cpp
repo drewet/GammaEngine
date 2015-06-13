@@ -29,18 +29,20 @@ namespace GE {
 
 std::vector< ObjectLoader* > Object::mObjectLoaders = std::vector< ObjectLoader* >();
 
-Object::Object( Vertex* verts, uint32_t nVerts )
-	: mVertices( verts )
+Object::Object( Vertex* verts, uint32_t nVerts, uint32_t* indices, uint32_t nIndices )
+	: mName( "" )
+	, mVertices( verts )
 	, mVerticesCount( nVerts )
-	, mIndices( nullptr )
-	, mIndicesCount( 0 )
+	, mIndices( indices )
+	, mIndicesCount( nIndices )
 	, mMatrix( new Matrix() )
 {
 }
 
 
 Object::Object( const std::string filename, Instance* instance )
-	: mVertices( nullptr )
+	: mName( "" )
+	, mVertices( nullptr )
 	, mVerticesCount( 0 )
 	, mIndices( nullptr )
 	, mIndicesCount( 0 )
@@ -49,8 +51,48 @@ Object::Object( const std::string filename, Instance* instance )
 	if ( !instance ) {
 		instance = Instance::baseInstance();
 	}
-	ObjectLoader* loader = nullptr;
 	File* file = new File( filename, File::READ );
+	ObjectLoader* loader = GetLoader( filename, file );
+
+	if ( loader ) {
+		loader = loader->NewInstance();
+		loader->Load( instance, file );
+
+		mVertices = loader->mVertices;
+		mIndices = loader->mIndices;
+		mVerticesCount = loader->mVerticesCount;
+		mIndicesCount = loader->mIndicesCount;
+
+		delete loader;
+	}
+
+	delete file;
+}
+
+
+std::list< Object* > Object::LoadObjects( const std::string filename, Instance* instance )
+{
+	if ( !instance ) {
+		instance = Instance::baseInstance();
+	}
+	File* file = new File( filename, File::READ );
+	ObjectLoader* loader = GetLoader( filename, file );
+	std::list< Object* > ret;
+
+	if ( loader ) {
+		loader = loader->NewInstance();
+		ret = loader->LoadObjects( instance, file );
+		delete loader;
+	}
+
+	delete file;
+	return ret;
+}
+
+
+ObjectLoader* Object::GetLoader( const std::string filename, File* file )
+{
+	ObjectLoader* loader = nullptr;
 
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
 	std::string first_line = file->ReadLine();
@@ -92,21 +134,7 @@ Object::Object( const std::string filename, Instance* instance )
 		}
 	}
 
-	if ( loader ) {
-		loader = loader->NewInstance();
-		loader->Load( instance, file );
-
-		// Copy data from loader to this object
-// 		*this = static_cast< VulkanObject* >( loader );
-		mVertices = loader->mVertices;
-		mIndices = loader->mIndices;
-		mVerticesCount = loader->mVerticesCount;
-		mIndicesCount = loader->mIndicesCount;
-
-		delete loader;
-	}
-
-	delete file;
+	return loader;
 }
 
 
@@ -136,33 +164,45 @@ Object::~Object()
 }
 
 
-uint32_t Object::verticesCount()
+const std::string& Object::name() const
+{
+	return mName;
+}
+
+
+uint32_t Object::verticesCount() const
 {
 	return mVerticesCount;
 }
 
 
-uint32_t Object::indicesCount()
+uint32_t Object::indicesCount() const
 {
 	return mIndicesCount;
 }
 
 
-Vertex* Object::vertices()
+Vertex* Object::vertices() const
 {
 	return mVertices;
 }
 
 
-uint32_t* Object::indices()
+uint32_t* Object::indices() const
 {
 	return mIndices;
 }
 
 
-Matrix* Object::matrix()
+Matrix* Object::matrix() const
 {
 	return mMatrix;
+}
+
+
+void Object::setName( const std::string& name )
+{
+	mName = name;
 }
 
 

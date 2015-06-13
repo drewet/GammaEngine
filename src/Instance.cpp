@@ -30,10 +30,17 @@ namespace GE {
 
 Instance* Instance::mBaseInstance = nullptr;
 void* Instance::sBackend = nullptr;
+uint64_t Instance::mBaseThread = 0;
 
 Instance* Instance::baseInstance()
 {
 	return mBaseInstance;
+}
+
+
+uint64_t Instance::baseThread()
+{
+	return mBaseThread;
 }
 
 
@@ -48,7 +55,10 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 	if ( !sBackend ) {
 // 		sBackend = dlopen( "build/backends/vulkan/backend_vulkan.so", RTLD_LAZY );
 		sBackend = dlopen( "build/backends/opengl43/backend_opengl43.so", RTLD_LAZY );
-// 		gDebug() << "sBackend = " << sBackend << " (" << dlerror() << ")\n";
+		if ( sBackend == nullptr ) {
+			gDebug() << "Backend loading error : " << dlerror() << ")\n";
+			exit(0);
+		}
 	}
 
 	typedef Instance* (*f_type)( const char*, uint32_t );
@@ -56,6 +66,7 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 	if ( easy_instance ) {
 		if ( !mBaseInstance ) {
 			mBaseInstance = fCreateInstance( appName, appVersion );
+			mBaseThread = pthread_self();
 		}
 		Instance* ret = mBaseInstance->CreateDevice( 0, 1 );
 		if ( !mBaseInstance || mBaseInstance->device() == 0 ) {
@@ -83,11 +94,27 @@ Renderer* Instance::CreateRenderer()
 }
 
 
-Object* Instance::CreateObject( Vertex* verts, uint32_t nVert )
+Renderer2D* Instance::CreateRenderer2D( uint32_t width, uint32_t height )
 {
-	typedef Object* (*f_type)( Vertex*, uint32_t );
+	typedef Renderer2D* (*f_type)( Instance*, uint32_t, uint32_t );
+	f_type fCreateRenderer2D = (f_type)dlsym( backend(), "CreateRenderer2D" );
+	return fCreateRenderer2D( this, width, height );
+}
+
+
+DeferredRenderer* Instance::CreateDeferredRenderer( uint32_t width, uint32_t height )
+{
+	typedef DeferredRenderer* (*f_type)( Instance*, uint32_t, uint32_t );
+	f_type fCreateDeferredRenderer = (f_type)dlsym( backend(), "CreateDeferredRenderer" );
+	return fCreateDeferredRenderer( this, width, height );
+}
+
+
+Object* Instance::CreateObject( Vertex* verts, uint32_t nVert, uint32_t* indices, uint32_t nIndices )
+{
+	typedef Object* (*f_type)( Vertex*, uint32_t, uint32_t*, uint32_t );
 	f_type fCreateObject = (f_type)dlsym( backend(), "CreateObject" );
-	return fCreateObject( verts, nVert );
+	return fCreateObject( verts, nVert, indices, nIndices );
 }
 
 
@@ -98,6 +125,14 @@ Object* Instance::LoadObject( const std::string& filename )
 	return fLoadObject( filename, this );
 }
 
+/*
+std::vector< Object* > Instance::LoadObjects( const std::string& filename )
+{
+	typedef std::vector< Object* > (*f_type)( const std::string&, Instance* );
+	f_type fLoadObjects = (f_type)dlsym( backend(), "LoadObjects" );
+	return fLoadObjects( filename, this );
+}
+*/
 
 static uintptr_t _ge_AllocMemBlock( uintptr_t size )
 {

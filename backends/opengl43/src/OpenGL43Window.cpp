@@ -24,6 +24,7 @@
 
 #include "OpenGL43Window.h"
 #include "OpenGL43Instance.h"
+#include "Debug.h"
 
 extern "C" GE::Window* CreateWindow( GE::Instance* instance, const std::string& title, int width, int height, OpenGL43Window::Flags flags ) {
 	return new OpenGL43Window( instance, title, width, height, flags );
@@ -46,8 +47,8 @@ OpenGL43Window::OpenGL43Window( Instance* instance, const std::string& title, in
 		GLX_DEPTH_SIZE, 16,
 		None
 	};
-	XVisualInfo* vi = glXChooseVisual( mDisplay, mScreen, (int*)attributes );
-	mGLContext = glXCreateContext( mDisplay, vi, 0, true );
+	mVisualInfo = glXChooseVisual( mDisplay, mScreen, (int*)attributes );
+	mGLContext = glXCreateContext( mDisplay, (XVisualInfo*)mVisualInfo, 0, true );
 	glXMakeCurrent( mDisplay, mWindow, static_cast<GLXContext>(mGLContext) );
 #endif
 
@@ -56,6 +57,9 @@ OpenGL43Window::OpenGL43Window( Instance* instance, const std::string& title, in
 	glFrontFace( GL_CCW );
 	glCullFace( GL_BACK );
 	glEnable( GL_DEPTH_TEST );
+	glEnable( GL_ALPHA_TEST );
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPointSize( 4.0f );
 
 	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(uint32_t) * mWidth * mHeight ); // Front
@@ -102,6 +106,23 @@ void OpenGL43Window::SwapBuffers()
 	if ( mHasResized ) {
 		glViewport( 0, 0, mWidth, mHeight );
 	}
+}
+
+
+uint64_t OpenGL43Window::CreateSharedContext()
+{
+	return (uint64_t)glXCreateContext( mDisplay, (XVisualInfo*)mVisualInfo, (GLXContext)mGLContext, true );
+}
+
+
+void OpenGL43Window::BindSharedContext( uint64_t ctx )
+{
+	int ret = glXMakeCurrent( mDisplay, mWindow, static_cast<GLXContext>((void*)ctx) );
+// 	int ret = glXMakeCurrent( mDisplay, 0, static_cast<GLXContext>((void*)ctx) );
+	gDebug() << "glXMakeCurrent ret = " << ret << "\n";
+	gDebug() << "OGL : " << glGetString( GL_VERSION ) << "\n";
+// 	exit(0);
+// 	glXMakeCurrent( mDisplay, 0, static_cast<GLXContext>((void*)ctx) );
 }
 
 

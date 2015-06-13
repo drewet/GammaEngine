@@ -20,8 +20,9 @@
 #include <cmath>
 #include <limits>
 #include <stdio.h>
-#include "Debug.h"
+#include "Instance.h"
 #include "PhysicalBody.h"
+#include "Debug.h"
 
 using namespace GE;
 

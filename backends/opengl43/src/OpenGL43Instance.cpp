@@ -21,6 +21,7 @@
 
 #include "OpenGL43Instance.h"
 #include "Vertex.h"
+#include "Image.h"
 #include "Debug.h"
 
 #ifndef ALIGN
@@ -62,6 +63,24 @@ Instance* OpenGL43Instance::CreateDevice( int devid, int queueCount )
 	fDebug( devid, queueCount );
 
 	return ret;
+}
+
+
+uint64_t OpenGL43Instance::ReferenceImage( Image* image )
+{
+	uint32_t glTextureID;
+	glGenTextures( 1, &glTextureID );
+	glBindTexture( GL_TEXTURE_2D, glTextureID );
+
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, image->width(), image->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data() );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( image->width() * image->height() * sizeof( uint32_t ) );
+
+	gDebug() << "New texture referenced\n";
+	return glTextureID;
 }
 
 

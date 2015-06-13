@@ -33,19 +33,30 @@ public:
 		Spot,
 	} Type;
 
-	Light( Type type, const Vector3f& position, const Vector3f& direction = Vector3f(), float angle = 70.0f );
+	Light( const Vector4f& color, const Vector3f& position, float attenuation = 0.1f );
+	Light( const Vector4f& color, const Vector3f& position, const Vector3f& direction, float innerAngle = 45.0f, float outerAngle = 70.0f, float attenuation = 0.0f );
 	~Light();
 
-	Type type();
-	const Vector3f& position();
-	const Vector3f& direction();
-	float angle();
+	Type type() const;
+	const Vector4f& color() const;
+	const Vector3f& position() const;
+	const Vector3f& direction() const;
+	float attenuation() const;
+	float innerAngle() const;
+	float outerAngle() const;
+
+	void setPosition( const Vector3f& pos );
+
+	void setPositionPointer( Vector3f* ptr );
 
 private:
 	Type mType;
-	Vector3f mPosition;
+	Vector4f mColor;
+	Vector3f* mPosition;
 	Vector3f mDirection;
-	float mAngle;
+	float mInnerAngle;
+	float mOuterAngle;
+	float mAttenuation;
 };
 
 } // namespace GE

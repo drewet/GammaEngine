@@ -106,6 +106,23 @@ void Matrix::Perspective( float fov, float aspect, float zNear, float zFar )
 	m[15] = 0.0f;
 }
 
+void Matrix::Orthogonal( float left, float right, float bottom, float top, float zNear, float zFar )
+{
+	Identity();
+
+	float tx = - (right + left) / (right - left);
+	float ty = - (top + bottom) / (top - bottom);
+	float tz = - (zFar + zNear) / (zFar - zNear);
+
+	m[0] = 2.0 / (right - left);
+	m[5] = 2.0 / (top - bottom);
+	m[10] = -2.0 / (zFar - zNear);
+
+	m[12] = tx;
+	m[13] = ty;
+	m[14] = tz;
+}
+
 
 void Matrix::LookAt( const Vector3f& eye, const Vector3f& center, const Vector3f& up )
 {

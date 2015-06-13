@@ -44,6 +44,7 @@ public:
 
 	virtual int EnumerateGpus();
 	virtual Instance* CreateDevice( int devid, int queueCount = 1 );
+	virtual uint64_t ReferenceImage( Image* image );
 
 	void AffectVRAM( int64_t sz );
 private:

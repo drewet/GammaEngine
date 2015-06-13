@@ -45,6 +45,8 @@ public:
 	virtual uint64_t colorImage() = 0;
 
 	virtual void ReadKeys( bool* keys ) = 0;
+	virtual uint64_t CreateSharedContext() = 0;
+	virtual void BindSharedContext( uint64_t ctx ) = 0;
 };
 
 

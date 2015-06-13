@@ -21,16 +21,14 @@
 #define VERTEX_H
 
 #include <stdint.h>
-#include <vulkan.h>
+#include "Vector.h"
 
 namespace GE {
 
 class Vertex
 {
 public:
-	Vertex();
-
-	static void UpdateDescriptorSet( VK_DESCRIPTOR_SET descriptorSet, VK_MEMORY_VIEW_ATTACH_INFO* memoryViewAttachInfo );
+	Vertex( const Vector3f& pos = Vector3f(), const Vector4f& color = Vector4f(1,1,1,1), const Vector3f& normal = Vector3f(), const Vector3f& texcoords = Vector3f() );
 
 // Attributes defined as public for fast access
 public:

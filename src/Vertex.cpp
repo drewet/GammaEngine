@@ -21,11 +21,11 @@
 
 namespace GE {
 
-Vertex::Vertex()
-	: u( 0.0f ), v( 0.0f ), w( 0.0f ), _align1( 0.0f )
-	, color{ 0.0f }
-	, nx( 0.0f ), ny( 0.0f ), nz( 0.0f ), _align2( 0.0f )
-	, x( 0.0f ), y( 0.0f ), z( 0.0f ), weight( 0.0f )
+Vertex::Vertex( const Vector3f& pos, const Vector4f& color, const Vector3f& normal, const Vector3f& texcoords )
+	: u( texcoords.x ), v( texcoords.y ), w( texcoords.z ), _align1( 0.0f )
+	, color{ color.x, color.y, color.z, color.w }
+	, nx( normal.x ), ny( normal.y ), nz( normal.z ), _align2( 0.0f )
+	, x( pos.x ), y( pos.y ), z( pos.z ), weight( 0.0f )
 {
 }
 

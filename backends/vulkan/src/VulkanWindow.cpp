@@ -72,7 +72,7 @@ void VulkanWindow::InitPresentableImage()
 		VK_NUM_FMT_UNORM
 	};
 	imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_TARGET;
-	imageCreateInfo.extent = { mWidth, mHeight };
+	imageCreateInfo.extent = { (int)mWidth, (int)mHeight };
 	vkWsiWinCreatePresentableImage( mInstance->device(), &imageCreateInfo, &mColorImage, &mColorImageMemRef.mem );
 
 	imageCreateInfo.format = {
@@ -80,7 +80,7 @@ void VulkanWindow::InitPresentableImage()
 		VK_NUM_FMT_UNDEFINED
 	};
 	imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL;
-	imageCreateInfo.extent = { mWidth, mHeight };
+	imageCreateInfo.extent = { (int)mWidth, (int)mHeight };
 	vkWsiWinCreatePresentableImage( mInstance->device(), &imageCreateInfo, &mDepthImage, &mDepthImageMemRef.mem );
 
 	mImageColorRange.aspect = VK_IMAGE_ASPECT_COLOR;
@@ -200,6 +200,17 @@ void VulkanWindow::SwapBuffers()
 	vkWsiWinQueuePresent( mInstance->queue(), &presentInfo );
 
 	SwapBuffersBase();
+}
+
+
+uint64_t VulkanWindow::CreateSharedContext()
+{
+	return 0;
+}
+
+
+void VulkanWindow::BindSharedContext( uint64_t ctx )
+{
 }
 
 

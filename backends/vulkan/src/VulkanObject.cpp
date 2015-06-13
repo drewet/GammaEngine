@@ -221,6 +221,6 @@ void VulkanObject::UploadMatrix( Instance* instance )
 }
 
 
-void VulkanObject::setTexture( int unit, Image* texture )
+void VulkanObject::setTexture( Instance* Instance, int unit, Image* texture )
 {
 }

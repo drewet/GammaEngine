@@ -26,7 +26,10 @@ namespace GE {
 
 class Window;
 class Renderer;
+class Renderer2D;
+class DeferredRenderer;
 class Vertex;
+class Image;
 class Object;
 
 class Instance
@@ -39,11 +42,15 @@ public:
 	static Instance* Create( const char* appName, uint32_t appVersion, bool easy_instance = true );
 	virtual int EnumerateGpus() = 0;
 	virtual Instance* CreateDevice( int devid, int queueCount = 1 ) = 0;
+	virtual uint64_t ReferenceImage( Image* image ) = 0;
 
 	Window* CreateWindow( const std::string& title, int width, int height, int flags = 0 );
 	Renderer* CreateRenderer();
-	Object* CreateObject( Vertex* verts = nullptr, uint32_t nVerts = 0 );
+	Renderer2D* CreateRenderer2D( uint32_t width = 0, uint32_t height = 0 );
+	DeferredRenderer* CreateDeferredRenderer( uint32_t width, uint32_t height );
+	Object* CreateObject( Vertex* verts = nullptr, uint32_t nVerts = 0, uint32_t* indices = nullptr, uint32_t nIndices = 0 );
 	Object* LoadObject( const std::string& filename );
+// 	std::vector< Object* > LoadObjects( const std::string& filename );
 
 	void* Memalign( uintptr_t size, uintptr_t align, bool clear_mem = true );
 	void* Realloc( void* last, uintptr_t size, bool clear_mem = true );
@@ -58,10 +65,12 @@ public:
 	uint64_t gpuRamCounter();
 
 	static Instance* baseInstance();
+	static uint64_t baseThread();
 	static void* backend();
 
 protected:
 	static Instance* mBaseInstance;
+	static uint64_t mBaseThread;
 	static void* sBackend;
 
 	int mDevId;

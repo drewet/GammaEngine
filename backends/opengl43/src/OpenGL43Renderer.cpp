@@ -70,6 +70,9 @@ OpenGL43Renderer::OpenGL43Renderer( Instance* instance )
 	, mInstance( instance ? instance : Instance::baseInstance() )
 	, mMatrixObjects( 0 )
 	, mRenderMode( GL_TRIANGLES )
+	, mShader( 0 )
+	, mVertexShader( 0 )
+	, mFragmentShader( 0 )
 {
 	mMatrixProjection = new Matrix();
 	mMatrixProjection->Perspective( 60.0f, 16.0f / 9.0f, 0.01f, 1000.0f );
@@ -83,11 +86,13 @@ OpenGL43Renderer::~OpenGL43Renderer()
 }
 
 
-int OpenGL43Renderer::LoadVertexShader( const std::string& file )
+int OpenGL43Renderer::LoadVertexShader( const void* data, size_t size )
 {
 	mReady = false;
+	if ( mVertexShader ) {
+		glDeleteShader( mVertexShader );
+	}
 
-	uint8_t* data = loadShader( file );
 // 	const char* array[2] = { vertex_shader_include, (char*)data };
 	mVertexShader = glCreateShader( GL_VERTEX_SHADER );
 // 	glShaderSource( mVertexShader, 2, array, NULL );
@@ -97,10 +102,39 @@ int OpenGL43Renderer::LoadVertexShader( const std::string& file )
 	int logsize = 4096;
 	glGetShaderInfoLog( mVertexShader, logsize, &logsize, log );
 	gDebug() << "vertex compile : " << log << "\n";
-	printf("vertex compile : %s\n", log);
-	mInstance->Free( data );
 
 	return 0;
+}
+
+
+int OpenGL43Renderer::LoadFragmentShader( const void* data, size_t size )
+{
+	mReady = false;
+	if ( mFragmentShader ) {
+		glDeleteShader( mFragmentShader );
+	}
+
+	mFragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
+	glShaderSource( mFragmentShader, 1, (const char**)&data, NULL );
+	glCompileShader( mFragmentShader );
+	char log[4096] = "";
+	int logsize = 4096;
+	glGetShaderInfoLog( mFragmentShader, logsize, &logsize, log );
+	gDebug() << "fragment compile : " << log << "\n";
+
+	return 0;
+}
+
+
+int OpenGL43Renderer::LoadVertexShader( const std::string& file )
+{
+	mReady = false;
+
+	uint8_t* data = loadShader( file );
+	int ret = LoadVertexShader( data, 0 );
+	mInstance->Free( data );
+
+	return ret;
 }
 
 
@@ -109,16 +143,10 @@ int OpenGL43Renderer::LoadFragmentShader( const std::string& file )
 	mReady = false;
 
 	uint8_t* data = loadShader( file );
-	mFragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
-	glShaderSource( mFragmentShader, 1, (const char**)&data, NULL );
-	glCompileShader( mFragmentShader );
-	char log[4096] = "";
-	int logsize = 4096;
-	glGetShaderInfoLog( mFragmentShader, logsize, &logsize, log );
-	gDebug() << "fragment compile : " << log << "\n";
+	int ret = LoadFragmentShader( data, 0 );
 	mInstance->Free( data );
 
-	return 0;
+	return ret;
 }
 
 
@@ -130,9 +158,18 @@ void OpenGL43Renderer::setRenderMode( int mode )
 
 void OpenGL43Renderer::createPipeline()
 {
+	if ( mShader ) {
+		glDeleteProgram( mShader );
+	}
 	mShader = glCreateProgram();
 	glAttachShader( mShader, mVertexShader );
 	glAttachShader( mShader, mFragmentShader );
+
+	glBindFragDataLocation( mShader, 0, "ge_FragColor" );
+	glBindFragDataLocation( mShader, 1, "ge_FragDepth" );
+	glBindFragDataLocation( mShader, 2, "ge_FragNormal" );
+	glBindFragDataLocation( mShader, 3, "ge_FragPosition" );
+
 	glLinkProgram( mShader );
 	glUseProgram( mShader );
 	glUseProgram( 0 );
@@ -199,19 +236,24 @@ void OpenGL43Renderer::Compute()
 		indicesCount += mObjects[i]->indicesCount();
 		verticesCount += mObjects[i]->verticesCount();
 
-		const std::vector< std::pair< Image*, uint32_t > >& textures = ((OpenGL43Object*)mObjects[i])->textures();
-		textureBases.emplace_back( textureHandles.size() / 2 );
-		uint64_t stride_data = ( (uint64_t)textures.size() ) | (( (uint64_t)textureHandles.size() ) << 32);
-		for ( size_t j = 0; j < textures.size(); j++ ) {
-			if ( textures[j].first != nullptr ) {
-				uint64_t handle = glGetTextureHandleARB( textures[j].second );
-				glMakeTextureHandleResidentARB( handle );
-				textureHandles.emplace_back( handle );
-			} else {
-				textureHandles.emplace_back( 0 );
+		const std::vector< std::pair< Image*, uint32_t > >* textures = ((OpenGL43Object*)mObjects[i])->textures( mInstance );
+		if ( textures ) {
+			textureBases.emplace_back( textureHandles.size() / 2 );
+			uint64_t stride_data = ( (uint64_t)( textures->size() ) ) | (( (uint64_t)textureHandles.size() ) << 32);
+			for ( size_t j = 0; j < textures->size(); j++ ) {
+				if ( (*textures)[j].first != nullptr ) {
+					uint64_t handle = glGetTextureHandleARB( (*textures)[j].second );
+					glMakeTextureHandleResidentARB( handle );
+					textureHandles.emplace_back( handle );
+				} else {
+					textureHandles.emplace_back( 0 );
+				}
+				textureHandles.emplace_back( stride_data ); // 128-bits Stride
 			}
-			
-			textureHandles.emplace_back( stride_data ); // 128-bits Stride
+		} else {
+			textureBases.emplace_back( textureHandles.size() / 2 );
+			textureHandles.emplace_back( 0 );
+			textureHandles.emplace_back( 0 ); // 128-bits Stride
 		}
 	}
 
@@ -284,11 +326,6 @@ void OpenGL43Renderer::Compute()
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(uint32_t) * textureBases.size() );
 
-	glGenBuffers( 1, &mVBO );
-	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-	glBufferData( GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW );
-	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(Vertex) * verticesCount );
-
 	glGenBuffers( 1, &mCommandBuffer );
 	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, mCommandBuffer );
 	glBufferData( GL_DRAW_INDIRECT_BUFFER, commands.size() * sizeof(DrawElementsIndirectCommand), commands.data(), GL_STATIC_DRAW );
@@ -296,6 +333,11 @@ void OpenGL43Renderer::Compute()
 // 	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, mCommandBuffer );
 // 	glBufferData( GL_DRAW_INDIRECT_BUFFER, direct_commands.size() * sizeof(DrawArraysIndirectCommand), direct_commands.data(), GL_STATIC_DRAW );
 	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(DrawElementsIndirectCommand) * commands.size() );
+
+	glGenBuffers( 1, &mVBO );
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferData( GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW );
+	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(Vertex) * verticesCount );
 
 	glEnableVertexAttribArray( 0 );
 	glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, sizeof( Vertex ), (void*)( 0 ) );
@@ -315,6 +357,9 @@ void OpenGL43Renderer::Compute()
 
 void OpenGL43Renderer::Draw()
 {
+	const uint32_t binding_proj = 0;
+	const uint32_t binding_view = 1;
+	const uint32_t binding_textures = 2;
 /*
 	if ( !mReady ) {
 		Compute();
@@ -325,6 +370,9 @@ void OpenGL43Renderer::Draw()
 	glBindVertexArray( mVAO );
 	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, mCommandBuffer );
 
+	glBindBufferBase( GL_UNIFORM_BUFFER, binding_proj, mMatrixProjectionID );
+	glBindBufferBase( GL_UNIFORM_BUFFER, binding_view, mMatrixViewID );
+	glBindBufferBase( GL_UNIFORM_BUFFER, binding_textures, mTexturesID );
 
 	glBindBuffer( GL_UNIFORM_BUFFER, mMatrixProjectionID );
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, mMatrixProjection->data() );

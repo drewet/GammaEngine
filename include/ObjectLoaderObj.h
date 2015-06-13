@@ -28,6 +28,7 @@
 namespace GE {
 
 class File;
+class Image;
 
 class ObjectLoaderObj : public ObjectLoader
 {
@@ -39,6 +40,7 @@ public:
 	virtual std::vector< std::string > extensions();
 	virtual ObjectLoader* NewInstance();
 	virtual void Load( Instance* instance, File* file );
+	virtual std::list< Object* > LoadObjects( Instance* instance, File* file );
 
 private:
 	typedef struct Material {
@@ -48,9 +50,10 @@ private:
 		float ambient[4];
 		float diffuse[4];
 		float specular[4];
+		Image* map_Kd;
 	} Material;
 
-	void LoadMaterials( File* file, std::string filename );
+	void LoadMaterials( Instance* instance, File* file, std::string filename );
 
 	static ObjectLoaderObj* mBaseInstance;
 	std::map< std::string, Material* > mMaterials;

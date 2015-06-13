@@ -28,8 +28,8 @@
 
 using namespace GE;
 
-extern "C" GE::Object* CreateObject( Vertex* verts, uint32_t nVerts ) {
-	return new OpenGL43Object( verts, nVerts );
+extern "C" GE::Object* CreateObject( Vertex* verts, uint32_t nVerts, uint32_t* indices, uint32_t nIndices ) {
+	return new OpenGL43Object( verts, nVerts, indices, nIndices );
 }
 
 extern "C" GE::Object* LoadObject( const std::string filename, Instance* instance ) {
@@ -37,8 +37,8 @@ extern "C" GE::Object* LoadObject( const std::string filename, Instance* instanc
 }
 
 
-OpenGL43Object::OpenGL43Object( Vertex* verts, uint32_t nVerts )
-	: Object( verts, nVerts )
+OpenGL43Object::OpenGL43Object( Vertex* verts, uint32_t nVerts, uint32_t* indices, uint32_t nIndices )
+	: Object( verts, nVerts, indices, nIndices )
 {
 }
 
@@ -55,33 +55,29 @@ OpenGL43Object::~OpenGL43Object()
 }
 
 
-const std::vector< std::pair< Image*, uint32_t > >& OpenGL43Object::textures()
+const std::vector< std::pair< Image*, uint32_t > >* OpenGL43Object::textures( Instance* instance )
 {
-	return mTextures;
+	if ( mTextures.find( instance ) != mTextures.end() ) {
+		return &mTextures[ instance ];
+	}
+	return nullptr;
 }
 
 
-void OpenGL43Object::setTexture( int unit, Image* texture )
+void OpenGL43Object::setTexture( Instance* instance, int unit, Image* texture )
 {
-	if ( (int)mTextures.size() <= unit ) {
-		mTextures.resize( unit + 1, std::make_pair( nullptr, 0 ) );
+	std::vector< std::pair< Image*, uint32_t > >* textures = nullptr;
+	if ( mTextures.find( instance ) == mTextures.end() ) {
+		std::vector< std::pair< Image*, uint32_t > > empty;
+		mTextures.insert( std::make_pair( instance, empty ) );
+	}
+	textures = &mTextures[ instance ];
+
+	if ( (int)textures->size() <= unit ) {
+		textures->resize( unit + 1, std::make_pair( nullptr, 0 ) );
 	}
 
-	uint32_t glTextureID = mTextures[unit].second;
-	if ( !glTextureID ) {
-		glGenTextures( 1, &glTextureID );
-	}
-	glBindTexture( GL_TEXTURE_2D, glTextureID );
-
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, texture->width(), texture->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->data() );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( texture->width() * texture->height() * sizeof( uint32_t ) );
-
-	glBindTexture( GL_TEXTURE_2D, 0 );
-	mTextures[unit] = std::make_pair( texture, glTextureID );
+	(*textures)[unit] = std::make_pair( texture, texture->serverReference( instance ) );
 }
 
 

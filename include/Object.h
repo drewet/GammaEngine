@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 
 #include "Vertex.h"
@@ -37,26 +38,32 @@ class Image;
 class Object
 {
 public:
-	Object( Vertex* verts = nullptr, uint32_t nVerts = 0 );
+	Object( Vertex* verts = nullptr, uint32_t nVerts = 0, uint32_t* indices = nullptr, uint32_t nIndices = 0 );
 	Object( const std::string filename, Instance* instance = nullptr );
 	virtual ~Object();
 
-	uint32_t verticesCount();
-	uint32_t indicesCount();
-	Vertex* vertices();
-	uint32_t* indices();
-	Matrix* matrix();
+	const std::string& name() const;
+	uint32_t verticesCount() const;
+	uint32_t indicesCount() const;
+	Vertex* vertices() const;
+	uint32_t* indices() const;
+	Matrix* matrix() const;
 
-	virtual void setTexture( int unit, Image* texture ) = 0;
+	void setName( const std::string& name );
+
+	virtual void setTexture( Instance* instance, int unit, Image* texture ) = 0;
 	virtual void UpdateVertices( Instance* instance, Vertex* verts, uint32_t offset, uint32_t count ) = 0;
 	virtual void UploadMatrix( Instance* instance ) = 0;
 
 	void operator=( Object& other );
 	void operator=( Object* other );
 
+	static std::list< Object* > LoadObjects( const std::string filename, Instance* instance = nullptr );
 	static ObjectLoader* AddObjectLoader( ObjectLoader* loader );
 
 protected:
+	static ObjectLoader* GetLoader( const std::string filename, File* file );
+	std::string mName;
 	Vertex* mVertices;
 	uint32_t mVerticesCount;
 	uint32_t* mIndices;
@@ -83,8 +90,9 @@ public:
 	virtual std::vector< std::string > extensions() = 0;
 	virtual ObjectLoader* NewInstance() = 0;
 	virtual void Load( Instance* instance, File* file ) = 0;
+	virtual std::list< Object* > LoadObjects( Instance* instance, File* file ) = 0;
 
-	virtual void setTexture( int unit, Image* texture ){}
+	virtual void setTexture( Instance* instance, int unit, Image* texture ){}
 	virtual void UpdateVertices( Instance* instance, Vertex* verts, uint32_t offset, uint32_t count ){}
 	virtual void UploadMatrix( Instance* instance ){}
 };

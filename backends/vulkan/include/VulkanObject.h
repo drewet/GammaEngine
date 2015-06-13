@@ -39,7 +39,7 @@ public:
 	VulkanObject( const std::string filename, Instance* instance = nullptr );
 	~VulkanObject();
 
-	virtual void setTexture( int unit, Image* texture );
+	virtual void setTexture( Instance* Instance, int unit, Image* texture );
 	virtual void UpdateVertices( Instance* instance, Vertex* verts, uint32_t offset, uint32_t count );
 	virtual void UploadMatrix( Instance* instance );
 

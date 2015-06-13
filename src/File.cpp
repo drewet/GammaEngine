@@ -17,9 +17,9 @@
  *
  */
 
+#include "Instance.h"
 #include "File.h"
 #include "Debug.h"
-#include "Instance.h"
 #include <errno.h>
 #include <string.h>
 
@@ -52,6 +52,10 @@ File::File( File* side, std::string filename, File::MODE mode )
 	, mMode( mode )
 {
 	fDebug( side, filename, mode );
+
+	if ( filename.length() <= 0 ) {
+		((int*)0)[0] = 0;
+	}
 
 	std::string path = side->mPath.substr( 0, side->mPath.rfind( "/" ) + 1 ) + filename;
 
@@ -159,9 +163,8 @@ uint64_t File::Read( void* buf, uint64_t len )
 		memcpy( buf, &mBuffer[mOffset], len );
 		ret = len;
 	} else if ( mType == FILE ) {
-		ret = mStream->tellg();
 		mStream->read( (char*)buf, len );
-		ret = (uint64_t)mStream->tellg() - ret;
+		ret = mStream->gcount();
 	}
 
 	return ret;

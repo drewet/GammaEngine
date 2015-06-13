@@ -69,10 +69,10 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 
 	XWindowAttributes attribs;
 	XGetWindowAttributes( mDisplay, RootWindow( mDisplay, mScreen ), &attribs );
-	if ( mWidth < 0 ) {
+	if ( width < 0 ) {
 		mWidth = attribs.width;
 	}
-	if ( mHeight < 0 ) {
+	if ( height < 0 ) {
 		mHeight = attribs.height;
 	}
 
@@ -127,13 +127,13 @@ BaseWindow::~BaseWindow()
 }
 
 
-int BaseWindow::width()
+uint32_t BaseWindow::width()
 {
 	return mWidth;
 }
 
 
-int BaseWindow::height()
+uint32_t BaseWindow::height()
 {
 	return mHeight;
 }

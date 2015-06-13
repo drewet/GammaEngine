@@ -66,10 +66,22 @@ static inline std::string className(const std::string& prettyFunction)
 	size_t end = colons - begin;
 	return prettyFunction.substr(begin,end);
 }
+#include "Instance.h"
+using namespace GE;
+
+#pragma GCC system_header // HACK Disable unused-function warnings
+static std::string self_thread() {
+	if ( pthread_self() != Instance::baseThread() ) {
+		std::stringstream ret;
+		ret << "[0x" << std::hex << pthread_self() << std::dec << "] ";
+		return ret.str();
+	}
+	return "";
+}
 
 #define __CLASS_NAME__ className(__PRETTY_FUNCTION__)
 
-#define gDebug() Debug() << __CLASS_NAME__ << "::" << __FUNCTION__ << "() "
+#define gDebug() Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << "() "
 // #define fDebug( x ) Debug() << __CLASS_NAME__ << "::" << __FUNCTION__ << "( " << x << " )\n"
 
 #pragma GCC system_header // HACK Disable unused-function warnings
@@ -101,12 +113,12 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 	fDebug_base( end, false, args... );
 }
 
-#define fDebug( args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "( " << std::flush; fDebug_base( ")\n", true, args )
-#define fDebug0() std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << "()\n" << std::flush
+#define fDebug( args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << "( " << std::flush; fDebug_base( ")\n", true, args )
+#define fDebug0() std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << "()\n" << std::flush
 
-#define aDebug( name, args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
+#define aDebug( name, args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
 
-#define vDebug( name, args... ) std::cout << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); std::cout << ""
+#define vDebug( name, args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); std::cout << ""
 
 #endif // __DBG_CLASS
 

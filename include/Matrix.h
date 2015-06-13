@@ -31,6 +31,7 @@ public:
 
 	void Identity();
 	void Perspective( float fov, float aspect, float zNear, float zFar );
+	void Orthogonal( float left, float right, float bottom, float top, float zNear, float zFar );
 	void LookAt( const Vector3f& eye, const Vector3f& center, const Vector3f& up );
 	
 	void Translate( const Vector3f& v );

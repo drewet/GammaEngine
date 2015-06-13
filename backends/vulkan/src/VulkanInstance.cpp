@@ -250,3 +250,10 @@ void VulkanInstance::UpdateDescriptorSet( VK_DESCRIPTOR_SET descriptorSet, VK_ME
 	memoryViewAttachInfo->format.numericFormat = VK_NUM_FMT_FLOAT;
 	vkAttachMemoryViewDescriptors( descriptorSet, 3, 1, memoryViewAttachInfo );
 }
+
+
+uint64_t VulkanInstance::ReferenceImage( Image* image )
+{
+	// TODO
+	return 0;
+}

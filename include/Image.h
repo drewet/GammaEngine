@@ -36,21 +36,25 @@ class Image
 {
 public:
 	Image();
+	Image( File* file, const std::string& extension = "", Instance* instance = nullptr );
 	Image( const std::string filename, Instance* instance = nullptr );
 	~Image();
 
 	uint32_t width();
 	uint32_t height();
 	uint32_t* data();
+	uint64_t serverReference( Instance* instance );
 
 	static ImageLoader* AddImageLoader( ImageLoader* loader );
 
 protected:
+	void Load(  File* file, const std::string& extension, Instance* instance );
 	uint32_t mWidth;
 	uint32_t mHeight;
 	uint32_t* mData;
 
 	std::map< std::pair< Instance*, int >, VK_MEMORY_REF > mVkRefs;
+	std::map< Instance*, uint64_t > mServerRefs;
 
 	static std::vector< ImageLoader* > mImageLoaders;
 };

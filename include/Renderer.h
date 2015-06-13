@@ -36,7 +36,9 @@ public:
 	virtual ~Renderer(){};
 
 	virtual int LoadVertexShader( const std::string& file ) = 0;
+	virtual int LoadVertexShader( const void* data, size_t size ) = 0;
 	virtual int LoadFragmentShader( const std::string& file ) = 0;
+	virtual int LoadFragmentShader( const void* data, size_t size ) = 0;
 	virtual void setRenderMode( int mode ) = 0;
 
 	virtual void AddObject( Object* obj ) = 0;

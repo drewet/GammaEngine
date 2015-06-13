@@ -7,10 +7,10 @@
 #define geTexture2D(x) sampler2D( ge_Textures[ ge_TextureBase + x ].xy )
 #define geTexture3D(x) sampler3D( ge_Textures[ ge_TextureBase + x ].xy )
 
-layout(location = 0) in vec3 ge_VertexTexcoord;
+layout(location = 0) in vec4 ge_VertexTexcoord;
 layout(location = 1) in vec4 ge_VertexColor;
-layout(location = 2) in vec3 ge_VertexNormal;
-layout(location = 3) in vec3 ge_VertexPosition;
+layout(location = 2) in vec4 ge_VertexNormal;
+layout(location = 3) in vec4 ge_VertexPosition;
 layout(location = 7 /* 8 9 10 */) in mat4 ge_ObjectMatrix;
 layout(location = 11) in int ge_TextureBase;
 
@@ -31,15 +31,26 @@ layout (binding=2, std140) uniform ge_Textures_0
 
 flat out sampler2D ge_Texture0;
 flat out int ge_Texture0Base;
+flat out float ge_HasTexture;
 out vec4 ge_Color;
 out vec3 ge_TextureCoord;
+out vec3 ge_Normal;
+out vec3 ge_Position;
 
 void main()
 {
+	if ( ge_Textures[ ge_TextureBase + 0 ].xy != uvec2(0) ) {
+		ge_HasTexture = 1.0;
+	} else {
+		ge_HasTexture = 0.0;
+	}
 	ge_Texture0Base = ge_TextureBase;
 	ge_Texture0 = geTexture2D(0);
 	ge_Color = ge_VertexColor;
-	ge_TextureCoord = ge_VertexTexcoord;
+	ge_TextureCoord = ge_VertexTexcoord.xyz;
+	ge_Normal = ge_VertexNormal.xyz;
 
-	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition, 1.0);
+	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition.xyz, 1.0);
+// 	ge_Position = ( ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition, 1.0) ).xyz;
+	ge_Position = (ge_ObjectMatrix * vec4(ge_VertexPosition.xyz, 1.0)).xyz;
 }

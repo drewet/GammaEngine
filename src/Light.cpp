@@ -21,12 +21,27 @@
 
 using namespace GE;
 
-Light::Light( Type type, const Vector3f& position, const Vector3f& direction, float angle )
-	: mType( type )
-	, mPosition( position )
-	, mDirection( direction )
-	, mAngle( angle )
+Light::Light( const Vector4f& color, const Vector3f& position, float attenuation )
+	: mType( Point )
+	, mColor( color )
+	, mPosition( new Vector3f( position ) )
+	, mInnerAngle( 360.0f )
+	, mOuterAngle( 360.0f )
+	, mAttenuation( attenuation )
 {
+}
+
+
+Light::Light( const Vector4f& color, const Vector3f& position, const Vector3f& direction, float innerAngle, float outerAngle, float attenuation )
+	: mType( Spot )
+	, mColor( color )
+	, mPosition( new Vector3f( position ) )
+	, mDirection( direction )
+	, mInnerAngle( innerAngle )
+	, mOuterAngle( outerAngle )
+	, mAttenuation( attenuation )
+{
+	mDirection.normalize();
 }
 
 
@@ -35,25 +50,57 @@ Light::~Light()
 }
 
 
-Light::Type Light::type()
+Light::Type Light::type() const
 {
 	return mType;
 }
 
 
-const Vector3f& Light::position()
+const Vector4f& Light::color() const
 {
-	return mPosition;
+	return mColor;
 }
 
 
-const Vector3f& Light::direction()
+const Vector3f& Light::position() const
+{
+	return *mPosition;
+}
+
+
+const Vector3f& Light::direction() const
 {
 	return mDirection;
 }
 
 
-float Light::angle()
+float Light::attenuation() const
 {
-	return mAngle;
+	return mAttenuation;
+}
+
+
+float Light::innerAngle() const
+{
+	return mInnerAngle;
+}
+
+
+float Light::outerAngle() const
+{
+	return mOuterAngle;
+}
+
+
+void Light::setPosition( const Vector3f& pos )
+{
+	mPosition->x = pos.x;
+	mPosition->y = pos.y;
+	mPosition->z = pos.z;
+}
+
+
+void Light::setPositionPointer( Vector3f* ptr )
+{
+	mPosition = ptr;
 }

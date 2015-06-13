@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef VULKANRENDERER_H
-#define VULKANRENDERER_H
+#ifndef OPENGL43RENDERER_H
+#define OPENGL43RENDERER_H
 
 #include <vector>
 #include "Renderer.h"
@@ -55,7 +55,9 @@ public:
 	~OpenGL43Renderer();
 
 	virtual int LoadVertexShader( const std::string& file );
+	virtual int LoadVertexShader( const void* data, size_t size );
 	virtual int LoadFragmentShader( const std::string& file );
+	virtual int LoadFragmentShader( const void* data, size_t size );
 	virtual void setRenderMode( int mode );
 
 	virtual void AddObject( Object* obj );
@@ -65,7 +67,7 @@ public:
 	virtual void Draw();
 	virtual void Look( Camera* cam );
 
-private:
+protected:
 	uint8_t* loadShader( const std::string& filename, size_t* sz = 0 );
 	void createPipeline();
 
@@ -96,4 +98,4 @@ private:
 	uint32_t mTexturesID;
 };
 
-#endif // VULKANRENDERER_H
+#endif // OPENGL43RENDERER_H

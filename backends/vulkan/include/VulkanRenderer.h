@@ -40,8 +40,10 @@ public:
 	VulkanRenderer( Instance* instance = nullptr );
 	~VulkanRenderer();
 
-	int LoadVertexShader( const std::string& file );
-	int LoadFragmentShader( const std::string& file );
+	virtual int LoadVertexShader( const std::string& file );
+	virtual int LoadVertexShader( const void* data, size_t size );
+	virtual int LoadFragmentShader( const std::string& file );
+	virtual int LoadFragmentShader( const void* data, size_t size );
 	void setRenderMode( int mode );
 
 	void AddObject( Object* obj );

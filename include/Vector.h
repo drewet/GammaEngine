@@ -38,6 +38,7 @@ public:
 	Vector( const Vector<T,3>& v, T a = 0 ) : x(v.x), y(v.y), z(v.z), w(a) {}
 	Vector(T a, const Vector<T,3>& v ) : x(a), y(v.x), z(v.y), w(v.z) {}
 	Vector( const Vector<T,4>& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+	Vector( float* v ) : x(v[0]), y(v[1]), z(v[2]), w(v[3]) {}
 
 	void normalize();
 	T length();

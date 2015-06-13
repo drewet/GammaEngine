@@ -17,8 +17,9 @@
  *
  */
 
-#include "Debug.h"
+#include "Instance.h"
 #include "Vector.h"
+#include "Debug.h"
 #include <cmath>
 
 namespace GE {

@@ -45,6 +45,8 @@ public:
 	virtual uint64_t colorImage();
 
 	virtual void ReadKeys( bool* keys );
+	virtual uint64_t CreateSharedContext();
+	virtual void BindSharedContext( uint64_t ctx );
 
 private:
 	void InitPresentableImage();

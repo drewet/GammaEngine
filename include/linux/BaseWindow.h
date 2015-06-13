@@ -47,8 +47,8 @@ public:
 	BaseWindow( Instance* instance, const std::string& title, int width, int height, uint32_t flags );
 	~BaseWindow();
 
-	int width();
-	int height();
+	uint32_t width();
+	uint32_t height();
 	Vector2i& cursor();
 	Vector2i& cursorWarp();
 
@@ -58,8 +58,8 @@ protected:
 	void pEventThread();
 
 	Instance* mInstance;
-	int mWidth;
-	int mHeight;
+	uint32_t mWidth;
+	uint32_t mHeight;
 	bool mHasResized;
 	uint64_t mWindow;
 	std::thread* mEventThread;

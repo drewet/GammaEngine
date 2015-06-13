@@ -38,35 +38,63 @@ Image::Image()
 }
 
 
+Image::Image( File* file, const std::string& extension, Instance* instance )
+	: Image()
+{
+	if ( !instance ) {
+		instance = Instance::baseInstance();
+	}
+	Load( file, extension, instance );
+}
+
+
 Image::Image( const std::string filename, Instance* instance )
 	: Image()
 {
 	if ( !instance ) {
 		instance = Instance::baseInstance();
 	}
-	ImageLoader* loader = nullptr;
 	File* file = new File( filename, File::READ );
-
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
-	std::string first_line = file->ReadLine();
-	std::transform( first_line.begin(), first_line.end(), first_line.begin(), ::tolower );
+
+	Load( file, extension, instance );
+
+	delete file;
+}
+
+
+Image::~Image()
+{
+}
+
+
+void Image::Load( File* file, const std::string& extension, Instance* instance )
+{
+	ImageLoader* loader = nullptr;
+
+// 	std::string first_line = file->ReadLine();
+	char first_line[32];
 	file->Rewind();
-	uint32_t file_magic = 0;
-	file->Read( &file_magic, sizeof(file_magic) );
+	file->Read( first_line, sizeof(first_line) );
+// 	std::transform( first_line.begin(), first_line.end(), first_line.begin(), ::tolower );
 	file->Rewind();
 
 	for ( size_t i = 0; i < mImageLoaders.size(); i++ ) {
 		std::vector< std::string > patterns = mImageLoaders.at(i)->contentPatterns();
 		for ( size_t j = 0; j < patterns.size(); j++ ) {
 			std::string test_case = patterns[j];
-			std::transform( test_case.begin(), test_case.end(), test_case.begin(), ::tolower );
-			if ( first_line.find( test_case ) ) {
-				loader = mImageLoaders.at(i);
+// 			std::transform( test_case.begin(), test_case.end(), test_case.begin(), ::tolower );
+// 			if ( first_line.find( test_case ) ) {
+			for ( size_t k = 0; k < sizeof(first_line)-test_case.length(); k++ ) {
+				if ( !memcmp( first_line + k, test_case.c_str(), test_case.length() ) ) {
+					loader = mImageLoaders.at(i);
+					break;
+				}
 			}
 		}
 	}
 
-	if ( !loader ) {
+	if ( !loader && extension.length() > 0 ) {
 		for ( size_t i = 0; i < mImageLoaders.size(); i++ ) {
 			std::vector< std::string > extensions = mImageLoaders.at(i)->extensions();
 			for ( size_t j = 0; j < extensions.size(); j++ ) {
@@ -85,15 +113,8 @@ Image::Image( const std::string filename, Instance* instance )
 		loader->Load( instance, file );
 		*this = static_cast< Image >( *loader );
 		delete loader;
-		gDebug() << "Image loaded, size = " << mWidth << " x " << mHeight << "\n";
+// 		gDebug() << "Image loaded, size = " << mWidth << " x " << mHeight << "\n";
 	}
-
-	delete file;
-}
-
-
-Image::~Image()
-{
 }
 
 
@@ -112,6 +133,17 @@ uint32_t Image::height()
 uint32_t* Image::data()
 {
 	return mData;
+}
+
+
+uint64_t Image::serverReference( Instance* instance )
+{
+	if ( mServerRefs.find( instance ) != mServerRefs.end() ) {
+		return mServerRefs[ instance ];
+	}
+	uint64_t ref = instance->ReferenceImage( this );
+	mServerRefs.insert( std::make_pair( instance, ref ) );
+	return ref;
 }
 
 
