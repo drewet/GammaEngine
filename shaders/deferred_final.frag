@@ -27,11 +27,12 @@ void main()
 {
 	vec2 screenSize = textureSize( ge_Texture0, 0 ).xy;
 	vec2 texcoords = gl_FragCoord.xy / screenSize;
+	float depth = float(texture2D(ge_Texture1, texcoords.st).r) / 65535.0;
+	gl_FragDepth = depth;
 
 	if ( ge_LightAttenuation < 0.0 ) {
 		gl_FragColor = ge_Color * texture2D( ge_Texture0, texcoords );
 	} else {
-		float depth = float(texture2D(ge_Texture1, texcoords.st).r) / 65535.0;
 		if ( depth > gl_FragCoord.z ) {
 // 			discard;
 		}
@@ -55,7 +56,7 @@ void main()
 			}
 			gl_FragColor.a = scene_color.a;
 		}
-// 		gl_FragColor += vec4(0.1);
+//		gl_FragColor += vec4(0.1);
 	}
 
 }

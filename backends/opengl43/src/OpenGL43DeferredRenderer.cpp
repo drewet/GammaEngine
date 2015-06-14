@@ -47,7 +47,7 @@ OpenGL43DeferredRenderer::OpenGL43DeferredRenderer( Instance* instance, uint32_t
 	LoadFragmentShader( "shaders/deferred_final.frag" );
 
 	MeshBuilder builder( MeshBuilder::Sphere );
-	builder.GenerateVertexArray( mInstance, &mSphereVertices, &mSphereVerticesCount );
+	builder.GenerateIndexedVertexArray( mInstance, &mSphereVertices, &mSphereVerticesCount, &mSphereIndices, &mSphereIndicesCount, true );
 
 	mMatrixProjection->Identity();
 	mMatrixProjection->Perspective( 60.0f, 16.0f / 9.0f, 0.01f, 1000.0f );
@@ -153,6 +153,7 @@ float LightRadius( const Light* light )
 void OpenGL43DeferredRenderer::ComputeCommandList()
 {
 	std::vector< Vertex > vertices;
+	std::vector< uint32_t > indices;
 	uint32_t nSphereLights = 0;
 	uint32_t nConeLights = 0;
 	uint32_t lightsDataCount = 0;
@@ -252,25 +253,35 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 	quad[0].color[2] = quad[1].color[2] = quad[2].color[2] = quad[3].color[2] = quad[4].color[2] = quad[5].color[2] = 1.0f;
 	quad[0].color[3] = quad[1].color[3] = quad[2].color[3] = quad[3].color[3] = quad[4].color[3] = quad[5].color[3] = 1.0f;
 
-	DrawArraysIndirectCommand direct_commands[] = {
+	DrawElementsIndirectCommand direct_commands[] = {
 		{
-			.count = mSphereVerticesCount,
+			.count = mSphereIndicesCount,
 			.instanceCount = nSphereLights,
-			.firstVertex = 6,
+			.firstIndex = 6,
+			.baseVertex = 6,
 			.baseInstance = 1,
 		},
 		{
 // 			.count = mConeVerticesCount,
-			.count = mSphereVerticesCount,
+			.count = mSphereIndicesCount,
 			.instanceCount = nConeLights,
-// 			.firstVertex = 6 + mSphereVerticesCount,
-			.firstVertex = 6,
-			.baseInstance = nSphereLights+1,
+// 			.firstIndex = 6 + mSphereIndicesCount,
+			.firstIndex = 6,
+//			.baseVertex = 6 + mSphereVerticesCount,
+			.baseVertex = 6,
+			.baseInstance = 1 + nSphereLights,
 		},
 		
 	};
-	vertices.insert( vertices.end(), quad, quad + 6 );
+	vertices.insert( vertices.end(), quad, &quad[6] );
 	vertices.insert( vertices.end(), mSphereVertices, &mSphereVertices[mSphereVerticesCount] );
+	indices.emplace_back( 0 );
+	indices.emplace_back( 1 );
+	indices.emplace_back( 2 );
+	indices.emplace_back( 3 );
+	indices.emplace_back( 4 );
+	indices.emplace_back( 5 );
+	indices.insert( indices.end(), mSphereIndices, &mSphereIndices[mSphereIndicesCount] );
 // 	vertices.insert( vertices.end(), mConeVertices, mConeVertices + mConeVerticesCount );
 
 
@@ -283,6 +294,11 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW );
 	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(Vertex) * vertices.size() );
+
+	glGenBuffers( 1, &mIBO );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, mIBO );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * indices.size(), indices.data(), GL_STATIC_DRAW );
+	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(uint32_t) * indices.size() );
 
 	mLightsDataIDi = 0;
 	glGenVertexArrays( 2, mVAOs );
@@ -307,6 +323,7 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
 		((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(LightData) * lightsDataCount );
 
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, mIBO );
 		glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 
 		glEnableVertexAttribArray( 0 );
@@ -334,6 +351,12 @@ void OpenGL43DeferredRenderer::Bind()
 	glDrawBuffers( 4, buffers );
 	glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+}
+
+
+void OpenGL43DeferredRenderer::Unbind()
+{
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 }
 
 
@@ -425,7 +448,8 @@ void OpenGL43DeferredRenderer::Render()
 	mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
 	glBindBuffer( GL_UNIFORM_BUFFER, mMatrixProjectionID );
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, mMatrixProjection->data() );
-	glDrawArrays( GL_TRIANGLES, 0, 6 );
+//	glDrawArrays( GL_TRIANGLES, 0, 6 );
+	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr );
 
 	mMatrixProjection->Identity();
 	mMatrixProjection->Perspective( 60.0f, (float)mWidth / (float)mHeight, 0.01f, 1000.0f );
@@ -434,11 +458,10 @@ void OpenGL43DeferredRenderer::Render()
 
 	glDisable( GL_DEPTH_TEST );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-	glCullFace( GL_FRONT );
 	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, mCommandBuffer );
-	glMultiDrawArraysIndirect( GL_TRIANGLES, nullptr, 2, 0 );
+//	glMultiDrawArraysIndirect( GL_TRIANGLES, nullptr, 2, 0 );
+	glMultiDrawElementsIndirect( GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, 2, 0 );
 	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, 0 );
-	glCullFace( GL_BACK );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	glEnable( GL_DEPTH_TEST );
 
@@ -446,6 +469,7 @@ void OpenGL43DeferredRenderer::Render()
 	glUseProgram( 0 );
 	glActiveTexture( GL_TEXTURE0 );
 	mRenderMutex.unlock();
+	glBindFramebuffer( GL_FRAMEBUFFER, mFBO );
 }
 
 

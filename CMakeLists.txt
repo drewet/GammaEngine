@@ -28,6 +28,7 @@ set(SOURCES
 	src/PhysicalBody.cpp
 	src/PhysicalGraph.cpp
 	src/PhysicalCollider.cpp
+	src/SkyRenderer.cpp
 	src/MeshBuilder.cpp
 	src/Object.cpp
 	src/ObjectLoaderObj.cpp

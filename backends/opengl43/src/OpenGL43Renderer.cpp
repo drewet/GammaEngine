@@ -87,6 +87,12 @@ OpenGL43Renderer::~OpenGL43Renderer()
 }
 
 
+Matrix* OpenGL43Renderer::projectionMatrix()
+{
+	return mMatrixProjection;
+}
+
+
 int OpenGL43Renderer::LoadVertexShader( const void* data, size_t size )
 {
 	mReady = false;

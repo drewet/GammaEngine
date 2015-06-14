@@ -17,6 +17,7 @@
  *
  */
 
+#include <string.h>
 #include "Vertex.h"
 
 namespace GE {
@@ -27,6 +28,12 @@ Vertex::Vertex( const Vector3f& pos, const Vector4f& color, const Vector3f& norm
 	, nx( normal.x ), ny( normal.y ), nz( normal.z ), _align2( 0.0f )
 	, x( pos.x ), y( pos.y ), z( pos.z ), weight( 0.0f )
 {
+}
+
+
+bool Vertex::operator==( const Vertex& other ) const
+{
+	return memcmp( this, &other, sizeof( Vertex ) ) == 0;
 }
 
 

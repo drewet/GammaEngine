@@ -17,6 +17,7 @@
 #include "Thread.h"
 #include "Light.h"
 #include "DeferredRenderer.h"
+#include "SkyRenderer.h"
 #include "Debug.h"
 
 using namespace GE;
@@ -53,9 +54,9 @@ int main( int argc, char** argv )
 	LightsThread* thread = new LightsThread( window );
 
 	std::list< Object* > scene_objects = Object::LoadObjects( "scene/street.obj", instance );
+//	std::list< Object* > scene_objects = Object::LoadObjects( "scene/city.obj", instance );
 
 	Object* cube = instance->LoadObject( "scene/cube.obj" );
-// 	Object* cube2 = instance->LoadObject( "scene/street.obj" );
 
 	Image* texture = new Image( "scene/texture.png" );
 	cube->setTexture( instance, 0, texture );
@@ -94,10 +95,6 @@ int main( int argc, char** argv )
 	}
 	renderer->Compute();
 
-// 	pthread_t thread;
-// 	pthread_create( &thread, nullptr, (void*(*)(void*))thread_entry, &scene_objects );
-// 	pthread_create( &thread, nullptr, (void*(*)(void*))thread_entry, lights );
-
 	Renderer2D* renderer2d = instance->CreateRenderer2D();
 	renderer2d->AssociateSize( window );
 
@@ -115,6 +112,8 @@ int main( int argc, char** argv )
 	deferredRenderer->AddLight( light2 );
 	deferredRenderer->AddLight( light3 );
 	deferredRenderer->AddLight( light4 );
+
+	SkyRenderer* sky = new SkyRenderer( instance, 100000.0f );
 
 	thread->deferredRenderer = deferredRenderer;
 	thread->lights = lights;
@@ -172,6 +171,8 @@ int main( int argc, char** argv )
 		scene->Draw( camera );
 		deferredRenderer->Look( camera );
 		deferredRenderer->Render();
+		deferredRenderer->Unbind();
+		sky->Render( camera );
 
  //		renderer2d->Draw( 0, 0, texture );
 

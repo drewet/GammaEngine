@@ -180,7 +180,8 @@ void ImageLoaderPng::Load( Instance* instance, File* file, uint32_t pref_w, uint
 	for ( y = 0; y < height; y++ ) {
 		png_read_row( png_ptr, ( uint8_t* ) line, nullptr );
 		for ( x = 0; x < width; x++ ) {
-			uint32_t color = line[x/2];
+	//		uint32_t color = line[x/2];
+			uint32_t color = line[x];
 			uint32_t x2, y2;
 			for( y2=( y*mHeight/height ); y2<( ( y+1 )*mHeight/height ); y2++ ){
 				for( x2=( x*mWidth/width ); x2<( ( x+1 )*mWidth/width ); x2++ ){

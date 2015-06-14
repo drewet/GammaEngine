@@ -47,6 +47,8 @@ public:
 	virtual void Compute() = 0;
 	virtual void Draw() = 0;
 	virtual void Look( Camera* cam ) = 0;
+
+	virtual Matrix* projectionMatrix() = 0;
 };
 
 } // namespace GE

@@ -106,13 +106,13 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 
 	std::unordered_map< std::string, uint32_t > elements;
 
-	Vertex* buff = ( Vertex* )instance->Malloc( sizeof( Vertex ) * 1024 * 128 );
+	Vertex* buff = ( Vertex* )instance->Malloc( sizeof( Vertex ) * 1024 * 1024 );
 	uint32_t iBuff = 0;
-	uint32_t maxBuff = 1024 * 128;
+	uint32_t maxBuff = 1024 * 1024;
 
-	uint32_t* indices = ( uint32_t* )instance->Malloc( sizeof( uint32_t ) * 128 * 3 * 256 );
+	uint32_t* indices = ( uint32_t* )instance->Malloc( sizeof( uint32_t ) * 128 * 3 * 1024 );
 	uint32_t iIndices = 0;
-	uint32_t maxIndices = 128 * 3 * 256;
+	uint32_t maxIndices = 128 * 3 * 1024;
 
 	while ( file->ReadLine( line ) )
 	{
@@ -228,12 +228,28 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 					tokenizer2.clear();
 					tokenizer2.str( str );
 					while(std::getline( tokenizer2, str2, '/') ) {
-						point_indexes[p] = std::stoi( str2 ) - 1;
+						if ( str2.length() <= 0 ) {
+							point_indexes[p] = -1;
+						} else {
+							point_indexes[p] = std::stoi( str2 ) - 1;
+						}
 // 						printf("  point_indexes[%d] = %d\n", p, point_indexes[p]);
 						p++;
 					}
 					if ( p == 3 ) {
-						buff[idx] = Vertex( verts[point_indexes[0]], mat->diffuse, norms[point_indexes[2]], tex[point_indexes[1]] );
+						Vector3f ppos;
+						Vector3f ptex;
+						Vector3f pnorm;
+						if ( point_indexes[0] >= 0 ) {
+							ppos = verts[point_indexes[0]];
+						}
+						if ( point_indexes[2] >= 0 ) {
+							pnorm = norms[point_indexes[2]];
+						}
+						if ( point_indexes[1] >= 0 ) {
+							ptex = tex[point_indexes[1]];
+						}
+						buff[idx] = Vertex( ppos, Vector4f(mat->diffuse), pnorm, ptex );
 						buff[idx].v = -buff[idx].v;
 					}
 
@@ -336,6 +352,7 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 		tokenizer.clear();
 		tokenizer.str( line );
 
+		type = "";
 		tokenizer >> type;
 
 		if ( type == "mtllib" ) {
@@ -475,6 +492,7 @@ void ObjectLoaderObj::LoadMaterials( Instance* instance, File* base_file, std::s
 		tokenizer.clear();
 		tokenizer.str( line );
 
+		type = "";
 		tokenizer >> type;
 
 		if ( type == "newmtl" ) {
@@ -486,6 +504,7 @@ void ObjectLoaderObj::LoadMaterials( Instance* instance, File* base_file, std::s
 
 		if ( type == "Tr" ) {
 			tokenizer >> alpha;
+			alpha = 1.0f - alpha;
 		}
 
 		if ( type == "Ka" ) {

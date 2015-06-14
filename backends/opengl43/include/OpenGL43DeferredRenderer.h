@@ -48,6 +48,7 @@ public:
 
 	virtual void Compute();
 	virtual void Bind();
+	virtual void Unbind();
 	virtual void Render();
 	virtual void Look( Camera* cam );
 
@@ -72,6 +73,8 @@ private:
 
 	Vertex* mSphereVertices;
 	uint32_t mSphereVerticesCount;
+	uint32_t* mSphereIndices;
+	uint32_t mSphereIndicesCount;
 
 	std::mutex mRenderMutex;
 	uint32_t mLightsDataIDi;

@@ -17,12 +17,15 @@
  *
  */
 
+#include <unordered_map>
 #include "MeshBuilder.h"
 #include "Instance.h"
 
 using namespace GE;
 
 MeshBuilder::MeshBuilder( BaseType basetype, const Vector3f& size, int tesslevel )
+	: mBaseType( basetype )
+	, mSize( size )
 {
 	if ( basetype == Sphere ) {
 		const Vector3f icosahedron[12] = {
@@ -59,6 +62,21 @@ MeshBuilder::MeshBuilder( BaseType basetype, const Vector3f& size, int tesslevel
 		mFaces.emplace_back( Face( icosahedron[1], icosahedron[8], icosahedron[10] ) );
 		mFaces.emplace_back( Face( icosahedron[6], icosahedron[1], icosahedron[3] ) );
 		mFaces.emplace_back( Face( icosahedron[11], icosahedron[7], icosahedron[5] ) );
+		for ( size_t i = 0; i < mFaces.size(); i++ ) {
+			Vector3f p0 = mFaces[i].p0();
+			Vector3f p1 = mFaces[i].p1();
+			Vector3f p2 = mFaces[i].p2();
+			p0.x *= size.x;
+			p0.y *= size.y;
+			p0.z *= size.z;
+			p1.x *= size.x;
+			p1.y *= size.y;
+			p1.z *= size.z;
+			p2.x *= size.x;
+			p2.y *= size.y;
+			p2.z *= size.z;
+			mFaces[i] = Face( p0, p1, p2 );
+		}
 		for ( int i = 0; i < tesslevel; i++ ) {
 			Tesselate( Normalize );
 		}
@@ -89,6 +107,20 @@ void MeshBuilder::Tesselate( MeshBuilder::TesselationMethod method )
 		Vector3f p01 = ( p0 + p1 ) * 0.5f;
 		Vector3f p12 = ( p1 + p2 ) * 0.5f;
 		Vector3f p02 = ( p0 + p2 ) * 0.5f;
+		if ( method == Normalize ) {
+			p01.normalize();
+			p12.normalize();
+			p02.normalize();
+			p01.x *= mSize.x;
+			p01.y *= mSize.y;
+			p01.z *= mSize.z;
+			p12.x *= mSize.x;
+			p12.y *= mSize.y;
+			p12.z *= mSize.z;
+			p02.x *= mSize.x;
+			p02.y *= mSize.y;
+			p02.z *= mSize.z;
+		}
 		newFaces.emplace_back( Face( p0, p01, p02 ) );
 		newFaces.emplace_back( Face( p01, p1, p12 ) );
 		newFaces.emplace_back( Face( p01, p12, p02 ) );
@@ -111,4 +143,76 @@ void MeshBuilder::GenerateVertexArray( Instance* instance, Vertex** verts, uint3
 
 	*verts = ret;
 	*nVerts = mFaces.size() * 3;
+}
+
+
+struct VertexHasher
+{
+	std::size_t operator()(const Vertex& k) const
+	{
+		using std::size_t;
+		using std::hash;
+		using std::string;
+
+		std::size_t a = ((hash<float>()(k.x) ^ (hash<float>()(k.y) << 1)) >> 1) ^ ((hash<float>()(k.z) ^ (hash<int>()(k.weight) << 1)) >> 1);
+		std::size_t b = ((hash<float>()(k.color[0]) ^ (hash<float>()(k.color[1]) << 1)) >> 1) ^ ((hash<float>()(k.color[2]) ^ (hash<int>()(k.color[3]) << 1)) >> 1);
+		std::size_t c = ((hash<float>()(k.u) ^ (hash<float>()(k.v) << 1)) >> 1) ^ ((hash<float>()(k.w) ^ (hash<int>()(k._align1) << 1)) >> 1);
+		std::size_t d = ((hash<float>()(k.nx) ^ (hash<float>()(k.ny) << 1)) >> 1) ^ ((hash<float>()(k.nz) ^ (hash<int>()(k._align2) << 1)) >> 1);
+		return a ^ ((b << 1) >> 1) ^ ((c << 1) >> 2) ^ (d << 1);
+	}
+};
+
+
+void MeshBuilder::GenerateIndexedVertexArray( Instance* instance, Vertex** pVertices, uint32_t* nVerts, uint32_t** pIndices, uint32_t* nIndices, bool invert_faces )
+{
+	/*
+	std::vector< Vertex > vertices;
+	std::vector< uint32_t > indices;
+	std::unordered_map< Vertex, uint32_t, VertexHasher > elements;
+
+	for ( size_t i = 0; i < mFaces.size(); i++ ) {
+		size_t start = invert_faces ? 2 : 0;
+		size_t end = invert_faces ? 0 : 2;
+		size_t incr = invert_faces ? -1 : 1;
+		for ( size_t j = start; j != end; j += incr ) {
+			Vertex vertex = Vertex( mFaces[i].p(j) );
+			uint32_t idx = 0;
+			if ( elements.find( vertex ) != elements.end() ) {
+				idx = elements[ vertex ];
+			} else {
+				idx = vertices.size();
+				vertices.emplace_back( vertex );
+				elements.insert( std::make_pair( vertex, idx ) );
+			}
+			indices.emplace_back( idx );
+		}
+	}
+*/
+	std::vector< Vertex > vertices;
+	std::vector< uint32_t > indices;
+
+	for ( size_t i = 0; i < mFaces.size(); i++ ) {
+		for ( size_t j = 0; j < 3; j++ ) {
+			Vertex vertex = Vertex( mFaces[i].p( invert_faces * ( 2 - j ) + !invert_faces * j ) );
+			int64_t idx = -1;
+			for ( size_t k = 0; k < vertices.size(); k++ ) {
+				if ( vertices[k] == vertex ) {
+					idx = k;
+					break;
+				}
+			}
+			if ( idx < 0 ) {
+				idx = vertices.size();
+				vertices.emplace_back( vertex );
+			}
+			indices.emplace_back( idx );
+		}
+	}
+	
+	*pVertices = (Vertex*)instance->Malloc( sizeof(Vertex) * vertices.size() );
+	*pIndices = (uint32_t*)instance->Malloc( sizeof(uint32_t) * indices.size() );
+	memcpy( *pVertices, vertices.data(), sizeof(Vertex) * vertices.size() );
+	memcpy( *pIndices, indices.data(), sizeof(uint32_t) * indices.size() );
+	*nVerts = vertices.size();
+	*nIndices = indices.size();
 }

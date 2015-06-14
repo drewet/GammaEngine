@@ -48,12 +48,13 @@ public:
 
 	void Tesselate( TesselationMethod method );
 	void GenerateVertexArray( Instance* instance, Vertex** verts, uint32_t* nVerts );
-	void GenerateIndexedVertexArray( Instance* instance, Vertex** verts, uint32_t* nVerts, uint32_t** indices, uint32_t* nIndices );
+	void GenerateIndexedVertexArray( Instance* instance, Vertex** verts, uint32_t* nVerts, uint32_t** indices, uint32_t* nIndices, bool invert_faces = false );
 
 	class Face
 	{
 	public:
 		Face( const Vector3f& p0, const Vector3f& p1, const Vector3f& p2 ) : mp0(p0), mp1(p1), mp2(p2) {}
+		const Vector3f& p(uint32_t i) { return (i == 0) ? mp0 : ( (i == 1) ? mp1 : mp2 ); }
 		const Vector3f& p0() { return mp0; }
 		const Vector3f& p1() { return mp1; }
 		const Vector3f& p2() { return mp2; }
@@ -62,6 +63,8 @@ public:
 	};
 
 protected:
+	BaseType mBaseType;
+	Vector3f mSize;
 	std::vector< Face > mFaces;
 };
 }

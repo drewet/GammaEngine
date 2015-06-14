@@ -77,6 +77,7 @@ void Image::Load( File* file, const std::string& extension, Instance* instance )
 	if ( ImageLoaderFirstCall ) {
 		AddImageLoader( new ImageLoaderPng() );
 		AddImageLoader( new ImageLoaderJpg() );
+		ImageLoaderFirstCall = false;
 	}
 
 // 	std::string first_line = file->ReadLine();

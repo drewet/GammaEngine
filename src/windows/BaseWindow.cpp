@@ -24,14 +24,12 @@
 #include "Instance.h"
 #include "Time.h"
 #include "Input.h"
-#include "gememory.h"
+#include "Debug.h"
 
 #include <windows.h>
 #undef CreateWindow
 
 namespace GE {
-
-static LRESULT CALLBACK sWindowProcedure( HWND window, UINT message, WPARAM wParam, LPARAM lParam );
 
 BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width, int height, uint32_t _flags )
 	: mInstance( instance )
@@ -73,7 +71,7 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 
 	memset( &winClass, 0x0, sizeof(winClass) );
 	winClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-    winClass.lpfnWndProc = sWindowProcedure;
+    winClass.lpfnWndProc = (WNDPROC)BaseWindow::sWindowProcedure;
     winClass.cbClsExtra = 0;
     winClass.cbWndExtra = 0;
     winClass.hInstance = (HINSTANCE)hInstance;
@@ -114,8 +112,10 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 
 	AdjustWindowRectEx( &WindowRect, dwStyle, FALSE, dwExStyle );
 
-	mWindow = (uint64_t)CreateWindowEx( dwExStyle, "GammaEngine", title.c_str(), dwStyle|WS_CLIPSIBLINGS|WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT, WindowRect.right-WindowRect.left, WindowRect.bottom-WindowRect.top, NULL, NULL, (HINSTANCE)hInstance, NULL);
-	
+	gDebug() << "this base : " << (void*)this << "\n";
+
+	mWindow = (uint64_t)CreateWindowEx( dwExStyle, "GammaEngine", title.c_str(), dwStyle|WS_CLIPSIBLINGS|WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT, WindowRect.right-WindowRect.left, WindowRect.bottom-WindowRect.top, NULL, NULL, (HINSTANCE)hInstance, this);
+
 	static	PIXELFORMATDESCRIPTOR pfd;
 	ZeroMemory(&pfd, sizeof (pfd));
 	pfd.nSize = sizeof(pfd);
@@ -163,15 +163,49 @@ Vector2i& BaseWindow::cursorWarp()
 void BaseWindow::SwapBuffersBase()
 {
 	MSG message;
+	POINT point;
+
 	while ( PeekMessage( &message, NULL, 0, 0, PM_REMOVE ) ) {
 		TranslateMessage( &message );
 		DispatchMessage( &message );
 	}
+
+	GetCursorPos( &point );
+	ScreenToClient( (HWND)mWindow, &point );
+	mCursorWarp.x = point.x - mCursor.x;
+	mCursorWarp.y = point.y - mCursor.y;
+	mCursor.x = point.x;
+	mCursor.y = point.y;
 }
 
 
-static LRESULT CALLBACK sWindowProcedure( HWND window, UINT message, WPARAM wParam, LPARAM lParam )
+uintptr_t CALLBACK BaseWindow::sWindowProcedure( uint64_t window, uint64_t message, uint64_t wParam, uint64_t lParam )
 {
+	if ( message == WM_NCCREATE ) {
+		BaseWindow* win = (BaseWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+		SetWindowLongPtr( (HWND)window, GWLP_USERDATA, (uintptr_t)win );
+//		gDebug() << "set Ptr\n";
+	}
+
+	BaseWindow* thiz = (BaseWindow*)GetWindowLongPtr( (HWND)window, GWLP_USERDATA );
+//	gDebug() << "thiz : " << (void*)thiz << "\n";
+	if ( thiz == nullptr ) {
+		return DefWindowProc( (HWND)window, message, wParam, lParam );
+	}
+	return thiz->WindowProcedure( window, message, wParam, lParam);
+}
+
+static int create_counter = 0;
+uintptr_t CALLBACK BaseWindow::WindowProcedure( uint64_t _window, uint64_t _message, uint64_t _wParam, uint64_t _lParam )
+{
+	int key = 0;
+//	fDebug( _window, _message, _wParam, _lParam );
+//	gDebug() << "this : " << (void*)this << "\n";
+
+	HWND window = (HWND)_window;
+	UINT message = _message;
+	WPARAM wParam = _wParam;
+	LPARAM lParam = _lParam;
 /*
 	if(message == WM_SETFOCUS){
 		has_focus = true;
@@ -182,12 +216,12 @@ static LRESULT CALLBACK sWindowProcedure( HWND window, UINT message, WPARAM wPar
 		ShowCursor(true);
 	}
 */
-/*
+
 	if ( message == WM_DESTROY && !mInitializing ) {
 		PostQuitMessage(0);
 		exit(0);
 	}
-*/
+
 /*
 	if ( !mInitializing && message == WM_SIZE ) {
 		if ( lParam != 0 ) {
@@ -209,40 +243,56 @@ static LRESULT CALLBACK sWindowProcedure( HWND window, UINT message, WPARAM wPar
 				last_key = wParam;
 				break;
 */
-	/*
 			case WM_KEYDOWN:
-				last_key = wParam;
+//				last_key = wParam;
+				key = wParam;
+				if ( key >= 'a' && key <= 'z' ) {
+					key += ( 'A' - 'a' );
+				}
+				if ( key < 256 ) {
+					mKeys[key] = true;
+				} else {
+					// TODO
+				}
 				break;
 
 			case WM_KEYUP:
-				last_key = 0;
+//				last_key = 0;
+				key = wParam;
+				if ( key >= 'a' && key <= 'z' ) {
+					key += ( 'A' - 'a' );
+				}
+				if ( key < 256 ) {
+					mKeys[key] = false;
+				} else {
+					// TODO
+				}
 				break;
-	*/
-/*
+
 			case WM_LBUTTONDOWN:
-				keys_pressed[GEK_LBUTTON] = true;
+				mKeys[Input::LBUTTON] = true;
 				break;
 
 			case WM_LBUTTONUP:
-				keys_pressed[GEK_LBUTTON] = false;
+				mKeys[Input::LBUTTON] = false;
 				break;
 
 			case WM_RBUTTONDOWN:
-				keys_pressed[GEK_RBUTTON] = true;
+				mKeys[Input::RBUTTON] = true;
 				break;
 
 			case WM_RBUTTONUP:
-				keys_pressed[GEK_RBUTTON] = false;
+				mKeys[Input::RBUTTON] = false;
 				break;
 
 			case WM_MBUTTONDOWN:
-				keys_pressed[GEK_MBUTTON] = true;
+				mKeys[Input::MBUTTON] = true;
 				break;
 
 			case WM_MBUTTONUP:
-				keys_pressed[GEK_MBUTTON] = false;
+				mKeys[Input::MBUTTON] = false;
 				break;
-			
+/*
 			case WM_MOUSEWHEEL:
 				if(((short)((wParam & 0xFFFF0000) >> 16)) > 0){
 					keys_pressed[GEK_MWHEELUP] = true;

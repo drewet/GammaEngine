@@ -23,7 +23,8 @@
 #include <string>
 #include "Vector.h"
 
-#ifndef BASEWINDOW_CPP
+#ifndef CALLBACK
+	#define CALLBACK __stdcall
 #endif
 
 namespace GE {
@@ -55,6 +56,8 @@ protected:
 	Vector2i mCursorWarp;
 
 private:
+	static uintptr_t CALLBACK sWindowProcedure( uint64_t window, uint64_t message, uint64_t wParam, uint64_t lParam );
+	uintptr_t CALLBACK WindowProcedure( uint64_t window, uint64_t message, uint64_t wParam, uint64_t lParam );
 	bool mInitializing;
 };
 

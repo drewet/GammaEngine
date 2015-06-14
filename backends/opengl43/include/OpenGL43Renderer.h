@@ -67,6 +67,8 @@ public:
 	virtual void Draw();
 	virtual void Look( Camera* cam );
 
+	virtual Matrix* projectionMatrix();
+
 protected:
 	uint8_t* loadShader( const std::string& filename, size_t* sz = 0 );
 	void createPipeline();

@@ -23,7 +23,6 @@ void main()
 	} else {
 		ge_FragColor = ge_Color;
 	}
-	ge_FragColor.a = 1.0;
 
 	ge_FragDepth = uint( gl_FragCoord.z * 65535.0 );
 	ge_FragNormal = ge_Normal * 0.5 + vec3(0.5);

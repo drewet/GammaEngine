@@ -30,6 +30,8 @@ class Vertex
 public:
 	Vertex( const Vector3f& pos = Vector3f(), const Vector4f& color = Vector4f(1,1,1,1), const Vector3f& normal = Vector3f(), const Vector3f& texcoords = Vector3f() );
 
+	bool operator==( const Vertex& other ) const;
+
 // Attributes defined as public for fast access
 public:
 	float u, v, w, _align1;

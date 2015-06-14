@@ -17,38 +17,35 @@
  *
  */
 
-#ifndef DEFERREDRENDERER_H
-#define DEFERREDRENDERER_H
+#ifndef SKYRENDERER_H
+#define SKYRENDERER_H
 
 #include <vector>
-#include "Vector.h"
+#include "Instance.h"
+#include "Renderer.h"
 
 namespace GE {
 
-class Instance;
 class Object;
 class Light;
 class Camera;
-class Matrix;
 
-class DeferredRenderer
+class SkyRenderer
 {
 public:
-	virtual ~DeferredRenderer(){};
+	SkyRenderer( Instance* instance, float domeRadius );
+	~SkyRenderer();
 
-	virtual void AddLight( Light* light ) = 0;
-	virtual void AddSunLight( Light* sun_light ) = 0;
-	virtual void setAmbientColor( const Vector4f& color ) = 0;
+	void AddLight( Light* light );
+	void Render( Camera* cam );
 
-	virtual void Compute() = 0;
-	virtual void Bind() = 0;
-	virtual void Unbind() = 0;
-	virtual void Render() = 0;
-	virtual void Look( Camera* cam ) = 0;
-
-	virtual void Update( Light* light = nullptr ) = 0;
+protected:
+	Renderer* mRenderer;
+	Object* mDome;
+	float mDomeRadius;
+	std::vector< Light* > mLights;
 };
 
 } // namespace GE
 
-#endif // DEFERREDRENDERER_H
+#endif // SKYRENDERER_H
