@@ -4,12 +4,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L../../../libvulkangl/build -std=c++11 
 
 if(WIN32)
 	add_definitions(-DGE_WIN32)
+	include_directories(../../include/windows)
 else()
 	add_definitions(-DGE_LINUX)
+	include_directories(../../include/linux)
 endif()
 
 include_directories(include)
-include_directories(../../include/windows)
 include_directories(../../libvulkangl/include)
 
 add_library(backend_vulkan

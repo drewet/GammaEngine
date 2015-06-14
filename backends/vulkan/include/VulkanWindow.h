@@ -23,7 +23,7 @@
 #include <string>
 
 #include "Window.h"
-#include "linux/BaseWindow.h"
+#include "BaseWindow.h"
 #include <vulkan.h>
 
 namespace GE {

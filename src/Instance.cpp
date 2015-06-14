@@ -92,8 +92,8 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 //		sBackend = LoadLib( "backends/vulkan/backend_vulkan.dll" );
 		sBackend = LoadLib( "backend_opengl43.dll" );
 #elif defined(GE_LINUX)
-// 		sBackend = LoadLib( "build/backends/vulkan/backend_vulkan.so" );
-		sBackend = LoadLib( "build/backends/opengl43/backend_opengl43.so" );
+// 		sBackend = LoadLib( "backend_vulkan.so" );
+		sBackend = LoadLib( "backend_opengl43.so" );
 #endif
 		if ( sBackend == nullptr ) {
 			gDebug() << "Backend loading error : " << LibError() << ")\n";
