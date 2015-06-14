@@ -23,7 +23,7 @@
 #include <string>
 
 #include "Window.h"
-#include "linux/BaseWindow.h"
+#include "BaseWindow.h"
 
 namespace GE {
 	class Instance;

@@ -38,7 +38,7 @@ protected:
 			lights[i]->setPosition( pos );
 		}
 		n += 0.1;
-		deferredRenderer->Update();
+//		deferredRenderer->Update();
 		usleep( 1000000 / 60 );
 		return true;
 	}
