@@ -34,18 +34,18 @@ namespace GE {
 using namespace GE;
 
 typedef struct DrawElementsIndirectCommand {
-	uint count;
-	uint instanceCount;
-	uint firstIndex;
-	uint baseVertex;
-	uint baseInstance;
+	uint32_t count;
+	uint32_t instanceCount;
+	uint32_t firstIndex;
+	uint32_t baseVertex;
+	uint32_t baseInstance;
 } DrawElementsIndirectCommand;
 
 typedef struct DrawArraysIndirectCommand {
-	uint count;
-	uint instanceCount;
-	uint firstVertex;
-	uint baseInstance;
+	uint32_t count;
+	uint32_t instanceCount;
+	uint32_t firstVertex;
+	uint32_t baseInstance;
 } DrawArraysIndirectCommand;
 
 class OpenGL43Renderer : public Renderer

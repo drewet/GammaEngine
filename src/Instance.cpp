@@ -16,14 +16,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+ 
+ 
 
-#include <dlfcn.h>
 
 #include "Instance.h"
 #include "Debug.h"
 
 #ifndef ALIGN
 	#define ALIGN(x, align) (((x)+((align)-1))&~((align)-1))
+#endif
+
+#ifdef GE_WIN32
+	#include <windows.h>
+	#undef CreateWindow
+	void* LoadLib( const char* file ) {
+		return LoadLibrary( file );
+	}
+	void* SymLib( void* lib, const char* name ) {
+		return (void*)GetProcAddress( (HMODULE)lib, name );
+	}
+	const std::string LibError() {
+		DWORD errorMessageID = ::GetLastError();
+		if ( errorMessageID == 0 ) {
+		    return "No error message has been recorded";
+		}
+		LPSTR messageBuffer = nullptr;
+		size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+		std::string message(messageBuffer, size);
+		LocalFree(messageBuffer);
+		return message;
+	}
+#else
+	#include <dlfcn.h>
+	void* LoadLib( const char* file ) {
+		return dlopen( file, RTLD_LAZY );
+	}
+	void* SymLib( void* lib, const char* name ) {
+		return dlsym( lib, name );
+	}
+	const std::string LibError() {
+		return dlerror();
+	}
 #endif
 
 namespace GE {
@@ -52,17 +86,23 @@ void* Instance::backend()
 
 Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance )
 {
+	gDebug() << "aa\n";
 	if ( !sBackend ) {
-// 		sBackend = dlopen( "build/backends/vulkan/backend_vulkan.so", RTLD_LAZY );
-		sBackend = dlopen( "build/backends/opengl43/backend_opengl43.so", RTLD_LAZY );
+#ifdef GE_WIN32
+//		sBackend = LoadLib( "backends/vulkan/backend_vulkan.dll" );
+		sBackend = LoadLib( "backend_opengl43.dll" );
+#elif defined(GE_LINUX)
+// 		sBackend = LoadLib( "build/backends/vulkan/backend_vulkan.so" );
+		sBackend = LoadLib( "build/backends/opengl43/backend_opengl43.so" );
+#endif
 		if ( sBackend == nullptr ) {
-			gDebug() << "Backend loading error : " << dlerror() << ")\n";
+			gDebug() << "Backend loading error : " << LibError() << ")\n";
 			exit(0);
 		}
 	}
 
 	typedef Instance* (*f_type)( const char*, uint32_t );
-	f_type fCreateInstance = (f_type)dlsym( backend(), "CreateInstance" );
+	f_type fCreateInstance = (f_type)SymLib( backend(), "CreateInstance" );
 	if ( easy_instance ) {
 		if ( !mBaseInstance ) {
 			mBaseInstance = fCreateInstance( appName, appVersion );
@@ -81,7 +121,7 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 Window* Instance::CreateWindow( const std::string& title, int width, int height, int flags )
 {
 	typedef Window* (*f_type)( Instance*, const std::string&, int, int, int );
-	f_type fCreateWindow = (f_type)dlsym( backend(), "CreateWindow" );
+	f_type fCreateWindow = (f_type)SymLib( backend(), "CreateWindow" );
 	return fCreateWindow( this, title, width, height, flags );
 }
 
@@ -89,7 +129,7 @@ Window* Instance::CreateWindow( const std::string& title, int width, int height,
 Renderer* Instance::CreateRenderer()
 {
 	typedef Renderer* (*f_type)( Instance* );
-	f_type fCreateRenderer = (f_type)dlsym( backend(), "CreateRenderer" );
+	f_type fCreateRenderer = (f_type)SymLib( backend(), "CreateRenderer" );
 	return fCreateRenderer( this );
 }
 
@@ -97,7 +137,7 @@ Renderer* Instance::CreateRenderer()
 Renderer2D* Instance::CreateRenderer2D( uint32_t width, uint32_t height )
 {
 	typedef Renderer2D* (*f_type)( Instance*, uint32_t, uint32_t );
-	f_type fCreateRenderer2D = (f_type)dlsym( backend(), "CreateRenderer2D" );
+	f_type fCreateRenderer2D = (f_type)SymLib( backend(), "CreateRenderer2D" );
 	return fCreateRenderer2D( this, width, height );
 }
 
@@ -105,7 +145,7 @@ Renderer2D* Instance::CreateRenderer2D( uint32_t width, uint32_t height )
 DeferredRenderer* Instance::CreateDeferredRenderer( uint32_t width, uint32_t height )
 {
 	typedef DeferredRenderer* (*f_type)( Instance*, uint32_t, uint32_t );
-	f_type fCreateDeferredRenderer = (f_type)dlsym( backend(), "CreateDeferredRenderer" );
+	f_type fCreateDeferredRenderer = (f_type)SymLib( backend(), "CreateDeferredRenderer" );
 	return fCreateDeferredRenderer( this, width, height );
 }
 
@@ -113,7 +153,7 @@ DeferredRenderer* Instance::CreateDeferredRenderer( uint32_t width, uint32_t hei
 Object* Instance::CreateObject( Vertex* verts, uint32_t nVert, uint32_t* indices, uint32_t nIndices )
 {
 	typedef Object* (*f_type)( Vertex*, uint32_t, uint32_t*, uint32_t );
-	f_type fCreateObject = (f_type)dlsym( backend(), "CreateObject" );
+	f_type fCreateObject = (f_type)SymLib( backend(), "CreateObject" );
 	return fCreateObject( verts, nVert, indices, nIndices );
 }
 
@@ -121,7 +161,7 @@ Object* Instance::CreateObject( Vertex* verts, uint32_t nVert, uint32_t* indices
 Object* Instance::LoadObject( const std::string& filename )
 {
 	typedef Object* (*f_type)( const std::string&, Instance* );
-	f_type fLoadObject = (f_type)dlsym( backend(), "LoadObject" );
+	f_type fLoadObject = (f_type)SymLib( backend(), "LoadObject" );
 	return fLoadObject( filename, this );
 }
 

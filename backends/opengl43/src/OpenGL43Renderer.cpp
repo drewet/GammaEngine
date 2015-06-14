@@ -24,6 +24,7 @@
 #include "OpenGL43Object.h"
 #include "OpenGL43Instance.h"
 #include "OpenGL43Renderer.h"
+#include "OpenGL43Window.h"
 #include "Object.h"
 #include "Debug.h"
 #include "File.h"
@@ -114,6 +115,8 @@ int OpenGL43Renderer::LoadFragmentShader( const void* data, size_t size )
 		glDeleteShader( mFragmentShader );
 	}
 
+	fDebug( data, size );
+
 	mFragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
 	glShaderSource( mFragmentShader, 1, (const char**)&data, NULL );
 	glCompileShader( mFragmentShader );
@@ -130,8 +133,9 @@ int OpenGL43Renderer::LoadVertexShader( const std::string& file )
 {
 	mReady = false;
 
-	uint8_t* data = loadShader( file );
-	int ret = LoadVertexShader( data, 0 );
+	size_t sz = 0;
+	uint8_t* data = loadShader( file, &sz );
+	int ret = LoadVertexShader( data, sz );
 	mInstance->Free( data );
 
 	return ret;
@@ -142,8 +146,9 @@ int OpenGL43Renderer::LoadFragmentShader( const std::string& file )
 {
 	mReady = false;
 
-	uint8_t* data = loadShader( file );
-	int ret = LoadFragmentShader( data, 0 );
+	size_t sz = 0;
+	uint8_t* data = loadShader( file, &sz );
+	int ret = LoadFragmentShader( data, sz );
 	mInstance->Free( data );
 
 	return ret;

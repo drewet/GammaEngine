@@ -19,6 +19,7 @@
 
 #include "Instance.h"
 #include "Object.h"
+#include "ObjectLoaderObj.h"
 #include "File.h"
 #include "Debug.h"
 
@@ -28,6 +29,7 @@
 namespace GE {
 
 std::vector< ObjectLoader* > Object::mObjectLoaders = std::vector< ObjectLoader* >();
+static bool ObjectLoaderFirstCall = true;
 
 Object::Object( Vertex* verts, uint32_t nVerts, uint32_t* indices, uint32_t nIndices )
 	: mName( "" )
@@ -94,6 +96,11 @@ ObjectLoader* Object::GetLoader( const std::string filename, File* file )
 {
 	ObjectLoader* loader = nullptr;
 
+	if ( ObjectLoaderFirstCall ) {
+		AddObjectLoader( new ObjectLoaderObj() );
+		ObjectLoaderFirstCall = false;
+	}
+
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
 	std::string first_line = file->ReadLine();
 	std::transform( first_line.begin(), first_line.end(), first_line.begin(), ::tolower );
@@ -101,6 +108,9 @@ ObjectLoader* Object::GetLoader( const std::string filename, File* file )
 	uint32_t file_magic = 0;
 	file->Read( &file_magic, sizeof(file_magic) );
 	file->Rewind();
+	printf("  extension : '%s'\n", extension.c_str());
+	printf("  first_line : '%s'\n", first_line.c_str());
+	printf("  mObjectLoaders.size() : '%d'\n", mObjectLoaders.size());
 
 	for ( size_t i = 0; i < mObjectLoaders.size(); i++ ) {
 		if ( mObjectLoaders.at(i)->fileType() == ObjectLoader::BINARY ) {
@@ -126,6 +136,7 @@ ObjectLoader* Object::GetLoader( const std::string filename, File* file )
 			for ( size_t j = 0; j < extensions.size(); j++ ) {
 				std::string test_case = extensions[j];
 				std::transform( test_case.begin(), test_case.end(), test_case.begin(), ::tolower );
+				printf(" [%s].find(%s)\n", extension.c_str(), test_case.c_str());
 				if ( extension.find( test_case ) ) {
 					loader = mObjectLoaders.at(i);
 					break;
@@ -134,6 +145,7 @@ ObjectLoader* Object::GetLoader( const std::string filename, File* file )
 		}
 	}
 
+	printf("  loader : %p\n", loader); fflush(stdout);
 	return loader;
 }
 

@@ -25,7 +25,6 @@
 namespace GE {
 
 
-ImageLoaderPng* ImageLoaderPng::mBaseInstance = ( ImageLoaderPng* )Image::AddImageLoader( new ImageLoaderPng() );
 std::map< uintptr_t, std::pair< uintptr_t, uintptr_t > > ImageLoaderPng::mPngAllocs = std::map< uintptr_t, std::pair< uintptr_t, uintptr_t > >();
 
 

@@ -1,21 +1,25 @@
 cmake_minimum_required(VERSION 2.6)
 project(gammaengine)
 
-find_package(OpenGL REQUIRED)
-find_package(PNG REQUIRED)
-find_package(JPEG REQUIRED)
+#if(NOT WIN32)
+	find_package(PNG REQUIRED)
+	find_package(JPEG REQUIRED)
+#endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -I./fake -g3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -g3")
 
 include_directories(include)
 # include_directories(fake)
-include_directories(/usr/local/include/vulkangl)
+# include_directories(/usr/local/include/vulkangl)
+include_directories(libvulkangl/include)
 
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 add_subdirectory(backends/vulkan)
 add_subdirectory(backends/opengl43)
 
-add_executable(gammaengine
-	src/main.cpp
+set(SOURCES
 # 	src/gememory.cpp
 	src/Instance.cpp
 	src/Light.cpp
@@ -39,10 +43,29 @@ add_executable(gammaengine
 	src/Input.cpp
 	src/Thread.cpp
 	src/Debug.cpp
-	src/linux/BaseWindow.cpp
 # 	fake/dummy_vk.cpp
 )
 
-target_link_libraries(gammaengine -lge ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${OPENGL_LIBRARIES} -lvulkangl -lX11 -pthread -ldl)
+set(LIBS
+	${PNG_LIBRARIES}
+	${JPEG_LIBRARIES}
+	-pthread
+)
 
-install(TARGETS gammaengine RUNTIME DESTINATION bin)
+if(WIN32)
+	add_definitions(-DGE_WIN32)
+	include_directories(include/windows)
+	set(LIBS ${LIBS} -lwinmm)
+	set(SOURCES ${SOURCES} src/windows/BaseWindow.cpp)
+else()
+	add_definitions(-DGE_LINUX)
+	include_directories(include/linux)
+	set(LIBS ${LIBS} -lX11 -ldl)
+	set(SOURCES ${SOURCES} src/linux/BaseWindow.cpp)
+endif()
+
+add_library(gammaengine SHARED ${SOURCES})
+target_link_libraries(gammaengine ${LIBS})
+
+add_executable(testexec src/main.cpp)
+target_link_libraries(testexec gammaengine)

@@ -1,5 +1,5 @@
 /*
- * The GammaEngine Library 2.0 is a multiplatform OpenGL43-based game engine
+ * The GammaEngine Library 2.0 is a multiplatform Vulkan-based game engine
  * Copyright (C) 2015  Adrien Aubry <dridri85@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,42 +17,49 @@
  *
  */
 
-#ifndef VULKANINSTANCE_H
-#define VULKANINSTANCE_H
-
-#ifndef _WIN32
-#define GL_GLEXT_PROTOTYPES
-#endif
-#include <GL/gl.h>
-#include <GL/glext.h>
-#include <string.h>
-
-// Windows tricks
-#undef CreateWindow
+#ifndef BASEWINDOW_H
+#define BASEWINDOW_H
 
 #include <string>
-#include "Instance.h"
+#include "Vector.h"
+
+#ifndef BASEWINDOW_CPP
+#endif
 
 namespace GE {
-	class Window;
-	class Renderer;
-	class Vertex;
-	class Object;
-}
-using namespace GE;
 
-class OpenGL43Instance : public Instance
+class Instance;
+
+class BaseWindow
 {
 public:
-	OpenGL43Instance( const char* appName, uint32_t appVersion );
-	virtual ~OpenGL43Instance(){}
+	BaseWindow( Instance* instance, const std::string& title, int width, int height, uint32_t flags );
+	~BaseWindow();
 
-	virtual int EnumerateGpus();
-	virtual Instance* CreateDevice( int devid, int queueCount = 1 );
-	virtual uint64_t ReferenceImage( Image* image );
+	uint32_t width();
+	uint32_t height();
+	Vector2i& cursor();
+	Vector2i& cursorWarp();
 
-	void AffectVRAM( int64_t sz );
+	void SwapBuffersBase();
+
+protected:
+	Instance* mInstance;
+	uint32_t mWidth;
+	uint32_t mHeight;
+	bool mHasResized;
+	uint64_t mWindow;
+	uint64_t hInstance;
+	bool mKeys[512];
+	Vector2i mCursor;
+	Vector2i mCursorWarp;
+
 private:
+	bool mInitializing;
 };
 
-#endif // VULKANINSTANCE_H
+
+} // namespace GE
+
+#endif // BASEWINDOW_H
+ 

@@ -18,6 +18,8 @@
  */
 
 #include "Image.h"
+#include "ImageLoaderPng.h"
+#include "ImageLoaderJpg.h"
 #include "Instance.h"
 #include "File.h"
 #include "Debug.h"
@@ -28,7 +30,7 @@
 namespace GE {
 
 std::vector< ImageLoader* > Image::mImageLoaders = std::vector< ImageLoader* >();
-
+static bool ImageLoaderFirstCall = true;
 
 Image::Image()
 	: mWidth( 0 )
@@ -71,6 +73,11 @@ Image::~Image()
 void Image::Load( File* file, const std::string& extension, Instance* instance )
 {
 	ImageLoader* loader = nullptr;
+
+	if ( ImageLoaderFirstCall ) {
+		AddImageLoader( new ImageLoaderPng() );
+		AddImageLoader( new ImageLoaderJpg() );
+	}
 
 // 	std::string first_line = file->ReadLine();
 	char first_line[32];

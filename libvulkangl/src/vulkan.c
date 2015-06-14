@@ -1,9 +1,17 @@
 #include "internal.h"
 
+static int glext_loaded = 0;
+static void load_glext();
+
 
 VK_RESULT vkCreateInstance(const VK_APPLICATION_INFO* pAppInfo, const VK_ALLOC_CALLBACKS* pAllocCb, VK_INSTANCE* pInst)
 {
 	printf("%s()\n", __PRETTY_FUNCTION__);
+
+	if ( glext_loaded == 0 ) {
+		load_glext();
+		glext_loaded = 1;
+	}
 
 	vk_Instance* inst = (vk_Instance*)pAllocCb->pfnAlloc( sizeof(vk_Instance), 16, 0 );
 	memset( inst, 0, sizeof( *inst ) );
@@ -29,6 +37,7 @@ VK_RESULT vkEnumerateGpus(VK_INSTANCE inst, VK_SIZE arraySize, VK_UINT* pGpuCoun
 }
 
 
+#ifdef __linux
 VK_RESULT vkWsiX11AssociateConnection(VK_PHYSICAL_GPU pGpu, VK_CONNECTION_INFO* pConnectionInfo)
 {
 	printf("%s()\n", __PRETTY_FUNCTION__);
@@ -57,6 +66,7 @@ VK_RESULT vkWsiX11AssociateConnection(VK_PHYSICAL_GPU pGpu, VK_CONNECTION_INFO* 
 
 	return VK_SUCCESS;
 }
+#endif
 
 
 VK_RESULT vkCreateDevice(VK_PHYSICAL_GPU gpu, const VK_DEVICE_CREATE_INFO* pCreateInfo, VK_DEVICE* pDevice)
@@ -97,4 +107,78 @@ VK_RESULT vkCreateFence(VK_DEVICE device, const VK_FENCE_CREATE_INFO* pCreateInf
 	*pFence = (uint64_t)fence;
 
 	return VK_SUCCESS;
+}
+
+
+static void load_glext()
+{
+#ifdef _WIN32
+	#include <windows.h>
+	#define load_func(name) name = (void*)GetProcAddress(hOpenGL, #name); if ( !name ) { name = (void*)wglGetProcAddress(#name); }
+	HMODULE hOpenGL = LoadLibrary("opengl32.dll");
+	load_func( glActiveTexture );
+	load_func( glGenVertexArrays );
+	load_func( glBindVertexArray );
+	load_func( glEnableVertexAttribArray );
+	load_func( glDisableVertexAttribArray );
+	load_func( glVertexAttribPointer );
+	load_func( glVertexAttribIPointer );
+	load_func( glGenBuffers );
+	load_func( glDeleteBuffers );
+	load_func( glBindBuffer );
+	load_func( glBufferData );
+	load_func( glBufferSubData );
+	load_func( glGetBufferParameteriv );
+	load_func( glBlitFramebuffer );
+	load_func( glGenRenderbuffers );
+	load_func( glBindRenderbuffer );
+	load_func( glRenderbufferStorageMultisample );
+	load_func( glFramebufferRenderbuffer );
+	load_func( glGenFramebuffers );
+	load_func( glDeleteFramebuffers );
+	load_func( glBindFramebuffer );
+	load_func( glFramebufferTexture );
+	load_func( glFramebufferTexture2D );
+	load_func( glFramebufferTexture3D );
+	load_func( glFramebufferTextureLayer );
+	load_func( glDrawBuffers );
+	load_func( glCreateShader );
+	load_func( glShaderSource );
+	load_func( glCompileShader );
+	load_func( glAttachShader );
+	load_func( glGetShaderInfoLog );
+	load_func( glDeleteShader );
+	load_func( glDeleteProgram );
+	load_func( glCreateProgram );
+	load_func( glLinkProgram );
+	load_func( glUseProgram );
+	load_func( glGetProgramInfoLog );
+	load_func( glBindAttribLocation );
+	load_func( glGetUniformLocation );
+	load_func( glGetAttribLocation );
+	load_func( glUniform1i );
+	load_func( glUniform2i );
+	load_func( glUniform3i );
+	load_func( glUniform4i );
+	load_func( glUniform1f );
+	load_func( glUniform2f );
+	load_func( glUniform3f );
+	load_func( glUniform4f );
+	load_func( glUniform1fv );
+	load_func( glUniform2fv );
+	load_func( glUniform3fv );
+	load_func( glUniform4fv );
+	load_func( glUniform1iv );
+	load_func( glUniform2iv );
+	load_func( glUniform3iv );
+	load_func( glUniform4iv );
+	load_func( glUniformMatrix3fv );
+	load_func( glUniformMatrix4fv );
+	load_func( glGetUniformfv );
+	load_func( glPatchParameteri );
+	load_func( glBindBufferBase );
+	load_func( glUniformBlockBinding );
+	load_func( glMapBuffer );
+	load_func( glUnmapBuffer );
+#endif
 }

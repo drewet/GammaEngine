@@ -27,7 +27,7 @@ namespace GE {
 template <typename T, int n> class Vector
 {
 public:
-	Vector( T x = 0, T y = 0, T z = 0, T w = 0 );
+	Vector( T x = 0, T y = 0, T z = 0, T w = 0 ) : x( x ), y( y ), z( z ), w( w ) {}
 	Vector( const Vector<T,1>& v, T a = 0, T b = 0, T c = 0 ) : x(v.x), y(a), z(b), w(c) {}
 	Vector( T a, const Vector<T,1>& v, T b = 0, T c = 0 ) : x(a), y(v.x), z(b), w(c) {}
 	Vector( T a, T b, const Vector<T,1>& v, T c = 0 ) : x(a), y(b), z(v.x), w(c) {}

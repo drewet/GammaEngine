@@ -26,6 +26,7 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
+#include <pthread.h>
 
 
 namespace GE {
@@ -118,7 +119,7 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 
 #define aDebug( name, args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
 
-#define vDebug( name, args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); std::cout << ""
+#define vDebug( name, args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); std::cout << "" << std::flush
 
 #endif // __DBG_CLASS
 

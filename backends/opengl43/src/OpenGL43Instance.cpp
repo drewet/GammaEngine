@@ -17,8 +17,6 @@
  *
  */
 
-#include <dlfcn.h>
-
 #include "OpenGL43Instance.h"
 #include "Vertex.h"
 #include "Image.h"

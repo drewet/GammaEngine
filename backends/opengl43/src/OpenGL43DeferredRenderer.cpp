@@ -19,12 +19,14 @@
 
 #include <fstream>
 #include <vector>
+#include <math.h>
 
 #include "Window.h"
 #include "Instance.h"
 #include "OpenGL43Object.h"
 #include "OpenGL43Instance.h"
 #include "OpenGL43DeferredRenderer.h"
+#include "OpenGL43Window.h"
 #include "MeshBuilder.h"
 #include "Object.h"
 #include "Debug.h"
@@ -205,7 +207,7 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 				.position = Vector4f( mLights[i]->position(), 1.0f ),
 				.direction = Vector4f( mLights[i]->direction(), 1.0f ),
 				.color = mLights[i]->color(),
-				.data = Vector4f( LightRadius( mLights[i] ), mLights[i]->attenuation(), std::cos( mLights[i]->innerAngle() * M_PI / 180.0f ), std::cos( mLights[i]->outerAngle() * M_PI / 180.0f ) )
+				.data = Vector4f( LightRadius( mLights[i] ), mLights[i]->attenuation(), std::cos( mLights[i]->innerAngle() * 3.14159265359f / 180.0f ), std::cos( mLights[i]->outerAngle() * 3.14159265359f / 180.0f ) )
 			};
 			mLightsDataIndices.insert( std::make_pair( mLights[i], lightsDataCount ) );
 			memcpy( &mLightsData[lightsDataCount], &data, sizeof(data) );

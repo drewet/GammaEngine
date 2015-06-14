@@ -41,7 +41,7 @@ VulkanWindow::VulkanWindow( Instance* instance, const std::string& title, int wi
 {
 
 #ifdef GE_WIN32
-#else
+#elif defined(GE_LINUX)
 	VK_CONNECTION_INFO connectionInfo;
 	connectionInfo.dpy = mDisplay;
 	connectionInfo.screen = mScreen;

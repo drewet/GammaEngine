@@ -32,9 +32,6 @@
 namespace GE {
 
 
-ObjectLoaderObj* ObjectLoaderObj::mBaseInstance = ( ObjectLoaderObj* )Object::AddObjectLoader( new ObjectLoaderObj() );
-
-
 ObjectLoaderObj::ObjectLoaderObj()
 	: ObjectLoader()
 {

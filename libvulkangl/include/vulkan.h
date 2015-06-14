@@ -1233,8 +1233,10 @@ typedef struct VK_CONNECTION_INFO {
 } VK_CONNECTION_INFO;
 
 VK_RESULT vkWsiX11AssociateConnection(VK_PHYSICAL_GPU gpu, VK_CONNECTION_INFO* pConnectionInfo);
+#endif // __linux
 
-#endif
+#ifdef WIN32
+#endif // WIN32
 
 #ifdef __cplusplus
 };

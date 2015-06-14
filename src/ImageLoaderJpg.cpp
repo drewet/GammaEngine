@@ -25,9 +25,6 @@
 namespace GE {
 
 
-ImageLoaderJpg* ImageLoaderJpg::mBaseInstance = ( ImageLoaderJpg* )Image::AddImageLoader( new ImageLoaderJpg() );
-
-
 ImageLoaderJpg::ImageLoaderJpg()
 	: ImageLoader()
 {

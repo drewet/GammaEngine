@@ -25,6 +25,7 @@
 #include "OpenGL43Object.h"
 #include "OpenGL43Instance.h"
 #include "OpenGL43Renderer2D.h"
+#include "OpenGL43Window.h"
 #include "Object.h"
 #include "Debug.h"
 #include "File.h"
@@ -35,7 +36,7 @@ extern "C" GE::Renderer2D* CreateRenderer2D( GE::Instance* instance, uint32_t wi
 	return new OpenGL43Renderer2D( instance, width, height );
 }
 
-static const char* vertices_shader_base = 
+static const char vertices_shader_base[] = 
 	"#version 420 core\n"
 	"\n"
 	"layout(location = 0) in vec3 ge_VertexTexcoord;\n"
@@ -64,7 +65,7 @@ static const char* vertices_shader_base =
 	"}\n"
 ;
 
-static const char* fragment_shader_base = 
+static const char fragment_shader_base[] = 
 	"#version 420 core\n"
 	"\n"
 	"uniform sampler2D ge_Texture0;\n"

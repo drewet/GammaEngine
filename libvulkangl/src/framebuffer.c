@@ -70,12 +70,15 @@ VK_RESULT vkWsiWinQueuePresent(VK_QUEUE _queue, const VK_WSI_WIN_PRESENT_INFO* p
 
 	vk_Queue* queue = (vk_Queue*)_queue;
 	vk_PhysicalDevice* gpu = queue->device->dev;
-
-	Window win = (Window)pPresentInfo->hWndDest;
 	vk_Image* image = (vk_Image*)pPresentInfo->srcImage;
-	// TODO : play with pPresentInfo->presentMode
 
+#ifdef __linux
+	Window win = (Window)pPresentInfo->hWndDest;
+	// TODO : play with pPresentInfo->presentMode
 	glXMakeCurrent( gpu->dpy, win, gpu->ctx );
+#elif defined(WIN32)
+	// TODO
+#endif
 
 
 	_vkFlushQueue( queue );
@@ -91,7 +94,11 @@ VK_RESULT vkWsiWinQueuePresent(VK_QUEUE _queue, const VK_WSI_WIN_PRESENT_INFO* p
 
 	glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
 
+#ifdef __linux
 	glXSwapBuffers( gpu->dpy, win );
+#elif defined(WIN32)
+	// TODO
+#endif
 
 	return VK_SUCCESS;
 }

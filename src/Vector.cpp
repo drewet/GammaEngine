@@ -26,7 +26,7 @@ namespace GE {
 
 
 
-template <typename T, int n> Vector<T,n>::Vector( T x, T y, T z, T w ) : x( x ), y( y ), z( z ), w( w ) {}
+//template <typename T, int n> Vector<T,n>::Vector( T x, T y, T z, T w ) : x( x ), y( y ), z( z ), w( w ) {}
 
 template <typename T, int n> void Vector<T,n>::normalize() {
 	T add = 0;
@@ -153,7 +153,7 @@ static void dummy_vectors()
 {
 	dummy_vectors();
 	{
-		Vector2i v;
+		Vector2i v( 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
 		v.normalize();
 		v *= 0 * v.length();
@@ -161,7 +161,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector3i v;
+		Vector3i v( 0, 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
 		v.normalize();
 		v *= 0 * v.length();
@@ -169,7 +169,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector4i v;
+		Vector4i v( 0, 0, 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
 		v.normalize();
 		v *= 0 * v.length();
@@ -177,7 +177,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector2f v;
+		Vector2f v( 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0.0f * v ) + v * 0.0f;
 		v.normalize();
 		v *= 0 * v.length();
@@ -185,7 +185,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector3f v;
+		Vector3f v( 0, 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0.0f * v ) + v * 0.0f;
 		v.normalize();
 		v *= 0 * v.length();
@@ -193,7 +193,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector4f v;
+		Vector4f v( 0, 0, 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0.0f * v ) + v * 0.0f;
 		v.normalize();
 		v *= 0 * v.length();
@@ -201,7 +201,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector2d v;
+		Vector2d v( 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0.0 * v ) + v * 0.0;
 		v.normalize();
 		v *= 0 * v.length();
@@ -209,7 +209,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector3d v;
+		Vector3d v( 0, 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0.0 * v ) + v * 0.0;
 		v.normalize();
 		v *= 0 * v.length();
@@ -217,7 +217,7 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 	{
-		Vector4d v;
+		Vector4d v( 0, 0, 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0.0 * v ) + v * 0.0;
 		v.normalize();
 		v *= 0 * v.length();

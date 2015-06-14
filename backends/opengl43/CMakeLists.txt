@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -I./fake -g3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L../../ -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -I./fake -g3")
+
+find_package(OpenGL REQUIRED)
+
+if(WIN32)
+	add_definitions(-DGE_WIN32)
+else()
+	add_definitions(-DGE_LINUX)
+endif()
 
 include_directories(include)
+include_directories(../../include/windows)
 
 add_library(backend_opengl43
 	SHARED
@@ -15,4 +24,4 @@ add_library(backend_opengl43
 )
 
 SET_TARGET_PROPERTIES(backend_opengl43 PROPERTIES PREFIX "")
-target_link_libraries(backend_opengl43 -lvulkangl -lX11 -pthread -ldl)
+target_link_libraries(backend_opengl43 -lgammaengine ${OPENGL_LIBRARIES} -pthread)

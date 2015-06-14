@@ -22,6 +22,10 @@
 #include <time.h>
 #include "Time.h"
 
+#ifdef GE_WIN32
+	#include <windows.h>
+#endif
+
 namespace GE {
 
 
@@ -103,20 +107,28 @@ double Time::SlowSync( double min )
 
 uint32_t Time::GetTick()
 {
+#ifdef GE_WIN32
+	return timeGetTime();
+#else
 	struct timespec now;
 	clock_gettime( CLOCK_MONOTONIC, &now );
 	return now.tv_sec * 1000 + now.tv_nsec / 1000000;
+#endif
 }
 
 
 float Time::GetSeconds()
 {
+#ifdef GE_WIN32
+	return (float)( (double)timeGetTime() / 1000.0 );
+#else
 	struct timespec now;
 	clock_gettime( CLOCK_MONOTONIC, &now );
 	float ret = (float)now.tv_sec;
 	uint32_t ms = now.tv_nsec / 1000000;
 	ret += ( (float)ms ) / 1000.0;
 	return ret;
+#endif
 }
 
 

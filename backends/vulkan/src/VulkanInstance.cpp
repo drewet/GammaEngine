@@ -17,8 +17,6 @@
  *
  */
 
-#include <dlfcn.h>
-
 #include "VulkanInstance.h"
 #include "Vertex.h"
 #include "Debug.h"

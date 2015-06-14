@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
+
 #include "Instance.h"
 #include "Window.h"
 #include "Scene.h"
@@ -19,23 +20,6 @@
 #include "Debug.h"
 
 using namespace GE;
-/*
-void* thread_entry( std::list< Object* >* objects )
-{
-	while(1){
-		for ( std::list< Object* >::iterator it = objects->begin(); it != objects->end(); ++it ) {
-			(*it)->matrix()->RotateZ( 0.0001 );
-		}
-	}
-	return nullptr;
-}
-*/
-void* thread_entry( Light** lights )
-{
-	while(1){
-	}
-	return nullptr;
-}
 
 class LightsThread : public Thread {
 public:
@@ -189,7 +173,7 @@ int main( int argc, char** argv )
 		deferredRenderer->Look( camera );
 		deferredRenderer->Render();
 
-// 		renderer2d->Draw( 0, 0, texture );
+ //		renderer2d->Draw( 0, 0, texture );
 
 		window->SwapBuffers();
 		Time::GlobalSync();
@@ -201,7 +185,7 @@ int main( int argc, char** argv )
 			fps_max = std::max( fps_max, fps );
 			time = Time::GetSeconds();
 			img = 0;
-			printf("FPS : %.2f  ( %.2f - %.2f )\n", fps, fps_min, fps_max);
+			printf("FPS : %.2f  ( %.2f - %.2f )\n", fps, fps_min, fps_max); fflush(stdout);
 // 			printf(" RAM : %lu kB\n", instance->cpuRamCounter() / 1024);
 // 			printf("VRAM : %lu kB\n", instance->gpuRamCounter() / 1024);
 		}
