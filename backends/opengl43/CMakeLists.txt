@@ -6,12 +6,13 @@ find_package(OpenGL REQUIRED)
 
 if(WIN32)
 	add_definitions(-DGE_WIN32)
+	include_directories(../../include/windows)
 else()
 	add_definitions(-DGE_LINUX)
+	include_directories(../../include/linux)
 endif()
 
 include_directories(include)
-include_directories(../../include/windows)
 
 add_library(backend_opengl43
 	SHARED

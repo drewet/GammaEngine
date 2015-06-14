@@ -21,7 +21,7 @@
 #define WINDOW_H
 
 #include <string>
-#include "BaseWindow.h"
+#include "linux/BaseWindow.h"
 
 namespace GE {
 
