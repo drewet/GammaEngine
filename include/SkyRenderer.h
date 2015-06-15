@@ -23,6 +23,7 @@
 #include <vector>
 #include "Instance.h"
 #include "Renderer.h"
+#include "MeshBuilder.h"
 
 namespace GE {
 
@@ -40,6 +41,8 @@ public:
 	void Render( Camera* cam );
 
 protected:
+	static bool BuilderRemoveCB( MeshBuilder::Face* face, void* data );
+	static void BuilderModCB( MeshBuilder::Face* face, void* data );
 	Renderer* mRenderer;
 	Object* mDome;
 	float mDomeRadius;

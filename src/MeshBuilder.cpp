@@ -17,6 +17,7 @@
  *
  */
 
+#include <string.h>
 #include <unordered_map>
 #include "MeshBuilder.h"
 #include "Instance.h"
@@ -128,6 +129,36 @@ void MeshBuilder::Tesselate( MeshBuilder::TesselationMethod method )
 	}
 
 	mFaces = newFaces;
+}
+
+
+void MeshBuilder::Translate( const Vector3f& vec )
+{
+	for ( size_t i = 0; i < mFaces.size(); i++ ) {
+		Vector3f p0 = mFaces[i].p0() + vec;
+		Vector3f p1 = mFaces[i].p1() + vec;
+		Vector3f p2 = mFaces[i].p2() + vec;
+		mFaces[i] = Face( p0, p1, p2 );
+	}
+}
+
+
+void MeshBuilder::RemoveFaces( MeshBuilderRemoveCb cb, void* cbdata )
+{
+	for ( size_t i = 0; i < mFaces.size(); i++ ) {
+		if ( !cb( &mFaces[i], cbdata ) ) {
+			mFaces.erase( mFaces.begin() + i );
+			--i;
+		}
+	}
+}
+
+
+void MeshBuilder::SinglePassFaces( MeshBuilder::MeshBuilderPassCb cb, void* cbdata )
+{
+	for ( size_t i = 0; i < mFaces.size(); i++ ) {
+		cb( &mFaces[i], cbdata );
+	}
 }
 
 

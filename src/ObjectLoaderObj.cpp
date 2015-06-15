@@ -325,7 +325,7 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 	std::vector< Vector3f > tex;
 	std::vector< Vector3f > norms;
 	Material base_mat;
-	base_mat.diffuse[0] = base_mat.diffuse[1] = base_mat.diffuse[2] = base_mat.diffuse[3]= 1.0f;
+	base_mat.diffuse[0] = base_mat.diffuse[1] = base_mat.diffuse[2] = base_mat.diffuse[3] = 1.0f;
 	Material* mat = &base_mat;
 
 	uint32_t iVert = 0;
@@ -339,13 +339,15 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 
 	std::unordered_map< std::string, uint32_t > elements;
 
-	Vertex* buff = ( Vertex* )instance->Malloc( sizeof( Vertex ) * 1024 * 128 );
+	Vertex* buff = ( Vertex* )instance->Malloc( sizeof( Vertex ) * 1024 * 2048 );
 	uint32_t iBuff = 0;
-	uint32_t maxBuff = 1024 * 128;
+	uint32_t maxBuff = 1024 * 2048;
 
-	uint32_t* indices = ( uint32_t* )instance->Malloc( sizeof( uint32_t ) * 128 * 3 * 256 );
+	uint32_t* indices = ( uint32_t* )instance->Malloc( sizeof( uint32_t ) * 128 * 3 * 2048 );
 	uint32_t iIndices = 0;
-	uint32_t maxIndices = 128 * 3 * 256;
+	uint32_t maxIndices = 128 * 3 * 2048;
+
+	uint32_t ln = 0;
 
 	while ( file->ReadLine( line ) )
 	{

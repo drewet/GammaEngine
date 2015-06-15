@@ -57,6 +57,7 @@ int main( int argc, char** argv )
 //	std::list< Object* > scene_objects = Object::LoadObjects( "scene/city.obj", instance );
 
 	Object* cube = instance->LoadObject( "scene/cube.obj" );
+// 	Object* cube2 = instance->LoadObject( "scene/street.obj" );
 
 	Image* texture = new Image( "scene/texture.png" );
 	cube->setTexture( instance, 0, texture );
@@ -89,7 +90,6 @@ int main( int argc, char** argv )
 	renderer->LoadFragmentShader( "shaders/basic.frag" );
 	renderer->AddObject( cube );
 // 	renderer->AddObject( cube2 );
-// 	renderer->AddLight( light0 );
 	for ( decltype(scene_objects)::iterator it = scene_objects.begin(); it != scene_objects.end(); ++it ) {
 		renderer->AddObject( *it );
 	}
@@ -99,7 +99,8 @@ int main( int argc, char** argv )
 	renderer2d->AssociateSize( window );
 
 	DeferredRenderer* deferredRenderer = instance->CreateDeferredRenderer( window->width(), window->height() );
-	deferredRenderer->setAmbientColor( Vector4f( 0.15f, 0.15f, 0.15f, 1.0f ) );
+// 	deferredRenderer->setAmbientColor( Vector4f( 0.15f, 0.15f, 0.15f, 1.0f ) );
+	deferredRenderer->setAmbientColor( Vector4f( 0.5f, 0.5f, 0.5f, 1.0f ) );
 	deferredRenderer->AddSunLight( sun_light );
 
 	for ( int i = 0; i < nLights; i++ ) {
@@ -113,7 +114,8 @@ int main( int argc, char** argv )
 	deferredRenderer->AddLight( light3 );
 	deferredRenderer->AddLight( light4 );
 
-	SkyRenderer* sky = new SkyRenderer( instance, 100000.0f );
+// 	SkyRenderer* sky = new SkyRenderer( instance, 100000.0f );
+	SkyRenderer* sky = new SkyRenderer( instance, 1378114.0f );
 
 	thread->deferredRenderer = deferredRenderer;
 	thread->lights = lights;

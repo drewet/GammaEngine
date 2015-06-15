@@ -123,7 +123,7 @@ void ImageLoaderPng::Load( Instance* instance, File* file, uint32_t pref_w, uint
 	png_infop info_ptr;
 	png_uint_32 width, height, x, y;
 	int bit_depth, color_type, interlace_type;
-	png_uint_32* line;
+	uint32_t* line;
 
 	uint8_t magic[8] = { 0x0 };
 	file->Read( magic, 8 );
@@ -166,11 +166,10 @@ void ImageLoaderPng::Load( Instance* instance, File* file, uint32_t pref_w, uint
 	png_set_strip_16( png_ptr );
 	png_set_packing( png_ptr );
 	if ( color_type == PNG_COLOR_TYPE_PALETTE ) png_set_palette_to_rgb( png_ptr );
-//	if ( color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8 ) png_set_gray_1_2_4_to_8( png_ptr );
 	if ( png_get_valid( png_ptr, info_ptr, PNG_INFO_tRNS ) ) png_set_tRNS_to_alpha( png_ptr );
 	png_set_filler( png_ptr, 0xff, PNG_FILLER_AFTER );
 
-	line = ( png_uint_32* ) instance->Malloc( width * sizeof( png_uint_32 ) );
+	line = ( uint32_t* ) instance->Malloc( width * sizeof( uint32_t ) );
 	if ( !line ) {
 		instance->Free( mData );
 		png_destroy_read_struct( &png_ptr, nullptr, nullptr );
@@ -178,13 +177,12 @@ void ImageLoaderPng::Load( Instance* instance, File* file, uint32_t pref_w, uint
 	}
 
 	for ( y = 0; y < height; y++ ) {
-		png_read_row( png_ptr, ( uint8_t* ) line, nullptr );
+		png_read_row( png_ptr, (uint8_t*)line, nullptr );
 		for ( x = 0; x < width; x++ ) {
-	//		uint32_t color = line[x/2];
 			uint32_t color = line[x];
 			uint32_t x2, y2;
-			for( y2=( y*mHeight/height ); y2<( ( y+1 )*mHeight/height ); y2++ ){
-				for( x2=( x*mWidth/width ); x2<( ( x+1 )*mWidth/width ); x2++ ){
+			for ( y2=( y*mHeight/height ); y2<( ( y+1 )*mHeight/height ); y2++ ) {
+				for ( x2=( x*mWidth/width ); x2<( ( x+1 )*mWidth/width ); x2++ ) {
 					mData[ x2 + y2 * mWidth ] = color;
 				}
 			}

@@ -17,6 +17,8 @@
  *
  */
 
+#include <vector>
+#include <unordered_map>
 #include "Instance.h"
 #include "SkyRenderer.h"
 #include "Object.h"
@@ -27,20 +29,46 @@
 
 using namespace GE;
 
+bool SkyRenderer::BuilderRemoveCB( MeshBuilder::Face* face, void* data )
+{
+	return face->p0().z >= 0.0f || face->p1().z >= 0.0f || face->p2().z >= 0.0f;
+}
+
+
+void SkyRenderer::BuilderModCB( MeshBuilder::Face* face, void* data )
+{
+	Vector3f p0 = face->p0();
+	Vector3f p1 = face->p1();
+	Vector3f p2 = face->p2();
+	p0.z = std::max( p0.z, 0.0f );
+	p1.z = std::max( p1.z, 0.0f );
+	p2.z = std::max( p2.z, 0.0f );
+	*face = MeshBuilder::Face( p0, p1, p2 );
+}
+
+
 SkyRenderer::SkyRenderer( Instance* instance, float domeRadius )
 	: mRenderer( instance->CreateRenderer() )
 	, mDome( nullptr )
 	, mDomeRadius( domeRadius )
 {
-	mRenderer->projectionMatrix()->Perspective( 60.0f, 16.0f / 9.0f, 1.0f, 200000.0f );
+	mRenderer->projectionMatrix()->Perspective( 60.0f, 16.0f / 9.0f, 1.0f, domeRadius + 10.0f );
 
 	MeshBuilder builder( MeshBuilder::Sphere, Vector3f( domeRadius, domeRadius, domeRadius ), 4 );
+	builder.Translate( { 0.0f, 0.0f, -domeRadius + domeRadius / 18.0f } );
+	builder.RemoveFaces( &BuilderRemoveCB );
+	builder.Translate( { 0.0f, 0.0f, domeRadius - domeRadius / 18.0f } );
+	builder.Tesselate( MeshBuilder::Normalize );
+	builder.Tesselate( MeshBuilder::Normalize );
+	builder.Tesselate( MeshBuilder::Normalize );
+	builder.Translate( { 0.0f, 0.0f, -domeRadius + domeRadius / 18.0f } );
+	builder.SinglePassFaces( &BuilderModCB );
+
 	Vertex* verts = nullptr;
 	uint32_t nVerts = 0;
 	uint32_t* indices = nullptr;
 	uint32_t nIndices = 0;
 	builder.GenerateIndexedVertexArray( instance, &verts, &nVerts, &indices, &nIndices, true );
-	gDebug() << "mDome = instance->CreateObject( " << verts << ", " << nVerts << ", " << indices << ", " << nIndices << " )\n";
 	mDome = instance->CreateObject( verts, nVerts, indices, nIndices );
 
 	mRenderer->LoadVertexShader( "shaders/skydome.vert" );

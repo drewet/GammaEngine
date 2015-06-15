@@ -29,6 +29,8 @@ flat out float ge_LightAttenuation;
 flat out float ge_LightInnerAngle;
 flat out float ge_LightOuterAngle;
 
+flat out vec4 ge_MainLightPos;
+
 void main()
 {
 	vec4 pos;
@@ -50,4 +52,6 @@ void main()
 	}
 
 	gl_Position = pos;
+
+	ge_MainLightPos = ge_ProjectionMatrix * ge_ViewMatrix * vec4(1000.0, 500.0, 1000.0, 1.0);
 }

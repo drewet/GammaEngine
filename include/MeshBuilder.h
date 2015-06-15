@@ -32,6 +32,10 @@ class Instance;
 class MeshBuilder
 {
 public:
+	class Face;
+	typedef bool (*MeshBuilderRemoveCb)( Face*, void* );
+	typedef void (*MeshBuilderPassCb)( Face*, void* );
+
 	typedef enum {
 		Cube,
 		Sphere,
@@ -47,6 +51,10 @@ public:
 	~MeshBuilder();
 
 	void Tesselate( TesselationMethod method );
+	void Translate( const Vector3f& vec );
+	void RemoveFaces( MeshBuilderRemoveCb cb, void* cbdata = nullptr );
+	void SinglePassFaces( MeshBuilderPassCb cb, void* cbdata = nullptr );
+
 	void GenerateVertexArray( Instance* instance, Vertex** verts, uint32_t* nVerts );
 	void GenerateIndexedVertexArray( Instance* instance, Vertex** verts, uint32_t* nVerts, uint32_t** indices, uint32_t* nIndices, bool invert_faces = false );
 

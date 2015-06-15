@@ -77,9 +77,8 @@ void OpenGL43DeferredRenderer::AddLight( Light* light )
 
 void OpenGL43DeferredRenderer::AddSunLight( Light* sun_light )
 {
-	// TODO
+	mSunLights.emplace_back( sun_light );
 }
-
 
 
 void OpenGL43DeferredRenderer::Compute()
@@ -217,7 +216,7 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 		}
 	}
 
-	Vertex quad[6];
+	Vertex quad[4];
 	quad[0].u = 42.0f;
 	quad[0].v = 1.0f;
 	quad[0].x = 0;
@@ -234,31 +233,21 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 	quad[2].y = 0;
 
 	quad[3].u = 42.0f;
-	quad[3].v = 1.0f;
+	quad[3].v = 0.0f;
 	quad[3].x = 0;
-	quad[3].y = 0;
+	quad[3].y = mHeight;
 
-	quad[4].u = 42.0f;
-	quad[4].v = 0.0f;
-	quad[4].x = 0;
-	quad[4].y = mHeight;
-
-	quad[5].u = 42.0f;
-	quad[5].v = 0.0f;
-	quad[5].x = mWidth;
-	quad[5].y = mHeight;
-
-	quad[0].color[0] = quad[1].color[0] = quad[2].color[0] = quad[3].color[0] = quad[4].color[0] = quad[5].color[0] = 1.0f;
-	quad[0].color[1] = quad[1].color[1] = quad[2].color[1] = quad[3].color[1] = quad[4].color[1] = quad[5].color[1] = 1.0f;
-	quad[0].color[2] = quad[1].color[2] = quad[2].color[2] = quad[3].color[2] = quad[4].color[2] = quad[5].color[2] = 1.0f;
-	quad[0].color[3] = quad[1].color[3] = quad[2].color[3] = quad[3].color[3] = quad[4].color[3] = quad[5].color[3] = 1.0f;
+	quad[0].color[0] = quad[1].color[0] = quad[2].color[0] = quad[3].color[0] = 1.0f;
+	quad[0].color[1] = quad[1].color[1] = quad[2].color[1] = quad[3].color[1] = 1.0f;
+	quad[0].color[2] = quad[1].color[2] = quad[2].color[2] = quad[3].color[2] = 1.0f;
+	quad[0].color[3] = quad[1].color[3] = quad[2].color[3] = quad[3].color[3] = 1.0f;
 
 	DrawElementsIndirectCommand direct_commands[] = {
 		{
 			.count = mSphereIndicesCount,
 			.instanceCount = nSphereLights,
 			.firstIndex = 6,
-			.baseVertex = 6,
+			.baseVertex = 4,
 			.baseInstance = 1,
 		},
 		{
@@ -268,19 +257,19 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 // 			.firstIndex = 6 + mSphereIndicesCount,
 			.firstIndex = 6,
 //			.baseVertex = 6 + mSphereVerticesCount,
-			.baseVertex = 6,
+			.baseVertex = 4,
 			.baseInstance = 1 + nSphereLights,
 		},
 		
 	};
-	vertices.insert( vertices.end(), quad, &quad[6] );
+	vertices.insert( vertices.end(), quad, &quad[4] );
 	vertices.insert( vertices.end(), mSphereVertices, &mSphereVertices[mSphereVerticesCount] );
 	indices.emplace_back( 0 );
 	indices.emplace_back( 1 );
 	indices.emplace_back( 2 );
+	indices.emplace_back( 0 );
 	indices.emplace_back( 3 );
-	indices.emplace_back( 4 );
-	indices.emplace_back( 5 );
+	indices.emplace_back( 1 );
 	indices.insert( indices.end(), mSphereIndices, &mSphereIndices[mSphereIndicesCount] );
 // 	vertices.insert( vertices.end(), mConeVertices, mConeVertices + mConeVerticesCount );
 
@@ -367,7 +356,7 @@ void OpenGL43DeferredRenderer::Render()
 		mWidth = mAssociatedWindow->width();
 		mHeight = mAssociatedWindow->height();
 		// TODO : resize framebuffers
-		Vertex vertices[6];
+		Vertex vertices[4];
 		memset( vertices, 0, sizeof(vertices) );
 		vertices[0].u = 42.0f;
 		vertices[0].v = 1.0f;
@@ -385,27 +374,17 @@ void OpenGL43DeferredRenderer::Render()
 		vertices[2].y = 0;
 
 		vertices[3].u = 42.0f;
-		vertices[3].v = 1.0f;
+		vertices[3].v = 0.0f;
 		vertices[3].x = 0;
-		vertices[3].y = 0;
+		vertices[3].y = mHeight;
 
-		vertices[4].u = 42.0f;
-		vertices[4].v = 0.0f;
-		vertices[4].x = 0;
-		vertices[4].y = mHeight;
-
-		vertices[5].u = 42.0f;
-		vertices[5].v = 0.0f;
-		vertices[5].x = mWidth;
-		vertices[5].y = mHeight;
-
-		vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
-		vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
-		vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
-		vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
+		vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = 1.0f;
+		vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = 1.0f;
+		vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = 1.0f;
+		vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = 1.0f;
 
 		glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-		glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
+		glBufferSubData( GL_ARRAY_BUFFER, 0, 4 * sizeof(Vertex), vertices );
 	}
 	if ( !mCommandListReady ) {
 		ComputeCommandList();
@@ -448,7 +427,6 @@ void OpenGL43DeferredRenderer::Render()
 	mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
 	glBindBuffer( GL_UNIFORM_BUFFER, mMatrixProjectionID );
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, mMatrixProjection->data() );
-//	glDrawArrays( GL_TRIANGLES, 0, 6 );
 	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr );
 
 	mMatrixProjection->Identity();

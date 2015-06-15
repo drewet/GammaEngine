@@ -68,6 +68,7 @@ private:
 	bool mCommandListReady;
 	Vector4f mAmbientColor;
 	std::vector< Light* > mLights;
+	std::vector< Light* > mSunLights;
 	LightData* mLightsData;
 	std::unordered_map< Light*, uint32_t > mLightsDataIndices;
 

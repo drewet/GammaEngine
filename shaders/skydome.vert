@@ -31,7 +31,8 @@ layout (binding=2, std140) uniform ge_Textures_0
 
 
 uniform vec3 v3CameraPos = vec3(0.0);
-uniform vec3 v3SunPos = vec3(100000.0, 50000.0, 100000.0);
+uniform vec3 v3SunPos = vec3(10000000.0, 5000000.0, 10000000.0);
+uniform vec3 v3SunPos2 = vec3(5000000.0, -10000000.0, 10000000.0);
 uniform float Hr = 8800.0;
 uniform float Hm = 2400.0;
 
@@ -47,6 +48,8 @@ const vec3 bM = vec3(21.0e-6);
 out vec3 vpos;
 out vec3 sumR;
 out vec3 sumM;
+
+void CalcSun( vec3 SunPosition, vec3 curr, float hr, float hm, float opticalDepthR, float opticalDepthM );
 
 vec3 t0;
 vec3 t1;
@@ -72,7 +75,6 @@ void main()
 	float phaseR = 0.0;
 	float phaseM = 0.0;
 	float height = v3CameraPos.z;
-	vec3 sunDirection = normalize(v3SunPos);
 	sumR = vec3(0.0, 0.0, 0.0);
 	sumM = vec3(0.0);
 
@@ -96,10 +98,13 @@ void main()
 		opticalDepthR += hr;
 		opticalDepthM += hm;
 
+		CalcSun( normalize( v3SunPos ), curr, hr, hm, opticalDepthR, opticalDepthM );
+// 		CalcSun( normalize( v3SunPos2 ), curr, hr, hm, opticalDepthR, opticalDepthM );
+/*
 		float opticalDepthLightR = 0.0;
 		float opticalDepthLightM = 0.0;
 		vec3 lightStart = curr;
-		vec3 lightDir = sunDirection;
+		vec3 lightDir = normalize(v3SunPos);
 		intersect(lightStart + vec3(0.0, 0.0, 6350000.0), lightDir, Ra);
 		t1.z -= 6350000.0;
 		vec3 lightSegment = (t1 - lightStart) / float(NUM_SAMPLES_LIGHT);
@@ -118,7 +123,36 @@ void main()
 			sumR += vec3(hr) * attenuation;
 			sumM += vec3(hm) * attenuation;
 		}
+*/
 		curr = curr + segment;
 	}
 	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * vec4( ge_VertexPosition.xyz, 1.0 );
+}
+
+
+void CalcSun( vec3 SunPosition, vec3 curr, float hr, float hm, float opticalDepthR, float opticalDepthM )
+{
+	int j;
+	float opticalDepthLightR = 0.0;
+	float opticalDepthLightM = 0.0;
+	vec3 lightStart = curr;
+	vec3 lightDir = normalize( SunPosition );
+	intersect(lightStart + vec3(0.0, 0.0, 6350000.0), lightDir, Ra);
+	t1.z -= 6350000.0;
+	vec3 lightSegment = (t1 - lightStart) / float(NUM_SAMPLES_LIGHT);
+	vec3 lightCurr = lightStart;
+	for(j=0; j<NUM_SAMPLES_LIGHT; j++){
+		//float lightHeight = length(lightCurr) - Re + Hr;
+		float lightHeight = lightCurr.z;// + Hr;
+		//if(lightHeight < 0)break;
+		opticalDepthLightR += exp(-lightHeight / Hr) * length(lightSegment);
+		opticalDepthLightM += exp(-lightHeight / Hm) * length(lightSegment);
+		lightCurr += lightSegment;
+	}
+	if(j == NUM_SAMPLES_LIGHT){
+		vec3 tau = bR * (opticalDepthR + opticalDepthLightR) + bM * 1.1 * (opticalDepthM + opticalDepthLightM);
+		vec3 attenuation = exp(-tau);
+		sumR += vec3(hr) * attenuation;
+		sumM += vec3(hm) * attenuation;
+	}
 }
