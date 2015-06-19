@@ -30,25 +30,37 @@ layout (binding=2, std140) uniform ge_Textures_0
 };
 
 flat out sampler2D ge_Texture0;
+// flat out sampler2D ge_Texture1;
 flat out int ge_Texture0Base;
+flat out uint ge_TextureCount;
 flat out float ge_HasTexture;
 out vec4 ge_Color;
 out vec3 ge_TextureCoord;
 out vec3 ge_Normal;
 out vec3 ge_Position;
+// out mat3 tangentToWorld;
 
 void main()
 {
-	if ( ge_Textures[ ge_TextureBase + 0 ].xy != uvec2(0) ) {
-		ge_HasTexture = 1.0;
-	} else {
-		ge_HasTexture = 0.0;
-	}
+// 	ge_HasTexture = ( ge_Textures[ ge_TextureBase + 0 ].xy != uvec2(0) ) ? 1.0 : 0.0;
+	ge_HasTexture = ( ge_TextureBase == 0xFFFFFFFF ) ? 0.0 : 1.0;
 	ge_Texture0Base = ge_TextureBase;
+	ge_TextureCount = ge_Textures[ ge_TextureBase ].z;
 	ge_Texture0 = geTexture2D(0);
 	ge_Color = ge_VertexColor;
 	ge_TextureCoord = ge_VertexTexcoord.xyz;
 	ge_Normal = ge_VertexNormal.xyz;
+
+// 	if ( ge_TextureCount > 1 ) {
+// 		ge_Texture1 = geTexture2D(1);
+// 		mat3 normalMatrix = transpose( inverse( mat3( ge_ViewMatrix * ge_ObjectMatrix ) ) );
+// 		vec3 Normal = normalize( normalMatrix * ge_VertexNormal.xyz );
+// 		vec3 Tangent = normalize( normalMatrix[0]) ; 
+// 		vec3 Binormal = normalize( normalMatrix[1] );
+// 		tangentToWorld = mat3(Tangent.x, Binormal.x, Normal.x,
+// 							  Tangent.y, Binormal.y, Normal.y,
+// 							  Tangent.z, Binormal.z, Normal.z);
+// 	}
 
 	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition.xyz, 1.0);
 // 	ge_Position = ( ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition, 1.0) ).xyz;

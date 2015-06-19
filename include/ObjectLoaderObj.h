@@ -51,6 +51,7 @@ private:
 		float diffuse[4];
 		float specular[4];
 		Image* map_Kd;
+		Image* map_bump;
 	} Material;
 
 	void LoadMaterials( Instance* instance, File* file, std::string filename );

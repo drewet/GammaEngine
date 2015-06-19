@@ -41,13 +41,10 @@ void main()
 	ge_LightInnerAngle = ge_LightData.z;
 	ge_LightOuterAngle = ge_LightData.w;
 
-	if ( ge_VertexTexcoord.x == 42.0 )
-	{
+	if ( ge_VertexTexcoord.x == 42.0 ) {
 		pos = ge_ProjectionMatrix * vec4(ge_VertexPosition, 1.0);
 		ge_FragCoord = pos * 0.5 + 0.5;
-	}
-	else
-	{
+	} else {
 		pos = ge_ProjectionMatrix * ge_ViewMatrix * vec4(ge_LightPosition.xyz + ge_VertexPosition * ge_LightData.x, 1.0);
 	}
 

@@ -32,52 +32,49 @@
 #include "Camera.h"
 #include "Image.h"
 
+#define GLSL(version, shader)  "#version " #version "\n" #shader
+
 extern "C" GE::Renderer2D* CreateRenderer2D( GE::Instance* instance, uint32_t width, uint32_t height ) {
 	return new OpenGL43Renderer2D( instance, width, height );
 }
+static const char vertices_shader_base[] = GLSL(420,
+	layout(location = 0) in vec3 ge_VertexTexcoord;
+	layout(location = 1) in vec4 ge_VertexColor;
+	layout(location = 2) in vec3 ge_VertexNormal;
+	layout(location = 3) in vec3 ge_VertexPosition;
 
-static const char vertices_shader_base[] = 
-	"#version 420 core\n"
-	"\n"
-	"layout(location = 0) in vec3 ge_VertexTexcoord;\n"
-	"layout(location = 1) in vec4 ge_VertexColor;\n"
-	"layout(location = 2) in vec3 ge_VertexNormal;\n"
-	"layout(location = 3) in vec3 ge_VertexPosition;\n"
-	"\n"
-	"layout (binding=0, std140) uniform ge_Matrices_0\n"
-	"{\n"
-	"	mat4 ge_ProjectionMatrix;\n"
-	"};\n"
-	"\n"
-	"layout (binding=1, std140) uniform ge_Matrices_1\n"
-	"{\n"
-	"	mat4 ge_ViewMatrix;\n"
-	"};\n"
-	"\n"
-	"out vec4 ge_Color;\n"
-	"out vec3 ge_TextureCoord;\n"
-	"\n"
-	"void main()\n"
-	"{\n"
-	"	ge_Color = ge_VertexColor;\n"
-	"	ge_TextureCoord = ge_VertexTexcoord;\n"
-	"	gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * vec4(ge_VertexPosition, 1.0);\n"
-	"}\n"
-;
+	layout (binding=0, std140) uniform ge_Matrices_0
+	{
+		mat4 ge_ProjectionMatrix;
+	};
 
-static const char fragment_shader_base[] = 
-	"#version 420 core\n"
-	"\n"
-	"uniform sampler2D ge_Texture0;\n"
-	"in vec4 ge_Color;\n"
-	"in vec3 ge_TextureCoord;\n"
-	"\n"
-	"void main()\n"
-	"{\n"
-	"	gl_FragColor = ge_Color * texture2D( ge_Texture0, ge_TextureCoord.xy );\n"
-	"	gl_FragColor.a = 1.0;\n"
-	"}\n"
-;
+	layout (binding=1, std140) uniform ge_Matrices_1
+	{
+		mat4 ge_ViewMatrix;
+	};
+
+	out vec4 ge_Color;
+	out vec3 ge_TextureCoord;
+
+	void main()
+	{
+		ge_Color = ge_VertexColor;
+		ge_TextureCoord = ge_VertexTexcoord;
+		gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * vec4(ge_VertexPosition, 1.0);
+	}
+);
+
+static const char fragment_shader_base[] = GLSL(420,
+	uniform sampler2D ge_Texture0;
+	in vec4 ge_Color;
+	in vec3 ge_TextureCoord;
+
+	void main()
+	{
+		gl_FragColor = ge_Color * texture2D( ge_Texture0, ge_TextureCoord.xy );
+		gl_FragColor.a = 1.0;
+	}
+);
 
 
 OpenGL43Renderer2D::OpenGL43Renderer2D( Instance* instance, uint32_t width, uint32_t height )

@@ -150,9 +150,9 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 				Object* obj = instance->CreateObject( finalVertices, finalVerticesCount, finalIndices, finalIndicesCount );
 				obj->matrix()->Translate( center.x, center.y, center.z );
 				obj->setName( currentName );
-				if ( mat && mat != &base_mat && mat->map_Kd ) {
-					gDebug() << "   setting texture\n";
-					obj->setTexture( instance, 0, mat->map_Kd );
+				if ( mat && mat != &base_mat ) {
+					if ( mat->map_Kd ) obj->setTexture( instance, 0, mat->map_Kd );
+// 					if ( mat->map_bump ) obj->setTexture( instance, 1, mat->map_bump );
 				}
 				objects.emplace_back( obj );
 			}
@@ -294,8 +294,9 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 	}
 	Object* obj = instance->CreateObject( finalVertices, finalVerticesCount, finalIndices, finalIndicesCount );
 	obj->setName( currentName );
-	if ( mat && mat != &base_mat && mat->map_Kd ) {
-		obj->setTexture( instance, 0, mat->map_Kd );
+	if ( mat && mat != &base_mat ) {
+		if ( mat->map_Kd ) obj->setTexture( instance, 0, mat->map_Kd );
+// 		if ( mat->map_bump ) obj->setTexture( instance, 1, mat->map_bump );
 	}
 	objects.emplace_back( obj );
 
@@ -472,6 +473,12 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 	mIndices = ( uint32_t* )instance->Malloc( sizeof( uint32_t ) * iIndices, false );
 	memcpy( mIndices, indices, sizeof( uint32_t ) * iIndices );
 	instance->Free( indices );
+/*
+	if ( mat && mat != &base_mat ) {
+		if ( mat->map_Kd ) setTexture( instance, 0, mat->map_Kd );
+		if ( mat->map_bump ) setTexture( instance, 1, mat->map_bump );
+	}
+*/
 }
 
 
@@ -547,6 +554,15 @@ void ObjectLoaderObj::LoadMaterials( Instance* instance, File* base_file, std::s
 			gDebug() << "texfile : " << str << "\n";
 			File* texfile = new File( file, str, File::READ );
 			mat->map_Kd = new Image( texfile, "", instance );
+			delete texfile;
+		}
+
+		if ( type == "map_bump" || type == "bump" ) {
+			// TODO : handle -bm option
+			tokenizer >> str;
+			gDebug() << "bump map file : " << str << "\n";
+			File* texfile = new File( file, str, File::READ );
+			mat->map_bump = new Image( texfile, "", instance );
 			delete texfile;
 		}
 	}

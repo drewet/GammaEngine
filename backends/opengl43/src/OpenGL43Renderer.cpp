@@ -191,7 +191,22 @@ void OpenGL43Renderer::createPipeline()
 
 void OpenGL43Renderer::AddObject( Object* obj )
 {
-	mObjects.emplace_back( (Object*)obj );
+// 	mObjects.emplace_back( (Object*)obj );
+
+	bool opaque = true;
+	Vertex* vertices = obj->vertices();
+	for ( uint32_t i = 0; i < obj->verticesCount(); i++ ) {
+		if ( vertices[i].color[3] < 1.0 ) {
+			opaque = false;
+			break;
+		}
+	}
+
+	if ( opaque ) {
+		mObjects.insert( mObjects.begin(), obj );
+	} else {
+		mObjects.emplace_back( (Object*)obj );
+	}
 }
 
 
@@ -262,9 +277,10 @@ void OpenGL43Renderer::Compute()
 				textureHandles.emplace_back( stride_data ); // 128-bits Stride
 			}
 		} else {
-			textureBases.emplace_back( textureHandles.size() / 2 );
-			textureHandles.emplace_back( 0 );
-			textureHandles.emplace_back( 0 ); // 128-bits Stride
+// 			textureBases.emplace_back( textureHandles.size() / 2 );
+			textureBases.emplace_back( 0xFFFFFFFF );
+// 			textureHandles.emplace_back( 0 );
+// 			textureHandles.emplace_back( 0 ); // 128-bits Stride
 		}
 	}
 
@@ -395,6 +411,7 @@ void OpenGL43Renderer::Draw()
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16 * mObjects.size(), mMatrixObjects );
 	glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
+	glUniform1f( 32, Time::GetSeconds() );
 
 	glMultiDrawElementsIndirect( mRenderMode, GL_UNSIGNED_INT, nullptr, mObjects.size(), 0 );
 

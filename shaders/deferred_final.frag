@@ -34,7 +34,7 @@ void main()
 		gl_FragColor = ge_Color * texture2D( ge_Texture0, texcoords );
 	} else {
 		if ( depth > gl_FragCoord.z ) {
-// 			discard;
+			discard;
 		}
 		vec4 scene_color = texture2D( ge_Texture0, texcoords );
 		vec3 normal = texture2D( ge_Texture2, texcoords ).xyz * 2.0 - vec3(1.0);
@@ -58,7 +58,6 @@ void main()
 		}
 //		gl_FragColor += vec4(0.1);
 	}
-
 }
 
 /*

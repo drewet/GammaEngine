@@ -104,7 +104,7 @@ int main( int argc, char** argv )
 	deferredRenderer->AddSunLight( sun_light );
 
 	for ( int i = 0; i < nLights; i++ ) {
-		deferredRenderer->AddLight( lights[i] );
+// 		deferredRenderer->AddLight( lights[i] );
 	}
 
 	deferredRenderer->AddLight( lightm1 );
@@ -173,7 +173,7 @@ int main( int argc, char** argv )
 		scene->Draw( camera );
 		deferredRenderer->Look( camera );
 		deferredRenderer->Render();
-		deferredRenderer->Unbind();
+// 		deferredRenderer->Unbind();
 		sky->Render( camera );
 
  //		renderer2d->Draw( 0, 0, texture );

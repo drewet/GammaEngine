@@ -1,6 +1,7 @@
 // /!\ Shader designed for OpenGL43 backend /!\
 
-#version 420 core
+#version 430 core
+#extension GL_ARB_explicit_uniform_location : require
 #extension GL_ARB_shader_draw_parameters : require
 #extension GL_ARB_bindless_texture : require
 
