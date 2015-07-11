@@ -109,8 +109,8 @@ void FontLoaderTtf::resize( Font* font, int size )
 			continue;
 		}
 		total_width += slot->bitmap.width;
-		advX = std::max( advX, std::max( (int)slot->advance.x >> 6, std::max( slot->bitmap.width, mSize ) ) );
-		advY = std::max( advY, slot->bitmap.rows );
+		advX = std::max( advX, std::max( (int)slot->advance.x >> 6, std::max( (int)slot->bitmap.width, mSize ) ) );
+		advY = std::max( advY, (int)slot->bitmap.rows );
 		first_null_char = false;
 	}
 
