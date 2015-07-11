@@ -17,6 +17,8 @@
  *
  */
 
+#include <unordered_map>
+
 #include "ObjectLoaderObj.h"
 #include "File.h"
 #include "Vector.h"
@@ -25,7 +27,6 @@
 #include "Debug.h"
 
 #include <stdlib.h>
-#include <unordered_map>
 
 #define RGBA(r,g,b,a) (((uint8_t)(a) << 24)|((uint8_t)(b) << 16)|((uint8_t)(g) << 8)|(uint8_t)(r))
 #define RGBAf(r,g,b,a) RGBA(((r)*255.0f),((g)*255.0f),((b)*255.0f),((a)*255.0f))

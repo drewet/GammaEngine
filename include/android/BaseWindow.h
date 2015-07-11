@@ -20,15 +20,15 @@
 #ifndef BASEWINDOW_H
 #define BASEWINDOW_H
 
+#include "Vector.h"
 #include <string>
 #include <thread>
-#include "Vector.h"
 
 namespace GE {
 
 class Instance;
 
-#ifdef BASEWINDOW_CPP
+// #ifdef BASEWINDOW_CPP
 
 	#include <android/sensor.h>
 	#include <android/log.h>
@@ -44,9 +44,11 @@ class Instance;
 		jobject aJavaSurface;
 		struct android_app* app;
 		ANativeWindow* aSurface;
+		bool hasSurface;
 		int ofsx;
 		int ofsy;
 		int fullscreen;
+		int aflags;
 
 		ASensorManager* sensorManager;
 		const ASensor* accelerometerSensor;
@@ -59,6 +61,9 @@ class Instance;
 		EGLint format;
 		int32_t width;
 		int32_t height;
+
+		bool mainWindowCreated;
+		bool gotFocus;
 	} Engine;
 
 	typedef struct ATouch {
@@ -68,7 +73,7 @@ class Instance;
 		float x, y;
 		float force;
 	} ATouch;
-
+/*
 #else // BASEWINDOW_CPP
 
 	#define Engine void
@@ -76,7 +81,7 @@ class Instance;
 	#define AInputEvent void
 
 #endif // BASEWINDOW_CPP
-
+*/
 class BaseWindow
 {
 public:
@@ -92,6 +97,8 @@ public:
 	float fps() const;
 
 	static void AndroidInit( struct android_app* state );
+	static Engine* androidEngine() { return mEngine; }
+	static struct android_app* androidState() { return mState; }
 
 protected:
 	Instance* mInstance;
@@ -110,13 +117,13 @@ protected:
 
 protected://private:
 	bool mClosing;
+	static Engine* mEngine;
 
 private:
 	static void PollEvents();
 	static void engine_handle_cmd( struct android_app* app, int32_t cmd );
 	static int32_t engine_handle_input( struct android_app* app, AInputEvent* event );
 	static struct android_app* mState;
-	static Engine* mEngine;
 };
 
 

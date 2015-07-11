@@ -59,8 +59,8 @@
 	}
 #endif
 
-// namespace GE {
 using namespace GE;
+
 
 Instance* Instance::mBaseInstance = nullptr;
 void* Instance::sBackend = nullptr;
@@ -155,7 +155,8 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 		std::string lib_suffix = ".so";
 #endif
 // 		std::string backend_lib = "backend_vulkan" + lib_suffix;
-		std::string backend_lib = "backend_opengl43" + lib_suffix;
+// 		std::string backend_lib = "backend_opengl43" + lib_suffix;
+		std::string backend_lib = "backend_opengles20" + lib_suffix;
 		std::string prefixes[6] = {
 			"",
 			"gammaengine/",

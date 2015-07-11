@@ -17,16 +17,18 @@ endif
 SRC := $(wildcard ../src/*.cpp)
 SRC += $(wildcard ../backends/opengles20/src/*.cpp)
 SRC += $(wildcard ../src/android/*.cpp)
+SRC := $(filter-out ../src/Vector.cpp, $(SRC))
+SRC := $(filter-out ../src/m.cpp, $(SRC))
 
 $(info $(SRC))
 
 LOCAL_SRC_FILES = $(addprefix ../, $(SRC))
 
-LOCAL_CPPFLAGS := -Wall -Wno-unused -std=gnu++0x -std=c++11 -fPIC -I../include -I../include/android -I../backends/opengles20/include -DGE_ANDROID -DGE_STATIC_BACKEND=opengles20
+LOCAL_CPPFLAGS := -Wall -Wno-unused -std=gnu++0x -std=c++11 -fPIC -I../include -I../include/android -I../backends/opengles20/include -DGE_LIB -DGE_ANDROID -DGE_STATIC_BACKEND=opengles20
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 
-# LOCAL_LDLIBS    := -llua52 -lfreetype2-static -ljpeg9 -lpng -lz -lm -llog -landroid -lEGL -lGLESv2
+# LOCAL_LDLIBS    := -lfreetype2-static -ljpeg9 -lpng -lz -lm -llog -landroid -lEGL -lGLESv2
 LOCAL_WHOLE_STATIC_LIBRARIES := android_native_app_glue
 
 include $(BUILD_STATIC_LIBRARY)

@@ -32,6 +32,7 @@
 
 namespace GE {
 
+void log( const std::string& s );
 
 class Debug
 {
@@ -42,7 +43,9 @@ public:
 
 	template<typename T> Debug& operator<<( T t )
 	{
-		std::cout << t << std::flush;
+		std::stringstream ss;
+		ss << t;
+		log( ss.str() );
 		if ( mWriteFile ) {
 			// TODO
 		}
@@ -87,7 +90,7 @@ static std::string self_thread() {
 
 #pragma GCC system_header // HACK Disable unused-function warnings
 static void fDebug_base( const char* end, bool f ) {
-	std::cout << " " << end << std::flush;
+	Debug() << " " << end;
 }
 
 #include <cxxabi.h>
@@ -105,21 +108,21 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 	free(type);
 
 	if (!first ) {
-		std::cout << ", ";
+		Debug() << ", ";
 	}
-// 	std::cout << "[" << type << "]";
-	std::cout << cap;
-	std::cout << arg1;
-	std::cout << cap;
+// 	Debug() << "[" << type << "]";
+	Debug() << cap;
+	Debug() << arg1;
+	Debug() << cap;
 	fDebug_base( end, false, args... );
 }
 
-#define fDebug( args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << "( " << std::flush; fDebug_base( ")\n", true, args )
-#define fDebug0() std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << "()\n" << std::flush
+#define fDebug( args... ) Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << "( "; fDebug_base( ")\n", true, args )
+#define fDebug0() Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << "()\n"
 
-#define aDebug( name, args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
+#define aDebug( name, args... ) Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
 
-#define vDebug( name, args... ) std::cout << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); std::cout << "" << std::flush
+#define vDebug( name, args... ) Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); Debug() << ""
 
 #endif // __DBG_CLASS
 

@@ -63,8 +63,8 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 		None
 	};
 	mVisualInfo = glXChooseVisual( mDisplay, mScreen, (int*)attributes );
-
 	mColorMap = XCreateColormap( mDisplay, RootWindow( mDisplay, mScreen ), mVisualInfo->visual, AllocNone );
+
 	mWindowAttributes = (XSetWindowAttributes*)mInstance->Malloc( sizeof(XSetWindowAttributes) );
 	mWindowAttributes->colormap = mColorMap;
 	mWindowAttributes->border_pixel = 0;
@@ -180,8 +180,6 @@ void BaseWindow::SwapBuffersBase()
 			mCursor.y = my;
 		}
 	}
-
-// 	glXSwapBuffers( mDisplay, mWindow );
 
 	mFpsImages++;
 	if ( Time::GetTick() - mFpsTimer > 500 ) {

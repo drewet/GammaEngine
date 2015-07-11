@@ -17,12 +17,15 @@
  *
  */
 
+#ifdef GE_ANDROID
+#include "android/BaseWindow.h"
+#endif
+
 #include "Instance.h"
 #include "File.h"
 #include "Debug.h"
 #include <errno.h>
 #include <string.h>
-
 
 namespace GE {
 
@@ -42,8 +45,20 @@ File::File( std::string filename, MODE mode )
 		std_mode |= std::ios_base::out;
 	}
 
-	mStream = new std::fstream( filename, std_mode );
 	mPath = filename;
+#ifdef GE_ANDROID
+	mIsAsset = false;
+	mStream = new std::fstream( filename, std_mode );
+	if ( !mStream->is_open() ) {
+		mStream = new std::fstream( std::string( BaseWindow::androidState()->activity->internalDataPath ) + "/" + filename, std_mode );
+	}
+	if ( !mStream->is_open() ) {
+		mStream = (std::fstream*)AAssetManager_open( BaseWindow::androidState()->activity->assetManager, filename.c_str(), AASSET_MODE_STREAMING );
+		mIsAsset = true;
+	}
+#else
+	mStream = new std::fstream( filename, std_mode );
+#endif
 }
 
 
@@ -68,8 +83,20 @@ File::File( File* side, std::string filename, File::MODE mode )
 		std_mode |= std::ios_base::out;
 	}
 
-	mStream = new std::fstream( path, std_mode );
 	mPath = path;
+#ifdef GE_ANDROID
+	mIsAsset = false;
+	mStream = new std::fstream( filename, std_mode );
+	if ( !mStream->is_open() ) {
+		mStream = new std::fstream( std::string( BaseWindow::androidState()->activity->internalDataPath ) + "/" + filename, std_mode );
+	}
+	if ( !mStream->is_open() ) {
+		mStream = (std::fstream*)AAssetManager_open( BaseWindow::androidState()->activity->assetManager, filename.c_str(), AASSET_MODE_STREAMING );
+		mIsAsset = true;
+	}
+#else
+	mStream = new std::fstream( filename, std_mode );
+#endif
 }
 
 
@@ -101,8 +128,15 @@ File::~File()
 			mInstance->Free( mBuffer );
 		}
 	} else if ( mType == FILE ) {
-		mStream->close();
-		delete mStream;
+#ifdef GE_ANDROID
+		if ( mIsAsset ) {
+			AAsset_close( (AAsset*)mStream );
+		} else
+#endif
+		{
+			mStream->close();
+			delete mStream;
+		}
 	}
 }
 
@@ -112,7 +146,14 @@ bool File::isOpened()
 	if ( mType == BUFFER ) {
 		return true;
 	} else if ( mType == FILE ) {
-		return mStream && mStream->is_open();
+#ifdef GE_ANDROID
+		if ( mIsAsset ) {
+			return mStream != nullptr;
+		} else
+#endif
+		{
+			return mStream && mStream->is_open();
+		}
 	}
 	return false;
 }
@@ -123,7 +164,14 @@ void File::Rewind()
 	if ( mType == BUFFER ) {
 		mOffset = 0;
 	} else if ( mType == FILE ) {
-		mStream->seekg( 0, std::ios_base::beg );
+#ifdef GE_ANDROID
+		if ( mIsAsset ) {
+			AAsset_seek( (AAsset*)mStream, 0, 0 );
+		} else
+#endif
+		{
+			mStream->seekg( 0, std::ios_base::beg );
+		}
 	}
 }
 
@@ -146,8 +194,20 @@ uint64_t File::Seek( uint64_t ofs, DIR dir )
 	std_dir = ( dir == CURR ) ? std::ios_base::cur : std_dir;
 	std_dir = ( dir == END ) ? std::ios_base::end : std_dir;
 	if ( (int)std_dir != -1 ) {
-		mStream->seekg( ofs, std_dir );
+#ifdef GE_ANDROID
+		if ( mIsAsset ) {
+			AAsset_seek( (AAsset*)mStream, ofs, (int)std_dir );
+		} else
+#endif
+		{
+			mStream->seekg( ofs, std_dir );
+		}
 	}
+#ifdef GE_ANDROID
+		if ( mIsAsset ) {
+			return AAsset_seek( (AAsset*)mStream, 0, 1 );
+		}
+#endif
 	return mStream->tellg();
 }
 
@@ -163,8 +223,15 @@ uint64_t File::Read( void* buf, uint64_t len )
 		memcpy( buf, &mBuffer[mOffset], len );
 		ret = len;
 	} else if ( mType == FILE ) {
-		mStream->read( (char*)buf, len );
-		ret = mStream->gcount();
+#ifdef GE_ANDROID
+		if ( mIsAsset ) {
+			ret = AAsset_read( (AAsset*)mStream,(char*)buf, len );
+		} else
+#endif
+		{
+			mStream->read( (char*)buf, len );
+			ret = mStream->gcount();
+		}
 	}
 
 	return ret;
@@ -176,8 +243,28 @@ bool File::ReadLine( std::string& line )
 	if ( mType == BUFFER ) {
 		// TODO
 	} else if ( mType == FILE ) {
-		std::getline( *mStream, line, '\n' );
-		return !mStream->eof();
+#ifdef GE_ANDROID
+		if ( mIsAsset ) {
+			std::string reading = "";
+			uint64_t ret = 0;
+			char buf[129] = "";
+			do {
+				ret = Read( buf, 128 );
+				buf[ret] = 0x0;
+				reading = reading + std::string( buf );
+				if ( strchr( buf, '\n' ) ) {
+					size_t len = strchr( buf, '\n' ) - buf;
+					Seek( -( ret - len ), File::CURR );
+					break;
+				}
+			} while ( reading.find( "\n" ) < 0 && ret > 0 );
+			line = reading.substr( 0, reading.find( "\n" ) + 1 );
+		} else
+#endif
+		{
+			std::getline( *mStream, line, '\n' );
+			return !mStream->eof();
+		}
 	}
 	return false;
 }

@@ -17,13 +17,13 @@
  *
  */
 
+#include <algorithm>
+
 #include "Instance.h"
 #include "Object.h"
 #include "ObjectLoaderObj.h"
 #include "File.h"
 #include "Debug.h"
-
-#include <algorithm>
 
 
 namespace GE {

@@ -71,6 +71,9 @@ private:
 	uint64_t mOffset;
 	bool mCopiedBuffer;
 	Instance* mInstance;
+#ifdef GE_ANDROID
+	bool mIsAsset;
+#endif
 };
 
 

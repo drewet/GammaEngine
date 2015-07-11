@@ -17,14 +17,14 @@
  *
  */
 
+#ifndef GE_ANDROID
 #include "Instance.h"
 #include "Vector.h"
 #include "Debug.h"
 #include <cmath>
+#endif
 
-namespace GE {
-
-
+using namespace GE;
 
 //template <typename T, int n> Vector<T,n>::Vector( T x, T y, T z, T w ) : x( x ), y( y ), z( z ), w( w ) {}
 
@@ -132,26 +132,10 @@ template <typename T, int n> Vector<T,n> Vector<T,n>::operator^( const Vector<T,
 	return ret;
 }
 
-template <typename T, int n> Vector<T, n> operator*( T im, const Vector<T, n>& v ) {
-	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &v.x )[i] * im;
-	}
-	return ret;
-}
-
-
-template <typename T, int n> bool operator==( const Vector<T, n>& v1, const Vector<T,n>& v2 ) {
-	bool ret = true;
-	for ( int i = 0; i < n; i++ ) {
-		ret = ret && ( ( &v1.x )[i] == ( &v2.x )[i] );
-	}
-	return ret;
-}
-
-static void dummy_vectors()
+#ifndef GE_ANDROID
+static void _init_dummy_vectors()
 {
-	dummy_vectors();
+	_init_dummy_vectors();
 	{
 		Vector2i v( 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
@@ -225,5 +209,6 @@ static void dummy_vectors()
 		v -= v * (v == v);
 	}
 }
+#endif // GE_ANDROID
 
-} // namespace GE
+// } // namespace GE
