@@ -212,6 +212,8 @@ void BaseWindow::SwapBuffersBase()
 		PollEvents();
 	}
 
+	mWidth = mEngine->width;
+	mHeight = mEngine->height;
 	eglSwapBuffers( mEngine->display, mEngine->surface );
 }
 
@@ -237,8 +239,8 @@ void BaseWindow::engine_handle_cmd( struct android_app* app, int32_t cmd )
 				eglMakeCurrent( mEngine->display, mEngine->surface, mEngine->surface, mEngine->context );
 				eglQuerySurface( mEngine->display, mEngine->surface, EGL_WIDTH, &w );
 				eglQuerySurface( mEngine->display, mEngine->surface, EGL_HEIGHT, &h );
-				mWidth = w;
-				mHeight = h;
+				mEngine->width = w;
+				mEngine->height = h;
 			}
 			break;
 		case APP_CMD_TERM_WINDOW:
