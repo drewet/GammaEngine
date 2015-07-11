@@ -30,6 +30,31 @@
 #include "File.h"
 #include "Camera.h"
 
+
+#ifdef GE_WIN32
+#include <windows.h>
+static HINSTANCE hOpenGL = 0;
+	void* SymLib( const char* name ) {
+		if ( !hOpenGL ) {
+			hOpenGL = LoadLibrary("opengl32.dll");
+		}
+		return (void*)GetProcAddress( hOpenGL, name );
+	}
+#elif defined(GE_LINUX)
+typedef void (*__GLXextFuncPtr)(void);
+extern "C" __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
+	void* SymLib( const char* name ) {
+		return (void*)glXGetProcAddressARB( (GLubyte*)name );
+	}
+#else
+	void* SymLib( const char* name ) {
+		return nullptr;
+	}
+#endif
+
+static PFNGLGETTEXTUREHANDLEARBPROC glGetTextureHandle = 0;
+static PFNGLMAKETEXTUREHANDLERESIDENTARBPROC glMakeTextureHandleResident = 0;
+
 extern "C" GE::Renderer* CreateRenderer( GE::Instance* instance ) {
 	return new OpenGL43Renderer( instance );
 }
@@ -75,6 +100,13 @@ OpenGL43Renderer::OpenGL43Renderer( Instance* instance )
 	, mVertexShader( 0 )
 	, mFragmentShader( 0 )
 {
+	if ( !glGetTextureHandle ) {
+		glGetTextureHandle = (PFNGLGETTEXTUREHANDLEARBPROC)SymLib( "glGetTextureHandleARB" );
+	}
+	if ( !glMakeTextureHandleResident ) {
+		glMakeTextureHandleResident = (PFNGLMAKETEXTUREHANDLERESIDENTARBPROC)SymLib( "glMakeTextureHandleResidentARB" );
+	}
+
 	mMatrixProjection = new Matrix();
 	mMatrixProjection->Perspective( 60.0f, 16.0f / 9.0f, 0.01f, 1000.0f );
 	mMatrixView = new Matrix();
@@ -268,8 +300,8 @@ void OpenGL43Renderer::Compute()
 			uint64_t stride_data = ( (uint64_t)( textures->size() ) ) | (( (uint64_t)textureHandles.size() ) << 32);
 			for ( size_t j = 0; j < textures->size(); j++ ) {
 				if ( (*textures)[j].first != nullptr ) {
-					uint64_t handle = glGetTextureHandleARB( (*textures)[j].second );
-					glMakeTextureHandleResidentARB( handle );
+					uint64_t handle = glGetTextureHandle( (*textures)[j].second );
+					glMakeTextureHandleResident( handle );
 					textureHandles.emplace_back( handle );
 				} else {
 					textureHandles.emplace_back( 0 );

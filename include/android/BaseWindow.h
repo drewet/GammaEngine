@@ -35,6 +35,7 @@ class Instance;
 	#include <android/native_activity.h>
 	#include <android/native_window_jni.h>
 	#include <android/window.h>
+	#include <EGL/egl.h>
 	#include <jni.h>
 	#include <android_native_app_glue.h>
 

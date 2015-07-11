@@ -24,6 +24,7 @@
 #include "Image.h"
 #include "Debug.h"
 
+#include <stdlib.h>
 #include <unordered_map>
 
 #define RGBA(r,g,b,a) (((uint8_t)(a) << 24)|((uint8_t)(b) << 16)|((uint8_t)(g) << 8)|(uint8_t)(r))
@@ -231,7 +232,7 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 						if ( str2.length() <= 0 ) {
 							point_indexes[p] = -1;
 						} else {
-							point_indexes[p] = std::stoi( str2 ) - 1;
+							point_indexes[p] = atoi( str2.data() ) - 1;
 						}
 // 						printf("  point_indexes[%d] = %d\n", p, point_indexes[p]);
 						p++;
@@ -348,7 +349,7 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 	uint32_t iIndices = 0;
 	uint32_t maxIndices = 128 * 3 * 2048;
 
-	uint32_t ln = 0;
+// 	uint32_t ln = 0;
 
 	while ( file->ReadLine( line ) )
 	{
@@ -427,7 +428,7 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 					tokenizer2.clear();
 					tokenizer2.str( str );
 					while(std::getline( tokenizer2, str2, '/') ) {
-						point_indexes[p] = std::stoi( str2 ) - 1;
+						point_indexes[p] = atoi( str2.data() ) - 1;
 // 						printf("  point_indexes[%d] = %d\n", p, point_indexes[p]);
 						p++;
 					}

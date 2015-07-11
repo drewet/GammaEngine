@@ -9,6 +9,7 @@ find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
 
 option(target "target")
+option(backend "backend")
 
 if(${target} MATCHES OFF)
 	if(WIN32)
@@ -18,6 +19,10 @@ if(${target} MATCHES OFF)
 	elseif(UNIX)
 		set(target linux)
 	endif()
+endif()
+
+if( NOT ${backend} MATCHES OFF )
+	add_definitions(-DGE_STATIC_BACKEND=${backend})
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -g3")
@@ -30,8 +35,15 @@ include_directories(libvulkangl/include)
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
-add_subdirectory(backends/vulkan)
-add_subdirectory(backends/opengl43)
+
+if( ${backend} MATCHES OFF )
+	add_subdirectory(backends/vulkan)
+	add_subdirectory(backends/opengl43)
+else()
+	file(GLOB SOURCES backends/${backend}/src/*)
+	include_directories(backends/${backend}/include)
+	set(LIBS ${OPENGL_LIBRARIES})
+endif()
 
 
 set(INCLUDES
@@ -70,7 +82,7 @@ set(INCLUDES_TARGET
 	include/${target}/BaseWindow.h
 )
 
-set(SOURCES
+set(SOURCES ${SOURCES}
 # 	src/gememory.cpp
 	src/Instance.cpp
 	src/Light.cpp
@@ -100,7 +112,7 @@ set(SOURCES
 # 	fake/dummy_vk.cpp
 )
 
-set(LIBS
+set(LIBS ${LIBS}
 	${PNG_LIBRARIES}
 	${JPEG_LIBRARIES}
 	${FREETYPE_LIBRARIES}
@@ -115,15 +127,17 @@ if("${target}" MATCHES "windows")
 else()
 	add_definitions(-DGE_LINUX)
 	include_directories(include/linux)
-	set(LIBS ${LIBS} ${OPENGL_LIBRARIES} -lX11 -ldl)
+	set(LIBS ${LIBS} ${OPENGL_LIBRARIES} -lX11 -lXext -ldl)
 	set(SOURCES ${SOURCES} src/linux/BaseWindow.cpp)
 endif()
+
+message(STATUS "LIBS : ${LIBS}")
 
 add_library(gammaengine SHARED ${SOURCES})
 target_link_libraries(gammaengine ${LIBS})
 
 add_executable(testexec src/main.cpp)
-target_link_libraries(testexec gammaengine)
+target_link_libraries(testexec gammaengine ${LIBS})
 
 INSTALL(TARGETS gammaengine ARCHIVE DESTINATION /usr/lib LIBRARY DESTINATION /usr/lib)
 INSTALL(FILES ${INCLUDES} DESTINATION /usr/include/gammaengine)

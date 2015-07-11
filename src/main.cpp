@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <iostream>
 
 #include "Instance.h"
@@ -22,6 +23,16 @@
 #include "Debug.h"
 
 using namespace GE;
+
+#ifdef GE_ANDROID
+namespace std {
+template<typename T> string to_string(const T& t) {
+	ostringstream os;
+	os << t;
+	return os.str();
+}
+}
+#endif
 
 class LightsThread : public Thread {
 public:
@@ -137,12 +148,9 @@ int main( int argc, char** argv )
 	float fps_min = 1.0e34f;
 	float fps_max = 0.0f;
 	float time = Time::GetSeconds();
-	uint32_t ticks = Time::GetTick();
 	uint32_t img = 0;
 
 	while ( 1 ) {
-		float dt = Time::Delta();
-
 		input->Update();
 		if ( input->pressed( 'Z' ) ) {
 			camera->WalkForward( 10.0 );

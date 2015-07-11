@@ -18,8 +18,7 @@
  */
  
  
-
-
+#include <stdlib.h>
 #include "Instance.h"
 #include "Debug.h"
 
@@ -60,7 +59,8 @@
 	}
 #endif
 
-namespace GE {
+// namespace GE {
+using namespace GE;
 
 Instance* Instance::mBaseInstance = nullptr;
 void* Instance::sBackend = nullptr;
@@ -83,6 +83,68 @@ void* Instance::backend()
 	return sBackend;
 }
 
+#ifdef GE_STATIC_BACKEND
+
+extern "C" Instance* CreateInstance( const char*, uint32_t );
+extern "C" Window* CreateWindow( Instance*, const std::string&, int, int, int );
+extern "C" Renderer* CreateRenderer( Instance* );
+extern "C" Renderer2D* CreateRenderer2D( Instance*, uint32_t, uint32_t );
+extern "C" DeferredRenderer* CreateDeferredRenderer( Instance*, uint32_t, uint32_t );
+extern "C" Object* CreateObject( Vertex*, uint32_t, uint32_t*, uint32_t );
+extern "C" Object* LoadObject( const std::string&, Instance* );
+
+Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance )
+{
+	if ( easy_instance ) {
+		if ( !mBaseInstance ) {
+			mBaseInstance = CreateInstance( appName, appVersion );
+			mBaseThread = pthread_self();
+		}
+		Instance* ret = mBaseInstance->CreateDevice( 0, 1 );
+		if ( !mBaseInstance || mBaseInstance->device() == 0 ) {
+			mBaseInstance = ret;
+		}
+		return ret;
+	}
+	return CreateInstance( appName, appVersion );
+}
+
+Window* Instance::CreateWindow( const std::string& title, int width, int height, int flags )
+{
+	return ::CreateWindow( this, title, width, height, flags );
+}
+
+
+Renderer* Instance::CreateRenderer()
+{
+	return ::CreateRenderer( this );
+}
+
+
+Renderer2D* Instance::CreateRenderer2D( uint32_t width, uint32_t height )
+{
+	return ::CreateRenderer2D( this, width, height );
+}
+
+
+DeferredRenderer* Instance::CreateDeferredRenderer( uint32_t width, uint32_t height )
+{
+	return ::CreateDeferredRenderer( this, width, height );
+}
+
+
+Object* Instance::CreateObject( Vertex* verts, uint32_t nVert, uint32_t* indices, uint32_t nIndices )
+{
+	return ::CreateObject( verts, nVert, indices, nIndices );
+}
+
+
+Object* Instance::LoadObject( const std::string& filename )
+{
+	return ::LoadObject( filename, this );
+}
+
+#else // GE_STATIC_BACKEND
 
 Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance )
 {
@@ -176,15 +238,7 @@ Object* Instance::LoadObject( const std::string& filename )
 	f_type fLoadObject = (f_type)SymLib( backend(), "LoadObject" );
 	return fLoadObject( filename, this );
 }
-
-/*
-std::vector< Object* > Instance::LoadObjects( const std::string& filename )
-{
-	typedef std::vector< Object* > (*f_type)( const std::string&, Instance* );
-	f_type fLoadObjects = (f_type)dlsym( backend(), "LoadObjects" );
-	return fLoadObjects( filename, this );
-}
-*/
+#endif // GE_STATIC_BACKEND
 
 static uintptr_t _ge_AllocMemBlock( uintptr_t size )
 {
@@ -298,4 +352,4 @@ uint64_t Instance::queue()
 	return mQueues[mDevId];
 }
 
-} // namespace GE
+// } // namespace GE

@@ -24,7 +24,7 @@ float collide1_x = 0.0f;
 float collide1_y = 0.0f;
 float collide2_x = 0.0f;
 float collide2_y = 0.0f;
-
+/*
 #include <libge/libge.h>
 void main2d(){
 	geInit();
@@ -111,7 +111,7 @@ void main2d(){
 		geSwapBuffers();
 	}
 }
-
+*/
 
 int main( int argc, char** argv )
 {
@@ -187,12 +187,9 @@ int main( int argc, char** argv )
 
 	float fps = 0.0f;
 	float time = Time::GetSeconds();
-	uint32_t ticks = Time::GetTick();
 	uint32_t img = 0;
 
 	while ( 1 ) {
-		float dt = Time::Delta();
-
 		physics->ResetForces();
 		physics->ResetTorque();
 		physics2->ResetForces();

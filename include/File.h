@@ -45,13 +45,13 @@ public:
 
 	File( std::string filename, MODE mode );
 	File( File* side, std::string filename, MODE mode );
-	File( void* data, size_t len, MODE mode, bool copy_buffer = false, Instance* instance = nullptr );
+	File( void* data, uint64_t len, MODE mode, bool copy_buffer = false, Instance* instance = nullptr );
 	~File();
 
 	bool isOpened();
 	void Rewind();
 	uint64_t Seek( uint64_t ofs, DIR dir );
-	uint64_t Read( void* buf, size_t len );
+	uint64_t Read( void* buf, uint64_t len );
 	bool ReadLine( std::string& line );
 	std::string ReadLine();
 

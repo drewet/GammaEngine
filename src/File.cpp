@@ -73,7 +73,7 @@ File::File( File* side, std::string filename, File::MODE mode )
 }
 
 
-File::File( void* data, size_t len, MODE mode, bool copy_buffer, Instance* instance )
+File::File( void* data, uint64_t len, MODE mode, bool copy_buffer, Instance* instance )
 	: mType( BUFFER )
 	, mMode( mode )
 	, mCopiedBuffer( copy_buffer )
@@ -128,7 +128,7 @@ void File::Rewind()
 }
 
 
-size_t File::Seek( uint64_t ofs, DIR dir )
+uint64_t File::Seek( uint64_t ofs, DIR dir )
 {
 	if ( mType == BUFFER ) {
 		if ( dir == BEGIN && ofs >= 0 && ofs < mBufferSize ) {

@@ -29,6 +29,9 @@
 
 namespace GE {
 
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "libge", __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "libge", __VA_ARGS__))
+
 Engine* BaseWindow::mEngine = nullptr;
 int main( int, char** );
 
@@ -67,7 +70,6 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 	, mHasResized( false )
 	, mWindow( 0 )
 	, mKeys{ false }
-	, mDisplay( 0 )
 {
 	Window::Flags flags = static_cast<Window::Flags>( _flags );
 }
@@ -119,12 +121,12 @@ void BaseWindow::SwapBuffersBase()
 }
 
 
-static void BaseWindow::engine_handle_cmd( struct android_app* app, int32_t cmd )
+void BaseWindow::engine_handle_cmd( struct android_app* app, int32_t cmd )
 {
 }
 
 
-static int32_t BaseWindow::engine_handle_input( struct android_app* app, AInputEvent* event )
+int32_t BaseWindow::engine_handle_input( struct android_app* app, AInputEvent* event )
 {
 	return 0;
 }
@@ -135,9 +137,9 @@ void BaseWindow::PollEvents()
 	int ident;
 	int events;
 	struct android_poll_source* source;
-	u32 pause_start = geGetTick();
+	uint64_t pause_start = Time::GetTick();
 	bool time_shift = false;
-
+/*
 	do {
 		while ( ( ident = ALooper_pollAll( 0, nullptr, &events, (void**)&source) ) >= 0 ) {
 			if (source != NULL) {
@@ -159,6 +161,7 @@ void BaseWindow::PollEvents()
 	if ( time_shift ) {
 		tick_pause += geGetTick() - pause_start;
 	}
+*/
 }
 
 } // namespace GE 

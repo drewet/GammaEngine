@@ -70,7 +70,7 @@ void ImageLoaderJpg::Load( Instance* instance, File* file, uint32_t pref_w, uint
 
 	ge_init_jpeg_src( instance, &dinfo, file );
 
-	jpeg_read_header( &dinfo, true );
+	jpeg_read_header( &dinfo, TRUE );
 	mWidth = dinfo.image_width;
 	mHeight = dinfo.image_height;
 	jpeg_start_decompress( &dinfo );
@@ -157,7 +157,7 @@ boolean ImageLoaderJpg::file_fill_input_buffer( j_decompress_ptr cinfo )
 
 	if ( nbytes <= 0 ) {
 		if ( src->start_of_file ) { //It's an error
-			return false;
+			return FALSE;
 		}
 		WARNMS(cinfo, JWRN_JPEG_EOF);
 		// Insert a fake EOI marker
@@ -168,9 +168,9 @@ boolean ImageLoaderJpg::file_fill_input_buffer( j_decompress_ptr cinfo )
 
 	src->jsrc.next_input_byte = src->buffer;
 	src->jsrc.bytes_in_buffer = nbytes;
-	src->start_of_file = false;
+	src->start_of_file = FALSE;
 
-	return true;
+	return TRUE;
 }
 
 
