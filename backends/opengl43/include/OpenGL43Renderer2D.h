@@ -37,7 +37,16 @@ public:
 	virtual int LoadFragmentShader( const std::string& file );
 	virtual int LoadFragmentShader( const void* data, size_t size );
 
-	virtual void Draw( int x, int y, Image* image );
+	virtual uintptr_t attributeID( const std::string& name );
+	virtual uintptr_t uniformID( const std::string& name );
+	virtual void uniformUpload( const uintptr_t id, const float f );
+	virtual void uniformUpload( const uintptr_t id, const Vector2f& v );
+	virtual void uniformUpload( const uintptr_t id, const Vector3f& v );
+	virtual void uniformUpload( const uintptr_t id, const Vector4f& v );
+	virtual void uniformUpload( const uintptr_t id, const Matrix& v );
+
+	virtual void Draw( int x, int y, Image* image, int tx, int ty, int tw, int th );
+	virtual void Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th );
 	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text );
 
 protected:

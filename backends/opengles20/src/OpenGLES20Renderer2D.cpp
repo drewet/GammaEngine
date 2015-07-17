@@ -39,14 +39,6 @@ extern "C" GE::Renderer2D* CreateRenderer2D( GE::Instance* instance, uint32_t wi
 	return new OpenGLES20Renderer2D( instance, width, height );
 }
 static const char vertices_shader_base[] = GLSL(
-	attribute vec4 ge_VertexTexcoord;
-	attribute vec4 ge_VertexColor;
-	attribute vec4 ge_VertexNormal;
-	attribute vec4 ge_VertexPosition;
-
-	uniform mat4 ge_ProjectionMatrix;
-	uniform mat4 ge_ViewMatrix;
-
 	varying vec4 ge_Color;
 	varying vec3 ge_TextureCoord;
 
@@ -59,7 +51,6 @@ static const char vertices_shader_base[] = GLSL(
 );
 
 static const char fragment_shader_base[] = GLSL(
-	uniform sampler2D ge_Texture0;
 	varying vec4 ge_Color;
 	varying vec3 ge_TextureCoord;
 
@@ -189,41 +180,103 @@ void OpenGLES20Renderer2D::Render( Image* image, int n )
 }
 
 
-void OpenGLES20Renderer2D::Draw( int x, int y, Image* image )
+void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th )
 {
 	Prerender();
 
+	if ( tw == -1 ) {
+		tw = image->width();
+	}
+	if ( th == -1 ) {
+		th = image->height();
+	}
+
 	Vertex vertices[6];
 	memset( vertices, 0, sizeof(vertices) );
-	vertices[0].u = 0.0f;
-	vertices[0].v = 0.0f;
+	vertices[0].u = (float)tx / image->width();
+	vertices[0].v = (float)ty / image->height();
 	vertices[0].x = x;
 	vertices[0].y = y;
 
-	vertices[1].u = 1.0f;
-	vertices[1].v = 1.0f;
+	vertices[1].u = (float)(tx+tw) / image->width();
+	vertices[1].v = (float)(ty+th) / image->height();
 	vertices[1].x = x + image->width();
 	vertices[1].y = y + image->height();
 
-	vertices[2].u = 1.0f;
-	vertices[2].v = 0.0f;
+	vertices[2].u = (float)(tx+tw) / image->width();
+	vertices[2].v = (float)ty / image->height();
 	vertices[2].x = x + image->width();
 	vertices[2].y = y;
 
-	vertices[3].u = 0.0f;
-	vertices[3].v = 0.0f;
+	vertices[3].u = (float)tx / image->width();
+	vertices[3].v = (float)ty / image->height();
 	vertices[3].x = x;
 	vertices[3].y = y;
 
-	vertices[4].u = 0.0f;
-	vertices[4].v = 1.0f;
+	vertices[4].u = (float)tx / image->width();
+	vertices[4].v = (float)(ty+th) / image->height();
 	vertices[4].x = x;
 	vertices[4].y = y + image->height();
 
-	vertices[5].u = 1.0f;
-	vertices[5].v = 1.0f;
+	vertices[5].u = (float)(tx+tw) / image->width();
+	vertices[5].v = (float)(ty+th) / image->height();
 	vertices[5].x = x + image->width();
 	vertices[5].y = y + image->height();
+
+	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
+	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
+	vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
+	vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
+
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
+
+	Render( image, 6 );
+}
+
+
+void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th )
+{
+	Prerender();
+
+	if ( tw == -1 ) {
+		tw = image->width();
+	}
+	if ( th == -1 ) {
+		th = image->height();
+	}
+
+	Vertex vertices[6];
+	memset( vertices, 0, sizeof(vertices) );
+	vertices[0].u = (float)tx / image->width();
+	vertices[0].v = (float)ty / image->height();
+	vertices[0].x = x;
+	vertices[0].y = y;
+
+	vertices[1].u = (float)(tx+tw) / image->width();
+	vertices[1].v = (float)(ty+th) / image->height();
+	vertices[1].x = x + w;
+	vertices[1].y = y + h;
+
+	vertices[2].u = (float)(tx+tw) / image->width();
+	vertices[2].v = (float)ty / image->height();
+	vertices[2].x = x + w;
+	vertices[2].y = y;
+
+	vertices[3].u = (float)tx / image->width();
+	vertices[3].v = (float)ty / image->height();
+	vertices[3].x = x;
+	vertices[3].y = y;
+
+	vertices[4].u = (float)tx / image->width();
+	vertices[4].v = (float)(ty+th) / image->height();
+	vertices[4].x = x;
+	vertices[4].y = y + h;
+
+	vertices[5].u = (float)(tx+tw) / image->width();
+	vertices[5].v = (float)(ty+th) / image->height();
+	vertices[5].x = x + w;
+	vertices[5].y = y + h;
 
 	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
 	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
@@ -330,4 +383,57 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
 	Render( font->texture(), iBuff );
+}
+
+
+uintptr_t OpenGLES20Renderer2D::attributeID( const std::string& name )
+{
+	if ( !m2DReady ) {
+		Compute();
+	}
+	return glGetAttribLocation( mShader, name.c_str() );
+}
+
+
+uintptr_t OpenGLES20Renderer2D::uniformID( const std::string& name )
+{
+	if ( !m2DReady ) {
+		Compute();
+	}
+	return glGetUniformLocation( mShader, name.c_str() );
+}
+
+
+void OpenGLES20Renderer2D::uniformUpload( const uintptr_t id, const float f )
+{
+	glUseProgram( mShader );
+	glUniform1f( id, f );
+}
+
+
+void OpenGLES20Renderer2D::uniformUpload( const uintptr_t id, const Vector2f& v )
+{
+	glUseProgram( mShader );
+	glUniform2f( id, v.x, v.y );
+}
+
+
+void OpenGLES20Renderer2D::uniformUpload( const uintptr_t id, const Vector3f& v )
+{
+	glUseProgram( mShader );
+	glUniform3f( id, v.x, v.y, v.z );
+}
+
+
+void OpenGLES20Renderer2D::uniformUpload( const uintptr_t id, const Vector4f& v )
+{
+	glUseProgram( mShader );
+	glUniform4f( id, v.x, v.y, v.z, v.w );
+}
+
+
+void OpenGLES20Renderer2D::uniformUpload( const uintptr_t id, const Matrix& v )
+{
+	glUseProgram( mShader );
+	glUniformMatrix4fv( id, 1, GL_FALSE, v.constData() );
 }

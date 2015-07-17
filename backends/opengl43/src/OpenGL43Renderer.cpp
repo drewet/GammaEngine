@@ -462,6 +462,59 @@ void OpenGL43Renderer::Look( Camera* cam )
 }
 
 
+uintptr_t OpenGL43Renderer::attributeID( const std::string& name )
+{
+	if ( !mReady ) {
+		createPipeline();
+	}
+	return glGetAttribLocation( mShader, name.c_str() );
+}
+
+
+uintptr_t OpenGL43Renderer::uniformID( const std::string& name )
+{
+	if ( !mReady ) {
+		createPipeline();
+	}
+	return glGetUniformLocation( mShader, name.c_str() );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const float f )
+{
+	glUseProgram( mShader );
+	glUniform1f( id, f );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Vector2f& v )
+{
+	glUseProgram( mShader );
+	glUniform2f( id, v.x, v.y );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Vector3f& v )
+{
+	glUseProgram( mShader );
+	glUniform3f( id, v.x, v.y, v.z );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Vector4f& v )
+{
+	glUseProgram( mShader );
+	glUniform4f( id, v.x, v.y, v.z, v.w );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Matrix& v )
+{
+	glUseProgram( mShader );
+	glUniformMatrix4fv( id, 1, GL_FALSE, v.constData() );
+}
+
+
 uint8_t* OpenGL43Renderer::loadShader( const std::string& filename, size_t* sz )
 {
 	File* file = new File( filename, File::READ );

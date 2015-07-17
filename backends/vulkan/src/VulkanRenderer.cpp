@@ -226,6 +226,43 @@ void VulkanRenderer::Look( Camera* cam )
 }
 
 
+uintptr_t VulkanRenderer::attributeID( const std::string& name )
+{
+	return 0;
+}
+
+
+uintptr_t VulkanRenderer::uniformID( const std::string& name )
+{
+	return 0;
+}
+
+
+void VulkanRenderer::uniformUpload( const uintptr_t id, const float f )
+{
+}
+
+
+void VulkanRenderer::uniformUpload( const uintptr_t id, const Vector2f& v )
+{
+}
+
+
+void VulkanRenderer::uniformUpload( const uintptr_t id, const Vector3f& v )
+{
+}
+
+
+void VulkanRenderer::uniformUpload( const uintptr_t id, const Vector4f& v )
+{
+}
+
+
+void VulkanRenderer::uniformUpload( const uintptr_t id, const Matrix& v )
+{
+}
+
+
 uint8_t* VulkanRenderer::loadShader( const std::string& filename, size_t* sz )
 {
 	File* file = new File( filename, File::READ );

@@ -34,8 +34,31 @@ extern "C" GE::Renderer* CreateRenderer( GE::Instance* instance ) {
 	return new OpenGLES20Renderer( instance );
 }
 
-static const char* vertex_shader_include = "";
+static const char* vertex_shader_include =
+	"#define geTexture2D(x) ge_Texture0\n"
+	"#define geTexture3D(x) ge_Texture0\n"
+	"\n"
+	"attribute vec4 ge_VertexTexcoord;\n"
+	"attribute vec4 ge_VertexColor;\n"
+	"attribute vec4 ge_VertexNormal;\n"
+	"attribute vec4 ge_VertexPosition;\n"
+	"\n"
+	"uniform mat4 ge_ObjectMatrix;\n"
+	"uniform mat4 ge_ProjectionMatrix;\n"
+	"uniform mat4 ge_ViewMatrix;\n"
+	"uniform sampler2D ge_Texture0;\n"
+	"\n"
+	"#define in attribute\n"
+	"#define out varying\n"
+	"#define ge_Position gl_Position\n"
+;
 
+static const char* fragment_shader_include =
+	"uniform sampler2D ge_Texture0;\n"
+	"#define ge_FragColor gl_FragColor\n"
+	"#define in varying\n"
+	"#define texture texture2D\n"
+;
 
 OpenGLES20Renderer::OpenGLES20Renderer( Instance* instance )
 	: mReady( false )
@@ -75,10 +98,10 @@ int OpenGLES20Renderer::LoadVertexShader( const void* data, size_t size )
 		glDeleteShader( mVertexShader );
 	}
 
-// 	const char* array[2] = { vertex_shader_include, (char*)data };
+	const char* array[2] = { vertex_shader_include, (char*)data };
 	mVertexShader = glCreateShader( GL_VERTEX_SHADER );
-// 	glShaderSource( mVertexShader, 2, array, NULL );
-	glShaderSource( mVertexShader, 1, (const char**)&data, NULL );
+	glShaderSource( mVertexShader, 2, array, NULL );
+// 	glShaderSource( mVertexShader, 1, (const char**)&data, NULL );
 	glCompileShader( mVertexShader );
 	char log[4096] = "";
 	int logsize = 4096;
@@ -98,8 +121,10 @@ int OpenGLES20Renderer::LoadFragmentShader( const void* data, size_t size )
 
 	fDebug( data, size );
 
+	const char* array[2] = { fragment_shader_include, (char*)data };
 	mFragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
-	glShaderSource( mFragmentShader, 1, (const char**)&data, NULL );
+	glShaderSource( mFragmentShader, 2, array, NULL );
+// 	glShaderSource( mFragmentShader, 1, (const char**)&data, NULL );
 	glCompileShader( mFragmentShader );
 	char log[4096] = "";
 	int logsize = 4096;
@@ -274,6 +299,59 @@ void OpenGLES20Renderer::Look( Camera* cam )
 {
 	memcpy( mMatrixView->data(), cam->data(), sizeof( float ) * 16 );
 	// TODO / TBD : upload matrix to shader here
+}
+
+
+uintptr_t OpenGLES20Renderer::attributeID( const std::string& name )
+{
+	if ( !mReady ) {
+		createPipeline();
+	}
+	return glGetAttribLocation( mShader, name.c_str() );
+}
+
+
+uintptr_t OpenGLES20Renderer::uniformID( const std::string& name )
+{
+	if ( !mReady ) {
+		createPipeline();
+	}
+	return glGetUniformLocation( mShader, name.c_str() );
+}
+
+
+void OpenGLES20Renderer::uniformUpload( const uintptr_t id, const float f )
+{
+	glUseProgram( mShader );
+	glUniform1f( id, f );
+}
+
+
+void OpenGLES20Renderer::uniformUpload( const uintptr_t id, const Vector2f& v )
+{
+	glUseProgram( mShader );
+	glUniform2f( id, v.x, v.y );
+}
+
+
+void OpenGLES20Renderer::uniformUpload( const uintptr_t id, const Vector3f& v )
+{
+	glUseProgram( mShader );
+	glUniform3f( id, v.x, v.y, v.z );
+}
+
+
+void OpenGLES20Renderer::uniformUpload( const uintptr_t id, const Vector4f& v )
+{
+	glUseProgram( mShader );
+	glUniform4f( id, v.x, v.y, v.z, v.w );
+}
+
+
+void OpenGLES20Renderer::uniformUpload( const uintptr_t id, const Matrix& v )
+{
+	glUseProgram( mShader );
+	glUniformMatrix4fv( id, 1, GL_FALSE, v.constData() );
 }
 
 
