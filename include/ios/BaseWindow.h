@@ -22,7 +22,6 @@
 
 #include <string>
 #include <thread>
-// #include <vulkan.h>
 #include "Vector.h"
 
 #ifndef BASEWINDOW_CPP
@@ -55,6 +54,10 @@ public:
 	void SwapBuffersBase();
 	float fps() const;
 
+	static int iOSWindowWidth();
+	static int iOSWindowHeight();
+	static bool* iOSKeys();
+
 protected:
 	void pEventThread();
 
@@ -62,7 +65,7 @@ protected:
 	uint32_t mWidth;
 	uint32_t mHeight;
 	bool mHasResized;
-	bool mKeys[512];
+	static bool mKeys[512];
 	Vector2i mCursor;
 	Vector2i mCursorWarp;
 
@@ -71,6 +74,8 @@ protected:
 	uint64_t mFpsTimer;
 
 protected://private:
+	static uint32_t mBaseWidth;
+	static uint32_t mBaseHeight;
 };
 
 

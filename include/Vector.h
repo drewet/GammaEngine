@@ -104,9 +104,13 @@ typedef Vector<double, 4> Vector4d;
 
 } // namespace GE
 
-#if ( (defined(GE_ANDROID) || defined(GE_IOS)) && defined(GE_LIB) )
+#if ( (defined(GE_ANDROID) || defined(GE_IOS))/* && defined(GE_LIB)*/ )
 #define GE_VECTOR_CPP_INC
+#ifdef GE_LIB
 #include "../src/Vector.cpp"
+#else
+#include "Vector.cpp"
+#endif
 #endif
 
 #endif // VECTOR_H

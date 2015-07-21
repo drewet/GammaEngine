@@ -32,6 +32,16 @@ namespace GE {
 std::vector< ImageLoader* > Image::mImageLoaders = std::vector< ImageLoader* >();
 static bool ImageLoaderFirstCall = true;
 
+static uint32_t geGetNextPower2( uint32_t width )
+{
+	int b = width;
+	int n;
+	for ( n = 0; b != 0; n++ ) b >>= 1;
+	b = 1 << n;
+	if ( b == 2 * width ) b >>= 1;
+	return b;
+}
+
 Image::Image()
 	: mAllocInstance( nullptr )
 	, mWidth( 0 )
@@ -72,6 +82,12 @@ Image::Image( uint32_t width, uint32_t height, uint32_t backcolor, Instance* ins
 	, mHeight( height )
 	, mData( nullptr )
 {
+
+#ifdef GE_IOS
+	mWidth = geGetNextPower2( mWidth );
+	mHeight = geGetNextPower2( mHeight );
+#endif
+
 	mData = (uint32_t*)mAllocInstance->Malloc( sizeof(uint32_t) * mWidth * mHeight );
 	for ( uint32_t i = 0; i < mWidth * mHeight; i++ ) {
 		mData[ i ] = backcolor;

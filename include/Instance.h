@@ -21,6 +21,7 @@
 #define INSTANCE_H
 
 #include <stdint.h>
+#include <typeinfo>
 #include <string>
 
 namespace GE {
@@ -87,5 +88,9 @@ protected:
 };
 
 } // namespace GE
+
+#if ( defined(GE_IOS) && !defined(GE_LIB) )
+#define main _ge_main
+#endif
 
 #endif // INSTANCE_H

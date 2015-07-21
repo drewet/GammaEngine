@@ -35,6 +35,7 @@ extern "C" GE::Renderer* CreateRenderer( GE::Instance* instance ) {
 }
 
 static const char* vertex_shader_include =
+	"precision highp float;\n"
 	"#define geTexture2D(x) ge_Texture0\n"
 	"#define geTexture3D(x) ge_Texture0\n"
 	"\n"
@@ -54,6 +55,7 @@ static const char* vertex_shader_include =
 ;
 
 static const char* fragment_shader_include =
+	"precision highp float;\n"
 	"uniform sampler2D ge_Texture0;\n"
 	"#define ge_FragColor gl_FragColor\n"
 	"#define in varying\n"

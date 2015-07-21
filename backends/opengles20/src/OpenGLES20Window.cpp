@@ -35,6 +35,11 @@
 	#include <X11/Xlib.h>
 #endif
 
+
+#if GE_IOS
+void _ge_iOSFramebufferUseDefault();
+#endif
+
 #include "OpenGLES20Window.h"
 #include "OpenGLES20Instance.h"
 #include "Debug.h"
@@ -185,6 +190,7 @@ OpenGLES20Window::OpenGLES20Window( Instance* instance, const std::string& title
 */
 
 #elif defined(GE_ANDROID)
+#elif defined(GE_IOS)
 
 #endif
 
@@ -215,6 +221,8 @@ uint64_t OpenGLES20Window::colorImage()
 
 void OpenGLES20Window::Clear( uint32_t color )
 {
+	BindTarget();
+
 	float clearColor[] = {
 		(float)( ( color >>  0 ) & 0xFF ) / 255.0f,
 		(float)( ( color >>  8 ) & 0xFF ) / 255.0f,
@@ -228,7 +236,11 @@ void OpenGLES20Window::Clear( uint32_t color )
 
 void OpenGLES20Window::BindTarget()
 {
-// 	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+#if GE_IOS
+	_ge_iOSFramebufferUseDefault();
+#else
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+#endif
 }
 
 
@@ -267,7 +279,7 @@ void OpenGLES20Window::BindSharedContext( uint64_t ctx )
 #ifdef GE_WIN32
 #elif defined(GE_LINUX)
 #elif defined(GE_ANDROID)
-	eglSwapBuffers( mEngine->display, mEngine->surface );
+#elif defined(GE_IOS)
 #endif
 }
 

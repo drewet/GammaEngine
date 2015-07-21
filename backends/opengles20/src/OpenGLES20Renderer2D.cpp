@@ -150,8 +150,10 @@ void OpenGLES20Renderer2D::Render( Image* image, int n, const Matrix& matrix )
 	glUseProgram( mShader );
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 
-	glActiveTexture( 0 );
+	glActiveTexture( GL_TEXTURE0 );
+	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, image->serverReference( mInstance ) );
+	glUniform1i( uniformID( "ge_Texture0" ), 0 );
 
 	glUniform1f( mFloatTimeID, Time::GetSeconds() );
 	glUniformMatrix4fv( mMatrixProjectionID, 1, GL_FALSE, mMatrixProjection->constData() );

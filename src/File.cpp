@@ -27,12 +27,17 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef GE_IOS
+std::fstream* _ge_iOSOpen( const char* file, std::ios_base::openmode mode );
+#endif
+
 namespace GE {
 
 
 File::File( std::string filename, MODE mode )
 	: mType( FILE )
 	, mMode( mode )
+	, mStream( nullptr )
 {
 	fDebug( filename, mode );
 
@@ -55,6 +60,12 @@ File::File( std::string filename, MODE mode )
 	if ( !mStream->is_open() ) {
 		mStream = (std::fstream*)AAssetManager_open( BaseWindow::androidState()->activity->assetManager, filename.c_str(), AASSET_MODE_STREAMING );
 		mIsAsset = true;
+	}
+#elif GE_IOS
+	mStream = new std::fstream( filename, std_mode );
+	if ( !mStream->is_open() ) {
+		delete mStream;
+		mStream = _ge_iOSOpen( filename.c_str(), std_mode );
 	}
 #else
 	mStream = new std::fstream( filename, std_mode );
@@ -93,6 +104,12 @@ File::File( File* side, std::string filename, File::MODE mode )
 	if ( !mStream->is_open() ) {
 		mStream = (std::fstream*)AAssetManager_open( BaseWindow::androidState()->activity->assetManager, filename.c_str(), AASSET_MODE_STREAMING );
 		mIsAsset = true;
+	}
+#elif GE_IOS
+	mStream = new std::fstream( filename, std_mode );
+	if ( !mStream->is_open() ) {
+		delete mStream;
+		mStream = _ge_iOSOpen( filename.c_str(), std_mode );
 	}
 #else
 	mStream = new std::fstream( filename, std_mode );
