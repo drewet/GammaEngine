@@ -100,6 +100,8 @@ public:
 
 	void Update();
 	bool pressed( unsigned int keycode ) const;
+	bool toggled( unsigned int keycode ) const;
+	bool untoggled( unsigned int keycode ) const;
 	Vector2f cursor() const;
 	Vector2f cursorWarp() const;
 
@@ -109,6 +111,7 @@ protected:
 	Vector2i mCursorLast;
 	Vector2i mCursorWarp;
 	bool mKeys[512];
+	bool mLastKeys[512];
 };
 
 

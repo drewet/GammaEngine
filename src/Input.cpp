@@ -39,6 +39,7 @@ Input::~Input()
 
 void Input::Update()
 {
+	memcpy( mLastKeys, mKeys, sizeof( mKeys ) );
 	mWindow->ReadKeys( mKeys );
 
 	mCursorLast = mCursor;
@@ -50,6 +51,18 @@ void Input::Update()
 bool Input::pressed( unsigned int keycode ) const
 {
 	return mKeys[ keycode ];
+}
+
+
+bool Input::toggled( unsigned int keycode ) const
+{
+	return mKeys[ keycode ] && !mLastKeys[ keycode ];
+}
+
+
+bool Input::untoggled( unsigned int keycode ) const
+{
+	return mLastKeys[ keycode ] && !mKeys[ keycode ];
 }
 
 

@@ -89,6 +89,15 @@ template <typename T, int n> bool operator==( const Vector<T, n>& v1, const Vect
 }
 
 
+template <typename T, int n> bool operator!=( const Vector<T, n>& v1, const Vector<T,n>& v2 ) {
+	bool ret = true;
+	for ( int i = 0; i < n; i++ ) {
+		ret = ret && ( ( &v1.x )[i] != ( &v2.x )[i] );
+	}
+	return ret;
+}
+
+
 typedef Vector<int, 2> Vector2i;
 typedef Vector<int, 3> Vector3i;
 typedef Vector<int, 4> Vector4i;
