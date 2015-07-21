@@ -29,6 +29,7 @@
 #include <pthread.h>
 
 #include "Instance.h"
+#include <cxxabi.h>
 
 namespace GE {
 
@@ -75,7 +76,7 @@ static inline std::string className(const std::string& prettyFunction)
 
 #pragma GCC system_header // HACK Disable unused-function warnings
 static std::string self_thread() {
-	if ( pthread_self() != Instance::baseThread() ) {
+	if ( (uint64_t)pthread_self() != Instance::baseThread() ) {
 		std::stringstream ret;
 		ret << "[0x" << std::hex << pthread_self() << std::dec << "] ";
 		return ret.str();
@@ -92,8 +93,6 @@ static std::string self_thread() {
 static void fDebug_base( const char* end, bool f ) {
 	Debug() << " " << end;
 }
-
-#include <cxxabi.h>
 
 template<typename Arg1, typename... Args> static void fDebug_base( const char* end, bool first, const Arg1& arg1, const Args&... args ) {
 	char* type = abi::__cxa_demangle(typeid(arg1).name(), nullptr, nullptr, nullptr);

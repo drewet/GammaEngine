@@ -20,7 +20,7 @@
 #include "Matrix.h"
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <cmath>
 
 #define PI_OVER_360 0.0087266f

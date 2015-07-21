@@ -17,66 +17,64 @@
  *
  */
 
-#ifndef FILE_H
-#define FILE_H
+#ifndef BASEWINDOW_H
+#define BASEWINDOW_H
 
-
-#include <sys/types.h>
 #include <string>
-#include <fstream>
+#include <thread>
+// #include <vulkan.h>
+#include "Vector.h"
 
+#ifndef BASEWINDOW_CPP
+#ifndef Display
+#define Display void
+#endif
+#ifndef XSetWindowAttributes
+#define XSetWindowAttributes void
+#endif
+#ifndef XVisualInfo
+#define XVisualInfo void
+#endif
+#endif
 
 namespace GE {
 
 class Instance;
 
-class File
+class BaseWindow
 {
 public:
-	typedef enum {
-		READ = 0x1,
-		WRITE = 0x2
-	} MODE;
-	typedef enum {
-		BEGIN,
-		CURR,
-		END
-	} DIR;
+	BaseWindow( Instance* instance, const std::string& title, int width, int height, uint32_t flags );
+	~BaseWindow();
 
-	File( std::string filename, MODE mode );
-	File( File* side, std::string filename, MODE mode );
-	File( void* data, uint64_t len, MODE mode, bool copy_buffer = false, Instance* instance = nullptr );
-	~File();
+	uint32_t width();
+	uint32_t height();
+	Vector2i& cursor();
+	Vector2i& cursorWarp();
 
-	bool isOpened();
-	void Rewind();
-	uint64_t Seek( int64_t ofs, DIR dir );
-	uint64_t Read( void* buf, uint64_t len );
-	bool ReadLine( std::string& line );
-	std::string ReadLine();
+	void SwapBuffersBase();
+	float fps() const;
 
+protected:
+	void pEventThread();
 
-private:
-	typedef enum {
-		FILE,
-		BUFFER
-	} TYPE;
-
-	TYPE mType;
-	MODE mMode;
-	std::string mPath;
-	std::fstream* mStream;
-	unsigned char* mBuffer;
-	uint64_t mBufferSize;
-	uint64_t mOffset;
-	bool mCopiedBuffer;
 	Instance* mInstance;
-#ifdef GE_ANDROID
-	bool mIsAsset;
-#endif
+	uint32_t mWidth;
+	uint32_t mHeight;
+	bool mHasResized;
+	bool mKeys[512];
+	Vector2i mCursor;
+	Vector2i mCursorWarp;
+
+	float mFps;
+	int mFpsImages;
+	uint64_t mFpsTimer;
+
+protected://private:
 };
 
 
 } // namespace GE
 
-#endif // FILE_H
+#endif // BASEWINDOW_H
+ 

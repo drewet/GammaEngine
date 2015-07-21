@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GE_ANDROID
+#if ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) ) )
+
 #include "Instance.h"
 #include "Vector.h"
 #include "Debug.h"
 #include <cmath>
-#endif
 
 using namespace GE;
 
@@ -138,7 +138,7 @@ template <typename T, int n> Vector<T,n> Vector<T,n>::operator^( const Vector<T,
 	return ret;
 }
 
-#ifndef GE_ANDROID
+#if ( !defined(GE_ANDROID) && !defined(GE_IOS) )
 static void _init_dummy_vectors()
 {
 	_init_dummy_vectors();
@@ -242,6 +242,8 @@ static void _init_dummy_vectors()
 		v[0] = v2[0];
 	}
 }
-#endif // GE_ANDROID
+#endif // GE_ANDROID || GE_IOS
+
+#endif // ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) ) )
 
 // } // namespace GE

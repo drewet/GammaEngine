@@ -256,6 +256,8 @@ uint64_t OpenGLES20Window::CreateSharedContext()
 	return 0;
 #elif defined(GE_ANDROID)
 	return 0;
+#elif defined(GE_IOS)
+	return 0;
 #endif
 }
 

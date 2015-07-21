@@ -20,13 +20,15 @@
 #include <cmath>
 #include <unistd.h>
 #include <time.h>
-#include "Time.h"
+#include <sys/time.h>
+#include <stdint.h>
+#include "include/Time.h"
 
 #ifdef GE_WIN32
 	#include <windows.h>
 #endif
 
-namespace GE {
+using namespace GE;
 
 
 int64_t Time::sStartTime = 0;
@@ -111,6 +113,10 @@ uint64_t Time::GetTick()
 	if ( sStartTime == 0 ) {
 	#ifdef GE_WIN32
 		sStartTime = timeGetTime();
+	#elif GE_IOS
+		struct timeval cTime;
+		gettimeofday( &cTime, 0 );
+		sStartTime = ( cTime.tv_sec * 1000 ) + ( cTime.tv_usec / 1000 );
 	#else
 		struct timespec now;
 		clock_gettime( CLOCK_MONOTONIC, &now );
@@ -120,6 +126,10 @@ uint64_t Time::GetTick()
 
 #ifdef GE_WIN32
 	return timeGetTime() - sStartTime;
+#elif GE_IOS
+	struct timeval cTime;
+	gettimeofday( &cTime, 0 );
+	return ( cTime.tv_sec * 1000 ) + ( cTime.tv_usec / 1000 ) - sStartTime;
 #else
 	struct timespec now;
 	clock_gettime( CLOCK_MONOTONIC, &now );
@@ -148,6 +158,3 @@ void Time::Sleep( uint64_t t )
 {
 	usleep( t * 1000 );
 }
-
-
-} // namespace GE

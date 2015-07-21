@@ -5,7 +5,7 @@
 
 #define __DBG_CLASS
 #include "Debug.h"
-
+#include "include/Time.h"
 
 namespace GE {
 
@@ -48,9 +48,7 @@ Debug::~Debug()
 
 uint64_t Debug::GetTicks()
 {
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	return now.tv_sec + now.tv_nsec/100;
+	return Time::GetTick();
 }
 
 } // namespace GE

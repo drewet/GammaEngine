@@ -176,14 +176,14 @@ void File::Rewind()
 }
 
 
-uint64_t File::Seek( uint64_t ofs, DIR dir )
+uint64_t File::Seek( int64_t ofs, DIR dir )
 {
 	if ( mType == BUFFER ) {
 		if ( dir == BEGIN && ofs >= 0 && ofs < mBufferSize ) {
 			mOffset = ofs;
-		} else if ( dir == CURR && mOffset + ofs >= 0 && mOffset + ofs < mBufferSize ) {
+		} else if ( dir == CURR && (int64_t)mOffset + ofs >= 0 && (int64_t)mOffset + ofs < mBufferSize ) {
 			mOffset = mOffset + ofs;
-		} else if ( dir == END && mBufferSize + ofs >= 0 && mBufferSize + ofs < mBufferSize ) {
+		} else if ( dir == END && (int64_t)mBufferSize + ofs >= 0 && mBufferSize + ofs < mBufferSize ) {
 			mOffset = mBufferSize + ofs;
 		}
 		return mOffset;

@@ -98,7 +98,7 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 	if ( easy_instance ) {
 		if ( !mBaseInstance ) {
 			mBaseInstance = CreateInstance( appName, appVersion );
-			mBaseThread = pthread_self();
+			mBaseThread = (uint64_t)pthread_self();
 		}
 		Instance* ret = mBaseInstance->CreateDevice( 0, 1 );
 		if ( !mBaseInstance || mBaseInstance->device() == 0 ) {

@@ -53,8 +53,8 @@ int OpenGLES20Instance::EnumerateGpus()
 Instance* OpenGLES20Instance::CreateDevice( int devid, int queueCount )
 {
 	OpenGLES20Instance* ret = (OpenGLES20Instance*)malloc( sizeof(OpenGLES20Instance) );
-	memset( ret, 0, sizeof(OpenGLES20Instance) );
-	memcpy( ret, this, sizeof(OpenGLES20Instance) );
+	memset( (void*)ret, 0, sizeof(OpenGLES20Instance) );
+	memcpy( (void*)ret, (void*)this, sizeof(OpenGLES20Instance) );
 	ret->mCpuRamCounter = 0;
 	ret->mGpuRamCounter = 0;
 	ret->mDevId = devid;
