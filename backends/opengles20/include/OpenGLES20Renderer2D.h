@@ -45,14 +45,14 @@ public:
 	virtual void uniformUpload( const uintptr_t id, const Vector4f& v );
 	virtual void uniformUpload( const uintptr_t id, const Matrix& v );
 
-	virtual void Draw( int x, int y, Image* image, int tx, int ty, int tw, int th );
-	virtual void Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th );
+	virtual void Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle );
+	virtual void Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle );
 	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text );
 
 protected:
 	void Compute();
 	void Prerender();
-	void Render( GE::Image* image, int n );
+	void Render( GE::Image* image, int n, const Matrix& matrix );
 	bool m2DReady;
 	uint32_t mWidth;
 	uint32_t mHeight;

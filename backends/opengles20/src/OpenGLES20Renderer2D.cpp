@@ -46,7 +46,7 @@ static const char vertices_shader_base[] = GLSL(
 	{
 		ge_Color = ge_VertexColor;
 		ge_TextureCoord = ge_VertexTexcoord.xyz;
-		gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * vec4(ge_VertexPosition.xyz, 1.0);
+		gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition.xyz, 1.0);
 	}
 );
 
@@ -142,7 +142,7 @@ void OpenGLES20Renderer2D::Prerender()
 }
 
 
-void OpenGLES20Renderer2D::Render( Image* image, int n )
+void OpenGLES20Renderer2D::Render( Image* image, int n, const Matrix& matrix )
 {
 	const uint32_t binding_proj = 0;
 	const uint32_t binding_view = 1;
@@ -154,8 +154,9 @@ void OpenGLES20Renderer2D::Render( Image* image, int n )
 	glBindTexture( GL_TEXTURE_2D, image->serverReference( mInstance ) );
 
 	glUniform1f( mFloatTimeID, Time::GetSeconds() );
-	glUniformMatrix4fv( mMatrixProjectionID, 1, GL_FALSE, mMatrixProjection->data() );
-	glUniformMatrix4fv( mMatrixViewID, 1, GL_FALSE, mMatrixView->data() );
+	glUniformMatrix4fv( mMatrixProjectionID, 1, GL_FALSE, mMatrixProjection->constData() );
+	glUniformMatrix4fv( mMatrixViewID, 1, GL_FALSE, mMatrixView->constData() );
+	glUniformMatrix4fv( mMatrixObjectID, 1, GL_FALSE, matrix.constData() );
 // 	gDebug() << "mMatrixProjectionID : " << mMatrixProjectionID << "\n";
 // 	gDebug() << "mMatrixViewID : " << mMatrixViewID << "\n";
 
@@ -180,7 +181,7 @@ void OpenGLES20Renderer2D::Render( Image* image, int n )
 }
 
 
-void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th )
+void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle )
 {
 	Prerender();
 
@@ -231,11 +232,18 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
 
-	Render( image, 6 );
+	Matrix m;
+	if ( angle != 0.0f ) {
+		m.Translate( x + image->width() / 2, y + image->height() / 2, 0.0f );
+		m.RotateZ( -angle );
+		m.Translate( -x - image->width() / 2, -y - image->height() / 2, 0.0f );
+	}
+
+	Render( image, 6, m );
 }
 
 
-void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th )
+void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle )
 {
 	Prerender();
 
@@ -286,7 +294,14 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
 
-	Render( image, 6 );
+	Matrix m;
+	if ( angle != 0.0f ) {
+		m.Translate( x + w / 2, y + h / 2, 0.0f );
+		m.RotateZ( -angle );
+		m.Translate( -x - w / 2, -y - h / 2, 0.0f );
+	}
+
+	Render( image, 6, m );
 }
 
 
@@ -303,6 +318,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	const float ry = 1.0f / font->texture()->height();
 	uint32_t iBuff = 0;
 
+	Matrix matrix;
 	Vertex vertices[6*32];
 	memset( vertices, 0, sizeof(vertices) );
 
@@ -376,13 +392,13 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		if ( iBuff >= 6*32 && i + 1 < len ) {
 			glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 			glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
-			Render( font->texture(), iBuff );
+			Render( font->texture(), iBuff, matrix );
 			iBuff = 0;
 		}
 	}
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
-	Render( font->texture(), iBuff );
+	Render( font->texture(), iBuff, matrix );
 }
 
 

@@ -58,6 +58,12 @@ template <typename T, int n> T Vector<T,n>::operator[]( int i ) const
 }
 
 
+template <typename T, int n> T& Vector<T,n>::operator[]( int i )
+{
+	return ( &x )[i];
+}
+
+
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator-() const
 {
 	Vector<T, n> ret;
@@ -142,7 +148,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector2i& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector3i v( 0, 0, 0 );
@@ -150,7 +159,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector3i& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector4i v( 0, 0, 0, 0 );
@@ -158,7 +170,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector4i& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector2f v( 0, 0 );
@@ -166,7 +181,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector2f& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector3f v( 0, 0, 0 );
@@ -174,7 +192,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector3f& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector4f v( 0, 0, 0, 0 );
@@ -182,7 +203,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector4f& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector2d v( 0, 0 );
@@ -190,7 +214,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector2d& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector3d v( 0, 0, 0 );
@@ -198,7 +225,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector3d& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector4d v( 0, 0, 0, 0 );
@@ -206,7 +236,10 @@ static void _init_dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector4d& v2 = v;
+		v[0] = v2[0];
 	}
 }
 #endif // GE_ANDROID

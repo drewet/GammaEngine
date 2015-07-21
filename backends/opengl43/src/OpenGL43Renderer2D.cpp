@@ -221,7 +221,7 @@ void OpenGL43Renderer2D::Render( Image* image, int n )
 }
 
 
-void OpenGL43Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th )
+void OpenGL43Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle )
 {
 	Prerender();
 
@@ -276,7 +276,7 @@ void OpenGL43Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int t
 }
 
 
-void OpenGL43Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th )
+void OpenGL43Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle )
 {
 	Prerender();
 

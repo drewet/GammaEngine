@@ -49,6 +49,7 @@ public:
 	Vector<T,2> yz() const { return Vector<T,2>( y, z ); }
 
 	T operator[]( int i ) const;
+	T& operator[]( int i );
 	Vector<T,n> operator-() const;
  	void operator+=( const Vector<T,n>& v );
  	void operator-=( const Vector<T,n>& v );

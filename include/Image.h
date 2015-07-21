@@ -35,14 +35,16 @@ class Image
 public:
 	Image();
 	Image( File* file, const std::string& extension = "", Instance* instance = nullptr );
-	Image( const std::string filename, Instance* instance = nullptr );
+	Image( const std::string& filename, Instance* instance = nullptr );
 	Image( uint32_t width, uint32_t height, uint32_t backcolor = 0x00000000, Instance* instance = nullptr );
 	~Image();
 
-	uint32_t width();
-	uint32_t height();
-	uint32_t* data();
+	uint32_t width() const;
+	uint32_t height() const;
+	uint32_t* data() const;
 	uint64_t serverReference( Instance* instance );
+
+	void Release();
 
 	static ImageLoader* AddImageLoader( ImageLoader* loader );
 

@@ -42,26 +42,25 @@ Image::Image()
 
 
 Image::Image( File* file, const std::string& extension, Instance* instance )
-	: Image()
+	: mAllocInstance( instance ? instance : Instance::baseInstance() )
+	, mWidth( 0 )
+	, mHeight( 0 )
+	, mData( nullptr )
 {
-	if ( !instance ) {
-		instance = Instance::baseInstance();
-	}
-	mAllocInstance = instance;
-	Load( file, extension, instance );
+	Load( file, extension, mAllocInstance );
 }
 
 
-Image::Image( const std::string filename, Instance* instance )
-	: Image()
+Image::Image( const std::string& filename, Instance* instance )
+	: mAllocInstance( instance ? instance : Instance::baseInstance() )
+	, mWidth( 0 )
+	, mHeight( 0 )
+	, mData( nullptr )
 {
-	if ( !instance ) {
-		instance = Instance::baseInstance();
-	}
 	File* file = new File( filename, File::READ );
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
 
-	Load( file, extension, instance );
+	Load( file, extension, mAllocInstance );
 
 	delete file;
 }
@@ -83,11 +82,10 @@ Image::Image( uint32_t width, uint32_t height, uint32_t backcolor, Instance* ins
 Image::~Image()
 {
 	((int*)0)[0] = 0;
-	Instance* instance = mAllocInstance ? mAllocInstance : Instance::baseInstance();
 	decltype(mServerRefs)::iterator it;
 
 	if ( mData ) {
-		instance->Free( mData );
+		mAllocInstance->Free( mData );
 	}
 	for ( it = mServerRefs.begin(); it != mServerRefs.end(); ++it ) {
 		(*it).first->UnreferenceImage( (*it).second );
@@ -145,7 +143,10 @@ void Image::Load( File* file, const std::string& extension, Instance* instance )
 		loader = loader->NewInstance();
 		loader->Load( instance, file );
 // 		*this = static_cast< Image >( *loader );
-		*this = *((Image*)loader);
+// 		*this = *((Image*)loader);
+		mWidth = loader->mWidth;
+		mHeight = loader->mHeight;
+		mData = loader->mData;
 // 		delete loader;
 		free( loader );
 // 		gDebug() << "Image loaded, size = " << mWidth << " x " << mHeight << "\n";
@@ -153,19 +154,19 @@ void Image::Load( File* file, const std::string& extension, Instance* instance )
 }
 
 
-uint32_t Image::width()
+uint32_t Image::width() const
 {
 	return mWidth;
 }
 
 
-uint32_t Image::height()
+uint32_t Image::height() const
 {
 	return mHeight;
 }
 
 
-uint32_t* Image::data()
+uint32_t* Image::data() const
 {
 	return mData;
 }
@@ -179,6 +180,15 @@ uint64_t Image::serverReference( Instance* instance )
 	uint64_t ref = instance->ReferenceImage( this );
 	mServerRefs.insert( std::make_pair( instance, ref ) );
 	return ref;
+}
+
+
+void Image::Release()
+{
+	if ( mServerRefs.size() == 0 ) {
+		serverReference( Instance::baseInstance() );
+	}
+	mAllocInstance->Free( mData );
 }
 
 

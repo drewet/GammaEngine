@@ -44,8 +44,8 @@ public:
 	virtual int LoadFragmentShader( const std::string& file ) = 0;
 	virtual int LoadFragmentShader( const void* data, size_t size ) = 0;
 
-	virtual void Draw( int x, int y, Image* image, int tx = 0, int ty = 0, int tw = -1, int th = -1 ) = 0;
-	virtual void Draw( int x, int y, int w, int h, Image* image, int tx = 0, int ty = 0, int tw = -1, int th = -1 ) = 0;
+	virtual void Draw( int x, int y, Image* image, int tx = 0, int ty = 0, int tw = -1, int th = -1, float angle = 0.0f ) = 0;
+	virtual void Draw( int x, int y, int w, int h, Image* image, int tx = 0, int ty = 0, int tw = -1, int th = -1, float angle = 0.0f ) = 0;
 
 	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text ) = 0;
 
