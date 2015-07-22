@@ -114,8 +114,9 @@ void FontLoaderTtf::resize( Font* font, int size )
 		first_null_char = false;
 	}
 
-	int side = std::max( advX * 16, advY * 16 );
-	Image* texture = font->reallocTexture( side, side );
+//	int side = std::max( advX * 16, advY * 16 );
+//	Image* texture = font->reallocTexture( side, side );
+	Image* texture = font->reallocTexture( advX * 16, advY * 16 );
 
 	first_null_char = true;
 	y = advY;

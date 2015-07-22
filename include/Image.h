@@ -44,6 +44,7 @@ public:
 	uint32_t* data() const;
 	uint64_t serverReference( Instance* instance );
 
+	void Resize( uint32_t width, uint32_t height );
 	void Release();
 
 	static ImageLoader* AddImageLoader( ImageLoader* loader );

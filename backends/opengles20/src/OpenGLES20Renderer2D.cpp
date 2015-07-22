@@ -39,24 +39,24 @@ extern "C" GE::Renderer2D* CreateRenderer2D( GE::Instance* instance, uint32_t wi
 	return new OpenGLES20Renderer2D( instance, width, height );
 }
 static const char vertices_shader_base[] = GLSL(
-	varying vec4 ge_Color;
-	varying vec3 ge_TextureCoord;
+//	varying vec4 ge_Color;
+	varying vec2 ge_TextureCoord;
 
 	void main()
 	{
-		ge_Color = ge_VertexColor;
-		ge_TextureCoord = ge_VertexTexcoord.xyz;
-		gl_Position = ge_ProjectionMatrix * ge_ViewMatrix * ge_ObjectMatrix * vec4(ge_VertexPosition.xyz, 1.0);
+//		ge_Color = ge_VertexColor;
+		ge_TextureCoord = ge_VertexTexcoord.xy;
+		gl_Position = ge_ProjectionMatrix /* ge_ViewMatrix*/ * ge_ObjectMatrix * vec4(ge_VertexPosition.xy, 1.0, 1.0);
 	}
 );
 
 static const char fragment_shader_base[] = GLSL(
-	varying vec4 ge_Color;
-	varying vec3 ge_TextureCoord;
+//	varying vec4 ge_Color;
+	varying vec2 ge_TextureCoord;
 
 	void main()
 	{
-		gl_FragColor = ge_Color * texture2D( ge_Texture0, ge_TextureCoord.xy );
+		gl_FragColor = /*ge_Color */ texture2D( ge_Texture0, ge_TextureCoord.xy );
 	}
 );
 
@@ -117,12 +117,13 @@ void OpenGLES20Renderer2D::Compute()
 
 
 	glUseProgram( mShader );
+	glUniformMatrix4fv( mMatrixProjectionID, 1, GL_FALSE, mMatrixProjection->constData() );
 
-	// Pre-allocate 32 quads
+	// Pre-allocate 32 quads + 1 static quad
 	glGenBuffers( 1, &mVBO );
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-	glBufferData( GL_ARRAY_BUFFER, 32 * 6 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW );
-	((OpenGLES20Instance*)Instance::baseInstance())->AffectVRAM( sizeof(Vertex) * 32 * 6 );
+	glBufferData( GL_ARRAY_BUFFER, ( 32 + 1 ) * 6 * sizeof(Vertex2D), nullptr, GL_DYNAMIC_DRAW );
+	((OpenGLES20Instance*)Instance::baseInstance())->AffectVRAM( sizeof(Vertex2D) * ( 32 + 1 ) * 6 );
 
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 	m2DReady = true;
@@ -138,45 +139,44 @@ void OpenGLES20Renderer2D::Prerender()
 		mWidth = mAssociatedWindow->width();
 		mHeight = mAssociatedWindow->height();
 		mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
+		glUseProgram( mShader );
+		glUniformMatrix4fv( mMatrixProjectionID, 1, GL_FALSE, mMatrixProjection->constData() );
 	}
 }
 
 
-void OpenGLES20Renderer2D::Render( Image* image, int n, const Matrix& matrix )
+void OpenGLES20Renderer2D::Render( Image* image, int start, int n, const Matrix& matrix )
 {
-	const uint32_t binding_proj = 0;
-	const uint32_t binding_view = 1;
-
 	glUseProgram( mShader );
-	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 
-	glActiveTexture( GL_TEXTURE0 );
-	glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, image->serverReference( mInstance ) );
-	glUniform1i( uniformID( "ge_Texture0" ), 0 );
+	if (! s2DActive ) {
+		glActiveTexture( GL_TEXTURE0 );
+		glEnable( GL_TEXTURE_2D );
+
+//		glUniformMatrix4fv( mMatrixViewID, 1, GL_FALSE, mMatrixView->constData() );
+
+		glEnableVertexAttribArray( 0 );
+		glEnableVertexAttribArray( 1 );
+		glEnableVertexAttribArray( 2 );
+		glEnableVertexAttribArray( 3 );
+
+		glDisable( GL_DEPTH_TEST );
+	//	glDisable( GL_BLEND );
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+		s2DActive = true;
+	}
 
 	glUniform1f( mFloatTimeID, Time::GetSeconds() );
-	glUniformMatrix4fv( mMatrixProjectionID, 1, GL_FALSE, mMatrixProjection->constData() );
-	glUniformMatrix4fv( mMatrixViewID, 1, GL_FALSE, mMatrixView->constData() );
 	glUniformMatrix4fv( mMatrixObjectID, 1, GL_FALSE, matrix.constData() );
-// 	gDebug() << "mMatrixProjectionID : " << mMatrixProjectionID << "\n";
-// 	gDebug() << "mMatrixViewID : " << mMatrixViewID << "\n";
 
-	glEnableVertexAttribArray( 0 );
-	glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, sizeof( Vertex ), (void*)( 0 ) );
-	glEnableVertexAttribArray( 1 );
-	glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, sizeof( Vertex ), (void*)( sizeof( float ) * 4 ) );
-	glEnableVertexAttribArray( 2 );
-	glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, sizeof( Vertex ), (void*)( sizeof( float ) * 4 + sizeof( float ) * 4 ) );
-	glEnableVertexAttribArray( 3 );
-	glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, sizeof( Vertex ), (void*)( sizeof( float ) * 4 + sizeof( float ) * 4 + sizeof( float ) * 4 ) );
+	glBindTexture( GL_TEXTURE_2D, image->serverReference( mInstance ) );
+	glVertexAttribPointer( 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( Vertex2D ), (void*)( 0 ) );
+	glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, sizeof( Vertex2D ), (void*)( sizeof( uint32_t ) ) );
+	glVertexAttribPointer( 3, 2, GL_FLOAT, GL_FALSE, sizeof( Vertex2D ), (void*)( sizeof( uint32_t ) + sizeof( float ) * 2 ) );
 
-	glDisable( GL_DEPTH_TEST );
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	glDrawArrays( GL_TRIANGLES, 0, n );
-	glEnable( GL_DEPTH_TEST );
-
+	glDrawArrays( GL_TRIANGLES, start, n );
 
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 	glUseProgram( 0 );
@@ -194,7 +194,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 		th = image->height();
 	}
 
-	Vertex vertices[6];
+	Vertex2D vertices[6];
 	memset( vertices, 0, sizeof(vertices) );
 	vertices[0].u = (float)tx / image->width();
 	vertices[0].v = (float)ty / image->height();
@@ -225,14 +225,14 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 	vertices[5].v = (float)(ty+th) / image->height();
 	vertices[5].x = x + image->width();
 	vertices[5].y = y + image->height();
-
+/*
 	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
 	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
 	vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
 	vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
-
+*/
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), 6 * sizeof(Vertex2D), vertices );
 
 	Matrix m;
 	if ( angle != 0.0f ) {
@@ -241,14 +241,27 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 		m.Translate( -x - image->width() / 2, -y - image->height() / 2, 0.0f );
 	}
 
-	Render( image, 6, m );
+	Render( image, 6, 6, m );
 }
 
 
 void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle )
 {
 	Prerender();
-
+/*	// TODO ?
+	if ( tx == 0 && ty == 0 && tw == -1 && th == -1 ) {
+		Matrix m;
+		m.Translate( x, y, 0.0f );
+		if ( angle != 0.0f ) {
+			m.Translate( x + w / 2, y + h / 2, 0.0f );
+			m.RotateZ( -angle );
+			m.Translate( -x - w / 2, -y - h / 2, 0.0f );
+		}
+		m.Scale( w, h, 1.0f );
+		glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+		Render( image, 0, 6, m );
+	}
+*/
 	if ( tw == -1 ) {
 		tw = image->width();
 	}
@@ -256,7 +269,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 		th = image->height();
 	}
 
-	Vertex vertices[6];
+	Vertex2D vertices[6];
 	memset( vertices, 0, sizeof(vertices) );
 	vertices[0].u = (float)tx / image->width();
 	vertices[0].v = (float)ty / image->height();
@@ -288,13 +301,10 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 	vertices[5].x = x + w;
 	vertices[5].y = y + h;
 
-	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
-	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
-	vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
-	vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
+	vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = vertices[4].color = vertices[5].color = 0xFFFFFFFF;
 
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), 6 * sizeof(Vertex2D), vertices );
 
 	Matrix m;
 	if ( angle != 0.0f ) {
@@ -303,7 +313,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 		m.Translate( -x - w / 2, -y - h / 2, 0.0f );
 	}
 
-	Render( image, 6, m );
+	Render( image, 6, 6, m );
 }
 
 
@@ -321,7 +331,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	uint32_t iBuff = 0;
 
 	Matrix matrix;
-	Vertex vertices[6*32];
+	Vertex2D vertices[6*32];
 	memset( vertices, 0, sizeof(vertices) );
 
 	for ( uint32_t i = 0; i < len; i++ ) {
@@ -377,7 +387,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		vertices[iBuff + 5].x = x+width;
 		vertices[iBuff + 5].y = fy+height;
 // 		vertices[iBuff + 5].z = 0.0f;
-
+/*
 		vertices[iBuff + 0].color[0] = vertices[iBuff + 1].color[0] = vertices[iBuff + 2].color[0] = vertices[iBuff + 3].color[0] = vertices[iBuff + 4].color[0] = vertices[iBuff + 5].color[0] = ( (float)( color & 0xFF ) ) / 255.0f;
 		vertices[iBuff + 0].color[1] = vertices[iBuff + 1].color[1] = vertices[iBuff + 2].color[1] = vertices[iBuff + 3].color[1] = vertices[iBuff + 4].color[1] = vertices[iBuff + 5].color[1] = ( (float)( ( color >> 8 ) & 0xFF ) ) / 255.0f;
 		vertices[iBuff + 0].color[2] = vertices[iBuff + 1].color[2] = vertices[iBuff + 2].color[2] = vertices[iBuff + 3].color[2] = vertices[iBuff + 4].color[2] = vertices[iBuff + 5].color[2] = ( (float)( ( color >> 16 ) & 0xFF ) ) / 255.0f;
@@ -387,20 +397,20 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		vertices[iBuff + 0].color[1] = vertices[iBuff + 1].color[1] = vertices[iBuff + 2].color[1] = vertices[iBuff + 3].color[1] = vertices[iBuff + 4].color[1] = vertices[iBuff + 5].color[1] = 1.0;
 		vertices[iBuff + 0].color[2] = vertices[iBuff + 1].color[2] = vertices[iBuff + 2].color[2] = vertices[iBuff + 3].color[2] = vertices[iBuff + 4].color[2] = vertices[iBuff + 5].color[2] = 1.0;
 		vertices[iBuff + 0].color[3] = vertices[iBuff + 1].color[3] = vertices[iBuff + 2].color[3] = vertices[iBuff + 3].color[3] = vertices[iBuff + 4].color[3] = vertices[iBuff + 5].color[3] = 1.0;
-
+*/
 		x += font->glyphs()[c].advX;
 		iBuff += 6;
 
 		if ( iBuff >= 6*32 && i + 1 < len ) {
 			glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-			glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
-			Render( font->texture(), iBuff, matrix );
+			glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
+			Render( font->texture(), 6, iBuff, matrix );
 			iBuff = 0;
 		}
 	}
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-	glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
-	Render( font->texture(), iBuff, matrix );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
+	Render( font->texture(), 6, iBuff, matrix );
 }
 
 

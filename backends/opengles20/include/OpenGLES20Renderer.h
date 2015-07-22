@@ -103,6 +103,8 @@ protected:
 	int32_t mMatrixViewID;
 	int32_t mMatrixObjectID;
 	int32_t mFloatTimeID;
+
+	static bool s2DActive;
 };
 
 #endif // OPENGLES20RENDERER_H

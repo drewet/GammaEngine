@@ -41,6 +41,7 @@ static int _ge_mouse_wrap_y = 0;
 	
 	CAEAGLLayer * const eaglLayer = (CAEAGLLayer*)view.layer;
 	eaglLayer.opaque = YES;
+	eaglLayer.contentsScale = 1.0f;
 
 	[EAGLContext setCurrentContext:_ge_eagl_window_context];
 
@@ -53,6 +54,8 @@ static int _ge_mouse_wrap_y = 0;
 	glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_ge_ios_framebufferWidth );
 	glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_ge_ios_framebufferHeight );
 	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _ge_ios_colorRenderbuffer );
+
+	gDebug() << "Resolution : " << _ge_ios_framebufferWidth << ", " << _ge_ios_framebufferHeight << "\n";
 
 	glGenRenderbuffers( 1, &_ge_ios_depthRenderbuffer );
 	glBindRenderbuffer( GL_RENDERBUFFER, _ge_ios_depthRenderbuffer );
@@ -175,7 +178,6 @@ void _ge_iOSSwapBuffer( Vector2i& mCursor, Vector2i& mCursorWarp )
 	mCursorWarp.x = 0;
 	mCursorWarp.y = 0;
 
-	glBindFramebuffer( GL_FRAMEBUFFER, _ge_ios_defaultFramebuffer );
 	glBindRenderbuffer( GL_RENDERBUFFER, _ge_ios_colorRenderbuffer );
 	[ _ge_eagl_window_context presentRenderbuffer:GL_RENDERBUFFER ];
 	

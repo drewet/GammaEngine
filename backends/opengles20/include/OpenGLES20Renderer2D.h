@@ -52,7 +52,7 @@ public:
 protected:
 	void Compute();
 	void Prerender();
-	void Render( GE::Image* image, int n, const Matrix& matrix );
+	void Render( GE::Image* image, int start, int n, const Matrix& matrix );
 	bool m2DReady;
 	uint32_t mWidth;
 	uint32_t mHeight;

@@ -40,6 +40,20 @@ public:
 	float x, y, z, weight;
 } __attribute__((packed, aligned(16))); // Stay cool with memory
 
+class Vertex2D
+{
+public:
+	Vertex2D( const Vector2f& pos = Vector2f(), const Vector4f& color = Vector4f(1,1,1,1), const Vector2f& texcoords = Vector2f() );
+
+	bool operator==( const Vertex2D& other ) const;
+
+// Attributes defined as public for fast access
+public:
+	uint32_t color;
+	float u, v;
+	float x, y;
+} __attribute__((packed)); // Stay cool with memory
+
 /*
 typedef struct Vertex {
 	float u, v, w, _align1;

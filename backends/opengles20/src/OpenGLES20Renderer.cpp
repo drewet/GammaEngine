@@ -62,6 +62,8 @@ static const char* fragment_shader_include =
 	"#define texture texture2D\n"
 ;
 
+bool OpenGLES20Renderer::s2DActive = false;
+
 OpenGLES20Renderer::OpenGLES20Renderer( Instance* instance )
 	: mReady( false )
 	, mInstance( instance ? instance : Instance::baseInstance() )
@@ -264,6 +266,10 @@ void OpenGLES20Renderer::Draw()
 		Compute();
 	}
 */
+	if ( s2DActive ) {
+		glEnable( GL_DEPTH_TEST );
+		s2DActive = false;
+	}
 
 	glUseProgram( mShader );
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, mIBO );

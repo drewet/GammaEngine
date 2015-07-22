@@ -199,6 +199,24 @@ uint64_t Image::serverReference( Instance* instance )
 }
 
 
+void Image::Resize( uint32_t width, uint32_t height )
+{
+	uint32_t* data = ( uint32_t* )mAllocInstance->Malloc( sizeof(uint32_t) * width * height );
+
+	for ( uint32_t j = 0; j < height; j++ ) {
+		for ( uint32_t i = 0; i < width; i++ ) {
+			// TODO / TBD : Linear lookup ?
+			data[ j * width + i ] = mData[ ( j * mHeight / height * width ) + ( i * mWidth / width ) ];
+		}
+	}
+
+	mAllocInstance->Free( mData );
+	mData = data;
+	mWidth = width;
+	mHeight = height;
+}
+
+
 void Image::Release()
 {
 	if ( mServerRefs.size() == 0 ) {
