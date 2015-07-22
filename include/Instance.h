@@ -89,6 +89,17 @@ protected:
 
 } // namespace GE
 
+#if ( defined( GE_ANDROID ) )
+#include <sstream>
+namespace std {
+template<typename T> static inline string to_string(const T& t) {
+	ostringstream os;
+	os << t;
+	return os.str();
+}
+}
+#endif
+
 #if ( defined(GE_IOS) && !defined(GE_LIB) )
 #define main _ge_main
 #endif

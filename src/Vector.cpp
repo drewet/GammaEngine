@@ -24,30 +24,72 @@
 #include "Debug.h"
 #include <cmath>
 
+#define VEC_OP( r, a, op, b ) \
+	r x = a x op b x; \
+	if ( n > 1 ) { \
+		r y = a y op b y; \
+		if ( n > 2 ) { \
+			r z = a z op b z; \
+			if ( n > 3 ) { \
+				r w = a w op b w; \
+			} \
+		} \
+	}
+
+#define VEC_IM( r, a, op, im ) \
+	r x = a x op im; \
+	if ( n > 1 ) { \
+		r y = a y op im; \
+		if ( n > 2 ) { \
+			r z = a z op im; \
+			if ( n > 3 ) { \
+				r w = a w op im; \
+			} \
+		} \
+	}
+	
+#define VEC_ADD( r, a, op, b ) \
+	r += a x op b x; \
+	if ( n > 1 ) { \
+		r += a y op b y; \
+		if ( n > 2 ) { \
+			r += a z op b z; \
+			if ( n > 3 ) { \
+				r += a w op b w; \
+			} \
+		} \
+	}
+
+#define VEC_ADD_IM( r, a, op, im ) \
+	r += a x op im; \
+	if ( n > 1 ) { \
+		r += a y op im; \
+		if ( n > 2 ) { \
+			r += a z op im; \
+			if ( n > 3 ) { \
+				r += a w op im; \
+			} \
+		} \
+	}
+
 using namespace GE;
 
 //template <typename T, int n> Vector<T,n>::Vector( T x, T y, T z, T w ) : x( x ), y( y ), z( z ), w( w ) {}
 
 template <typename T, int n> void Vector<T,n>::normalize() {
 	T add = 0;
-	for ( int i = 0; i < n; i++ ) {
-		add += ( &x )[i] * ( &x )[i];
-	}
+	VEC_ADD( add, this-> , * , this-> );
 	T l = std::sqrt( add );
 	if ( l > 0.00001f ) {
 		T il = 1 / l;
-		for ( int i = 0; i < n; i++ ) {
-			( &x )[i] *= il;
-		}
+		VEC_IM( this-> , this-> , * , il );
 	}
 }
 
 
 template <typename T, int n> T Vector<T,n>::length() {
 	T add = 0;
-	for ( int i = 0; i < n; i++ ) {
-		add += ( &x )[i] * ( &x )[i];
-	}
+	VEC_ADD( add, this-> , * , this-> );
 	return std::sqrt( add );
 }
 
@@ -67,68 +109,52 @@ template <typename T, int n> T& Vector<T,n>::operator[]( int i )
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator-() const
 {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = -( &x )[i];
-	}
+	VEC_IM( ret. , - this-> , + , 0.0f );
 	return ret;
 }
 
 
 template <typename T, int n> void Vector<T,n>::operator+=( const Vector<T,n>& v ) {
-	for ( int i = 0; i < n; i++ ) {
-		( &x )[i] += ( &v.x )[i];
-	}
+	VEC_OP( this-> , this-> , + , v. );
 }
 
 
 template <typename T, int n> void Vector<T,n>::operator-=( const Vector<T,n>& v ) {
-	for ( int i = 0; i < n; i++ ) {
-		( &x )[i] -= ( &v.x )[i];
-	}
+	VEC_OP( this-> , this-> , - , v. );
 }
 
 template <typename T, int n> void Vector<T,n>::operator*=( T v ) {
-	for ( int i = 0; i < n; i++ ) {
-		( &x )[i] *= v;
-	}
+	VEC_IM( this-> , this-> , * , v );
 }
 
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator+( const Vector<T,n>& v ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &x )[i] + ( &v.x )[i];
-	}
+	VEC_OP( ret. , this-> , + , v. );
 	return ret;
 }
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator-( const Vector<T,n>& v ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &x )[i] - ( &v.x )[i];
-	}
+	VEC_OP( ret. , this-> , - , v. );
 	return ret;
 }
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator*( T im ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &x )[i] * im;
-	}
+	VEC_IM( ret. , this-> , * , im );
 	return ret;
 }
 
 template <typename T, int n> T Vector<T,n>::operator*( const Vector<T,n>& v ) const {
 	T ret = 0;
-	for ( int i = 0; i < n; i++ ) {
-		ret += ( &x )[i] * ( &v.x )[i];
-	}
+	VEC_ADD( ret, this-> , * , v. );
 	return ret;
 }
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator^( const Vector<T,n>& v ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
+	for ( int i = 0; i < n; i++ ) { // TODO : direct op
 		T a = ( &x )[ ( i + 1 ) % n ];
 		T b = ( &v.x )[ ( i + 2 ) % n ];
 		T c = ( &x )[ ( i + 2 ) % n ];

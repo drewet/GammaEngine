@@ -39,6 +39,14 @@ class Instance;
 	#include <jni.h>
 	#include <android_native_app_glue.h>
 
+	typedef struct ATouch {
+		bool used;
+		int id;
+		int action;
+		float x, y;
+		float force;
+	} ATouch;
+
 	typedef struct Engine {
 		JNIEnv* env;
 		jobject aJavaSurface;
@@ -64,15 +72,10 @@ class Instance;
 
 		bool mainWindowCreated;
 		bool gotFocus;
+		ATouch touches[16];
+		int cursorId;
+		bool last_cPress;
 	} Engine;
-
-	typedef struct ATouch {
-		int used;
-		int id;
-		int action;
-		float x, y;
-		float force;
-	} ATouch;
 /*
 #else // BASEWINDOW_CPP
 
@@ -107,9 +110,9 @@ protected:
 	bool mHasResized;
 	uint64_t mWindow;
 	std::thread* mEventThread;
-	bool mKeys[512];
-	Vector2i mCursor;
-	Vector2i mCursorWarp;
+	static bool mKeys[512];
+	static Vector2i mCursor;
+	static Vector2i mCursorWarp;
 
 	float mFps;
 	int mFpsImages;

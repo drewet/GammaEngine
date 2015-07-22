@@ -15,9 +15,9 @@ sudo mkdir -p /opt/android-ndk-r10d/platforms/android-15/arch-mips64/usr/include
 sudo mkdir -p /opt/android-ndk-r10d/platforms/android-15/arch-x86/usr/include/gammaengine/
 sudo mkdir -p /opt/android-ndk-r10d/platforms/android-15/arch-x86_64/usr/include/gammaengine/
 
-sudo cp -v ../include/*.h ../include/android/*.h /opt/android-ndk-r10d/platforms/android-15/arch-arm/usr/include/gammaengine/
-sudo cp -v ../include/*.h ../include/android/*.h /opt/android-ndk-r10d/platforms/android-15/arch-arm64/usr/include/gammaengine/
-sudo cp -v ../include/*.h ../include/android/*.h /opt/android-ndk-r10d/platforms/android-15/arch-mips/usr/include/gammaengine/
-sudo cp -v ../include/*.h ../include/android/*.h /opt/android-ndk-r10d/platforms/android-15/arch-mips64/usr/include/gammaengine/
-sudo cp -v ../include/*.h ../include/android/*.h /opt/android-ndk-r10d/platforms/android-15/arch-x86/usr/include/gammaengine/
-sudo cp -v ../include/*.h ../include/android/*.h /opt/android-ndk-r10d/platforms/android-15/arch-x86_64/usr/include/gammaengine/
+sudo cp -v ../include/*.h ../include/android/*.h ../src/Vector.cpp /opt/android-ndk-r10d/platforms/android-15/arch-arm/usr/include/gammaengine/
+sudo cp -v ../include/*.h ../include/android/*.h ../src/Vector.cpp /opt/android-ndk-r10d/platforms/android-15/arch-arm64/usr/include/gammaengine/
+sudo cp -v ../include/*.h ../include/android/*.h ../src/Vector.cpp /opt/android-ndk-r10d/platforms/android-15/arch-mips/usr/include/gammaengine/
+sudo cp -v ../include/*.h ../include/android/*.h ../src/Vector.cpp /opt/android-ndk-r10d/platforms/android-15/arch-mips64/usr/include/gammaengine/
+sudo cp -v ../include/*.h ../include/android/*.h ../src/Vector.cpp /opt/android-ndk-r10d/platforms/android-15/arch-x86/usr/include/gammaengine/
+sudo cp -v ../include/*.h ../include/android/*.h ../src/Vector.cpp /opt/android-ndk-r10d/platforms/android-15/arch-x86_64/usr/include/gammaengine/

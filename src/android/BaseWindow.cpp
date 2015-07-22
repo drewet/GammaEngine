@@ -46,6 +46,10 @@ void android_main( struct android_app* state )
 	BaseWindow::AndroidInit( state );
 }
 
+bool BaseWindow::mKeys[512];
+Vector2i BaseWindow::mCursor;
+Vector2i BaseWindow::mCursorWarp;
+
 
 void BaseWindow::AndroidInit( struct android_app* state )
 {
@@ -58,6 +62,7 @@ void BaseWindow::AndroidInit( struct android_app* state )
 	mEngine->app = state;
 	mEngine->aSurface = mEngine->app->window;
 	mEngine->gotFocus = true;
+	mEngine->cursorId = -1;
 
 	while ( !state->window ) {
 		PollEvents();
@@ -73,8 +78,9 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 	, mHeight( height )
 	, mHasResized( false )
 	, mWindow( 0 )
-	, mKeys{ false }
 {
+	memset( mKeys, 0, sizeof( mKeys ) );
+	mCursor = mCursorWarp = Vector2i( 0, 0 );
 	Window::Flags flags = static_cast<Window::Flags>( _flags );
 
 	mEngine->aflags = AWINDOW_FLAG_KEEP_SCREEN_ON;
@@ -201,8 +207,6 @@ void BaseWindow::SwapBuffersBase()
 		mFpsImages = 0;
 	}
 
-	mCursor.x = 0; // TODO
-	mCursor.y = 0; // TODO
 	mCursorWarp.x = 0;
 	mCursorWarp.y = 0;
 
@@ -270,6 +274,72 @@ void BaseWindow::engine_handle_cmd( struct android_app* app, int32_t cmd )
 
 int32_t BaseWindow::engine_handle_input( struct android_app* app, AInputEvent* event )
 {
+	Engine* engine = mEngine;
+	ATouch* touches = engine->touches;
+
+    if ( AInputEvent_getType( event ) == AINPUT_EVENT_TYPE_MOTION ) {
+		int n = AMotionEvent_getPointerCount( event );
+		int action = AMotionEvent_getAction( event ) & AMOTION_EVENT_ACTION_MASK;
+		int pointer_index = ( AMotionEvent_getAction( event ) & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK ) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+
+		for ( int j = 0; j < n; j++ ) {
+			gDebug() << "touch " << j << "\n";
+			ATouch* touch = nullptr;
+			for ( uint32_t i = 0; i < 16; i++ ) {
+				if ( touches[i].used && ( ( touches[i].action == AMOTION_EVENT_ACTION_UP ) || ( touches[i].action == AMOTION_EVENT_ACTION_POINTER_UP ) ) ) {
+					touches[i].used = false;
+					if ( touches[i].id == engine->cursorId ) {
+						engine->cursorId = -1;
+					}
+				}
+				if ( touches[i].used && touches[i].id == AMotionEvent_getPointerId( event, j ) ) {
+					touch = &touches[i];
+					break;
+				}
+			}
+			gDebug() << "touch : " << touch << "\n";
+			if ( !touch ) {
+				for ( uint32_t i = 0; i < 16; i++ ) {
+					if ( touches[i].used == false ) {
+						touch = &touches[i];
+						touch->used = true;
+						touch->id = AMotionEvent_getPointerId( event, j );
+						break;
+					}
+				}
+			}
+			gDebug() << "touch : " << touch << "\n";
+			if( touch ) {
+				if ( j == pointer_index ) {
+					touch->action = action;
+				}
+				touch->x = AMotionEvent_getX( event, j ) * engine->width / ANativeWindow_getWidth( engine->app->window );
+				touch->y = AMotionEvent_getY( event, j ) * engine->height / ANativeWindow_getHeight( engine->app->window );
+				touch->force = AMotionEvent_getPressure( event, j );
+				if ( engine->cursorId < 0 || ( touch->id <= engine->cursorId && touch->used ) ) {
+					if ( action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_POINTER_DOWN ) {
+						mKeys[ Input::LBUTTON ] = true;
+					}
+					if ( action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_POINTER_UP ) {
+						mKeys[ Input::LBUTTON ] = false;
+					}
+// 					engine->last_cPress = cPress;
+// 					cPress = v_keys[ Input::LBUTTON ];
+					engine->cursorId = touch->id;
+					Vector2i lastCursor = mCursor;
+					mCursor.x = (int)touch->x;
+					mCursor.y = (int)touch->y;
+					gDebug() << "touch : " << mCursor.x << ", " << mCursor.y << "\n";
+// 					if ( !engine->last_cPress ) {
+// 						mouse_last_x = libge_context->mouse_x;
+// 						mouse_last_y = libge_context->mouse_y;
+// 					}
+					mCursorWarp = mCursor - lastCursor;
+				}
+			}
+		}
+        return 1;
+    }
 	return 0;
 }
 
@@ -285,7 +355,7 @@ void BaseWindow::PollEvents()
 	do {
 		while ( ( ident = ALooper_pollAll( 0, nullptr, &events, (void**)&source) ) >= 0 ) {
 			if (source != nullptr) {
-				source->process(mState, source);
+				source->process( mState, source );
 			}
 			if ( mState->destroyRequested != 0) {
 // 				engine_term_display( mEngine );

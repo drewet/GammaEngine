@@ -24,16 +24,6 @@
 
 using namespace GE;
 
-#ifdef GE_ANDROID
-namespace std {
-template<typename T> string to_string(const T& t) {
-	ostringstream os;
-	os << t;
-	return os.str();
-}
-}
-#endif
-
 class LightsThread : public Thread {
 public:
 	LightsThread( Window* win ) : Thread( win ) { srand( time(nullptr) ); }

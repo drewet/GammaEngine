@@ -24,7 +24,7 @@ $(info $(SRC))
 
 LOCAL_SRC_FILES = $(addprefix ../, $(SRC))
 
-LOCAL_CPPFLAGS := -Wall -Wno-unused -std=gnu++0x -std=c++11 -fPIC -I../include -I../include/android -I../backends/opengles20/include -DGE_LIB -DGE_ANDROID -DGE_STATIC_BACKEND=opengles20
+LOCAL_CPPFLAGS := -Wall -Wno-unused -std=gnu++0x -std=c++11 -fPIC -I../ -I../include -I../include/android -I../backends/opengles20/include -DGE_LIB -DGE_ANDROID -DGE_STATIC_BACKEND=opengles20
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 
