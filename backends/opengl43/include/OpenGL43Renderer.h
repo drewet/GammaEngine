@@ -106,6 +106,7 @@ protected:
 	uint32_t mMatrixObjectID;
 	uint32_t mTextureBaseID;
 	uint32_t mTexturesID;
+	int32_t mFloatTimeID;
 };
 
 #endif // OPENGL43RENDERER_H

@@ -107,6 +107,8 @@ OpenGL43Renderer::OpenGL43Renderer( Instance* instance )
 		glMakeTextureHandleResident = (PFNGLMAKETEXTUREHANDLERESIDENTARBPROC)SymLib( "glMakeTextureHandleResidentARB" );
 	}
 
+	mFloatTimeID = 32;
+
 	mMatrixProjection = new Matrix();
 	mMatrixProjection->Perspective( 60.0f, 16.0f / 9.0f, 0.01f, 1000.0f );
 	mMatrixView = new Matrix();
@@ -443,7 +445,7 @@ void OpenGL43Renderer::Draw()
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16 * mObjects.size(), mMatrixObjects );
 	glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
-	glUniform1f( 32, Time::GetSeconds() );
+	glUniform1f( mFloatTimeID, Time::GetSeconds() );
 
 	glMultiDrawElementsIndirect( mRenderMode, GL_UNSIGNED_INT, nullptr, mObjects.size(), 0 );
 

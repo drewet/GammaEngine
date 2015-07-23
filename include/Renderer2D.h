@@ -49,6 +49,8 @@ public:
 
 	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text ) = 0;
 
+	virtual void DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 ) = 0;
+
 	void AssociateSize( Window* window ) { mAssociatedWindow = window; };
 
 	virtual uintptr_t attributeID( const std::string& name ) = 0;

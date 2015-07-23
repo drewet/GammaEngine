@@ -35,31 +35,41 @@ extern "C" GE::Renderer* CreateRenderer( GE::Instance* instance ) {
 }
 
 static const char* vertex_shader_include =
+#if ( !defined( GE_ANDROID ) && !defined( GE_IOS ) )
+	"#version 130\n"
+#endif
+#if ( defined( GE_ANDROID ) || defined( GE_IOS ) )
+	"#define in attribute\n"
+	"#define out varying\n"
+#endif
 	"precision highp float;\n"
 	"#define geTexture2D(x) ge_Texture0\n"
 	"#define geTexture3D(x) ge_Texture0\n"
 	"\n"
-	"attribute vec4 ge_VertexTexcoord;\n"
-	"attribute vec4 ge_VertexColor;\n"
-	"attribute vec4 ge_VertexNormal;\n"
-	"attribute vec4 ge_VertexPosition;\n"
+	"in vec4 ge_VertexTexcoord;\n"
+	"in vec4 ge_VertexColor;\n"
+	"in vec4 ge_VertexNormal;\n"
+	"in vec4 ge_VertexPosition;\n"
 	"\n"
 	"uniform mat4 ge_ObjectMatrix;\n"
 	"uniform mat4 ge_ProjectionMatrix;\n"
 	"uniform mat4 ge_ViewMatrix;\n"
 	"uniform sampler2D ge_Texture0;\n"
 	"\n"
-	"#define in attribute\n"
-	"#define out varying\n"
 	"#define ge_Position gl_Position\n"
 ;
 
 static const char* fragment_shader_include =
+#if ( !defined( GE_ANDROID ) && !defined( GE_IOS ) )
+	"#version 130\n"
+#endif
 	"precision highp float;\n"
 	"uniform sampler2D ge_Texture0;\n"
 	"#define ge_FragColor gl_FragColor\n"
+#if ( defined( GE_ANDROID ) || defined( GE_IOS ) )
 	"#define in varying\n"
 	"#define texture texture2D\n"
+#endif
 ;
 
 bool OpenGLES20Renderer::s2DActive = false;

@@ -87,6 +87,8 @@ OpenGL43Renderer2D::OpenGL43Renderer2D( Instance* instance, uint32_t width, uint
 	mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
 	mMatrixView->Identity();
 
+	mTextureWhite = new Image( 1, 1, 0xFFFFFFFF, instance );
+
 	OpenGL43Renderer::LoadVertexShader( vertices_shader_base, sizeof(vertices_shader_base) + 1 );
 	OpenGL43Renderer::LoadFragmentShader( fragment_shader_base, sizeof(fragment_shader_base) + 1 );
 
@@ -189,7 +191,7 @@ void OpenGL43Renderer2D::Prerender()
 }
 
 
-void OpenGL43Renderer2D::Render( Image* image, int n )
+void OpenGL43Renderer2D::Render( GE::Image* image, int mode, int start, int n, const Matrix& matrix )
 {
 	const uint32_t binding_proj = 0;
 	const uint32_t binding_view = 1;
@@ -209,10 +211,15 @@ void OpenGL43Renderer2D::Render( Image* image, int n )
 	glBindBuffer( GL_UNIFORM_BUFFER, mMatrixViewID );
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, mMatrixView->data() );
 
+	glUniform1f( mFloatTimeID, Time::GetSeconds() );
+	glUniformMatrix4fv( mMatrixObjectID, 1, GL_FALSE, matrix.constData() );
+
 	glDisable( GL_DEPTH_TEST );
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	glDrawArrays( GL_TRIANGLES, 0, n );
+
+	glDrawArrays( mode, start, n );
+
 	glEnable( GL_DEPTH_TEST );
 
 
@@ -272,7 +279,14 @@ void OpenGL43Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int t
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
 
-	Render( image, 6 );
+	Matrix m;
+	if ( angle != 0.0f ) {
+		m.Translate( x + image->width() / 2, y + image->height() / 2, 0.0f );
+		m.RotateZ( -angle );
+		m.Translate( -x - image->width() / 2, -y - image->height() / 2, 0.0f );
+	}
+
+	Render( image, GL_TRIANGLES, 0, 6, m );
 }
 
 
@@ -327,7 +341,14 @@ void OpenGL43Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx,
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
 
-	Render( image, 6 );
+	Matrix m;
+	if ( angle != 0.0f ) {
+		m.Translate( x + image->width() / 2, y + image->height() / 2, 0.0f );
+		m.RotateZ( -angle );
+		m.Translate( -x - image->width() / 2, -y - image->height() / 2, 0.0f );
+	}
+
+	Render( image, GL_TRIANGLES, 0, 6, m );
 }
 
 void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::string& text )
@@ -343,6 +364,7 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 	const float ry = 1.0f / font->texture()->height();
 	uint32_t iBuff = 0;
 
+	Matrix m;
 	Vertex vertices[6*32];
 	memset( vertices, 0, sizeof(vertices) );
 
@@ -416,13 +438,37 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 		if ( iBuff >= 6*32 && i + 1 < len ) {
 			glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 			glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
-			Render( font->texture(), iBuff );
+			Render( font->texture(), GL_TRIANGLES, 0, iBuff, m );
 			iBuff = 0;
 		}
 	}
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
-	Render( font->texture(), iBuff );
+	Render( font->texture(), GL_TRIANGLES, 0, iBuff, m );
+}
+
+
+void OpenGL43Renderer2D::DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 )
+{
+	Matrix matrix;
+	Vertex2D vertices[6*2];
+	memset( vertices, 0, sizeof(vertices) );
+
+	vertices[0].x = x0;
+	vertices[0].y = y0;
+	vertices[0].u = 0.0f;
+	vertices[0].v = 0.0f;
+	vertices[0].color = color0;
+
+	vertices[1].x = x1;
+	vertices[1].y = y1;
+	vertices[1].u = 0.0f;
+	vertices[1].v = 0.0f;
+	vertices[1].color = color1;
+
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), 2 * sizeof(Vertex2D), vertices );
+	Render( mTextureWhite, GL_LINES, 6, 2, matrix );
 }
 
 

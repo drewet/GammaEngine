@@ -144,7 +144,7 @@ void ImageLoaderPng::Load( Instance* instance, File* file, uint32_t pref_w, uint
 	}
 
 #ifndef GE_IOS
-	png_set_mem_fn( png_ptr, nullptr, ge_png_malloc, ge_png_free );
+// 	png_set_mem_fn( png_ptr, nullptr, ge_png_malloc, ge_png_free );
 #endif
 	png_set_error_fn( png_ptr, nullptr, nullptr, nullptr );
 	png_set_read_fn( png_ptr, ( png_voidp* )file, png_read_from_File );

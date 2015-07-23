@@ -42,8 +42,10 @@ public:
 	uint32_t width() const;
 	uint32_t height() const;
 	uint32_t* data() const;
+	uint32_t color() const;
 	uint64_t serverReference( Instance* instance );
 
+	void setColor( uint32_t c );
 	void Resize( uint32_t width, uint32_t height );
 	void Release();
 
@@ -55,6 +57,7 @@ protected:
 	uint32_t mWidth;
 	uint32_t mHeight;
 	uint32_t* mData;
+	uint32_t mColor;
 
 	std::map< std::pair< Instance*, int >, uint64_t > mVkRefs;
 	std::map< Instance*, uint64_t > mServerRefs;

@@ -146,7 +146,7 @@ Object* Instance::LoadObject( const std::string& filename )
 
 #else // GE_STATIC_BACKEND
 
-Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance )
+Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance, const std::string& backend_file )
 {
 	if ( !sBackend ) {
 #ifdef GE_WIN32
@@ -154,25 +154,38 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 #else
 		std::string lib_suffix = ".so";
 #endif
-// 		std::string backend_lib = "backend_vulkan" + lib_suffix;
-// 		std::string backend_lib = "backend_opengl43" + lib_suffix;
-		std::string backend_lib = "backend_opengles20" + lib_suffix;
-		std::string prefixes[6] = {
-			"",
-			"gammaengine/",
-			"/usr/lib/",
-			"/usr/lib/gammaengine/",
-			"/usr/local/lib/",
-			"/usr/local/lib/gammaengine/",
+#if ( defined( GE_ANDROID ) || defined( GE_IOS ) )
+		std::string backend_lib = "opengles20";
+#else
+// 		std::string backend_lib = "vulkan";
+		std::string backend_lib = "opengl43";
+#endif
+		std::string prefixes[10] = {
+			"backend_",
+			"backends/",
+			"gammaengine/backend_",
+			"gammaengine/backends/",
+			"/usr/local/lib/backend_",
+			"/usr/local/lib/gammaengine/backend_",
+			"/usr/local/lib/gammaengine/backends/",
+			"/usr/lib/backend_",
+			"/usr/lib/gammaengine/backend_",
+			"/usr/lib/gammaengine/backends/",
 		};
-		for ( int i = 0; i < 6 && !sBackend; i++ ) {
-			sBackend = LoadLib( prefixes[i] + backend_lib );
+		if ( backend_file != "" ) {
+			backend_lib = backend_file;
+		}
+		int i = 0;
+		for ( i = 0; i < 10 && !sBackend; i++ ) {
+			sBackend = LoadLib( prefixes[i] + backend_lib + lib_suffix );
 			if ( sBackend == nullptr ) {
-				gDebug() << "Backend (" << backend_lib << ") loading error : " << LibError() << "\n";
+				gDebug() << "Backend ( " << backend_lib << " ) loading error : " << LibError() << "\n";
 			}
 		}
 		if ( sBackend == nullptr ) {
 			exit(0);
+		} else {
+			gDebug() << "Backend file " << prefixes[--i] << backend_lib << lib_suffix << " loaded !\n";
 		}
 	}
 

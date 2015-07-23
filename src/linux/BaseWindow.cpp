@@ -49,6 +49,12 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 {
 	Window::Flags flags = static_cast<Window::Flags>( _flags );
 
+	// TODO / TBD : XFree86 screen scaling ?
+	if ( flags & Window::Fullscreen ) {
+		width = -1;
+		height = -1;
+	}
+
 	mDisplay = XOpenDisplay(0);
 	mScreen = DefaultScreen( mDisplay );
 
@@ -99,9 +105,10 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 	XMapRaised( mDisplay, mWindow );
 
 	if ( flags & Window::Fullscreen ) {
-		printf("fs\n");
+// 		int unused = 0;
 		Atom wm_fullscreen = XInternAtom( mDisplay, "_NET_WM_STATE_FULLSCREEN", true );
 		XChangeProperty( mDisplay, mWindow, XInternAtom( mDisplay, "_NET_WM_STATE", true), XA_ATOM, 32, PropModeReplace, (unsigned char *)&wm_fullscreen, 1 );
+// 		XGetGeometry( mDisplay, mWindow, (::Window*)&unused, &unused, &unused, &mWidth, &mHeight, (uint32_t*)&unused, (uint32_t*)&unused );
 	}
 
 

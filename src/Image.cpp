@@ -47,6 +47,7 @@ Image::Image()
 	, mWidth( 0 )
 	, mHeight( 0 )
 	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
 {
 }
 
@@ -56,6 +57,7 @@ Image::Image( File* file, const std::string& extension, Instance* instance )
 	, mWidth( 0 )
 	, mHeight( 0 )
 	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
 {
 	Load( file, extension, mAllocInstance );
 }
@@ -66,6 +68,7 @@ Image::Image( const std::string& filename, Instance* instance )
 	, mWidth( 0 )
 	, mHeight( 0 )
 	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
 {
 	File* file = new File( filename, File::READ );
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
@@ -81,6 +84,7 @@ Image::Image( uint32_t width, uint32_t height, uint32_t backcolor, Instance* ins
 	, mWidth( width )
 	, mHeight( height )
 	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
 {
 
 #ifdef GE_IOS
@@ -185,6 +189,18 @@ uint32_t Image::height() const
 uint32_t* Image::data() const
 {
 	return mData;
+}
+
+
+uint32_t Image::color() const
+{
+	return mColor;
+}
+
+
+void Image::setColor( uint32_t c )
+{
+	mColor = c;
 }
 
 

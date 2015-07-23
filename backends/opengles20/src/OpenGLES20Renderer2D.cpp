@@ -39,24 +39,24 @@ extern "C" GE::Renderer2D* CreateRenderer2D( GE::Instance* instance, uint32_t wi
 	return new OpenGLES20Renderer2D( instance, width, height );
 }
 static const char vertices_shader_base[] = GLSL(
-//	varying vec4 ge_Color;
-	varying vec2 ge_TextureCoord;
+	out vec4 ge_Color;
+	out vec2 ge_TextureCoord;
 
 	void main()
 	{
-//		ge_Color = ge_VertexColor;
+		ge_Color = ge_VertexColor;
 		ge_TextureCoord = ge_VertexTexcoord.xy;
 		gl_Position = ge_ProjectionMatrix /* ge_ViewMatrix*/ * ge_ObjectMatrix * vec4(ge_VertexPosition.xy, 1.0, 1.0);
 	}
 );
 
 static const char fragment_shader_base[] = GLSL(
-//	varying vec4 ge_Color;
-	varying vec2 ge_TextureCoord;
+	in vec4 ge_Color;
+	in vec2 ge_TextureCoord;
 
 	void main()
 	{
-		gl_FragColor = /*ge_Color */ texture2D( ge_Texture0, ge_TextureCoord.xy );
+		gl_FragColor = ge_Color * texture( ge_Texture0, ge_TextureCoord.xy );
 	}
 );
 
@@ -70,6 +70,8 @@ OpenGLES20Renderer2D::OpenGLES20Renderer2D( Instance* instance, uint32_t width, 
 {
 	mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
 	mMatrixView->Identity();
+
+	mTextureWhite = new Image( 1, 1, 0xFFFFFFFF, instance );
 
 	OpenGLES20Renderer::LoadVertexShader( vertices_shader_base, sizeof(vertices_shader_base) + 1 );
 	OpenGLES20Renderer::LoadFragmentShader( fragment_shader_base, sizeof(fragment_shader_base) + 1 );
@@ -145,7 +147,7 @@ void OpenGLES20Renderer2D::Prerender()
 }
 
 
-void OpenGLES20Renderer2D::Render( Image* image, int start, int n, const Matrix& matrix )
+void OpenGLES20Renderer2D::Render( Image* image, int mode, int start, int n, const Matrix& matrix )
 {
 	glUseProgram( mShader );
 
@@ -176,7 +178,7 @@ void OpenGLES20Renderer2D::Render( Image* image, int start, int n, const Matrix&
 	glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, sizeof( Vertex2D ), (void*)( sizeof( uint32_t ) ) );
 	glVertexAttribPointer( 3, 2, GL_FLOAT, GL_FALSE, sizeof( Vertex2D ), (void*)( sizeof( uint32_t ) + sizeof( float ) * 2 ) );
 
-	glDrawArrays( GL_TRIANGLES, start, n );
+	glDrawArrays( mode, start, n );
 
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 	glUseProgram( 0 );
@@ -225,12 +227,9 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 	vertices[5].v = (float)(ty+th) / image->height();
 	vertices[5].x = x + image->width();
 	vertices[5].y = y + image->height();
-/*
-	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
-	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
-	vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
-	vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
-*/
+
+	vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = vertices[4].color = vertices[5].color = image->color();
+
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), 6 * sizeof(Vertex2D), vertices );
 
@@ -241,7 +240,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 		m.Translate( -x - image->width() / 2, -y - image->height() / 2, 0.0f );
 	}
 
-	Render( image, 6, 6, m );
+	Render( image, GL_TRIANGLES, 6, 6, m );
 }
 
 
@@ -301,7 +300,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 	vertices[5].x = x + w;
 	vertices[5].y = y + h;
 
-	vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = vertices[4].color = vertices[5].color = 0xFFFFFFFF;
+	vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = vertices[4].color = vertices[5].color = image->color();
 
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), 6 * sizeof(Vertex2D), vertices );
@@ -313,7 +312,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 		m.Translate( -x - w / 2, -y - h / 2, 0.0f );
 	}
 
-	Render( image, 6, 6, m );
+	Render( image, GL_TRIANGLES, 6, 6, m );
 }
 
 
@@ -387,6 +386,8 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		vertices[iBuff + 5].x = x+width;
 		vertices[iBuff + 5].y = fy+height;
 // 		vertices[iBuff + 5].z = 0.0f;
+
+		vertices[iBuff + 0].color = vertices[iBuff + 1].color = vertices[iBuff + 2].color = vertices[iBuff + 3].color = vertices[iBuff + 4].color = vertices[iBuff + 5].color = 0xFFFFFFFF;
 /*
 		vertices[iBuff + 0].color[0] = vertices[iBuff + 1].color[0] = vertices[iBuff + 2].color[0] = vertices[iBuff + 3].color[0] = vertices[iBuff + 4].color[0] = vertices[iBuff + 5].color[0] = ( (float)( color & 0xFF ) ) / 255.0f;
 		vertices[iBuff + 0].color[1] = vertices[iBuff + 1].color[1] = vertices[iBuff + 2].color[1] = vertices[iBuff + 3].color[1] = vertices[iBuff + 4].color[1] = vertices[iBuff + 5].color[1] = ( (float)( ( color >> 8 ) & 0xFF ) ) / 255.0f;
@@ -404,13 +405,37 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		if ( iBuff >= 6*32 && i + 1 < len ) {
 			glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 			glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
-			Render( font->texture(), 6, iBuff, matrix );
+			Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
 			iBuff = 0;
 		}
 	}
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
-	Render( font->texture(), 6, iBuff, matrix );
+	Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+}
+
+
+void OpenGLES20Renderer2D::DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 )
+{
+	Matrix matrix;
+	Vertex2D vertices[6*2];
+	memset( vertices, 0, sizeof(vertices) );
+
+	vertices[0].x = x0;
+	vertices[0].y = y0;
+	vertices[0].u = 0.0f;
+	vertices[0].v = 0.0f;
+	vertices[0].color = color0;
+
+	vertices[1].x = x1;
+	vertices[1].y = y1;
+	vertices[1].u = 0.0f;
+	vertices[1].v = 0.0f;
+	vertices[1].color = color1;
+
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), 2 * sizeof(Vertex2D), vertices );
+	Render( mTextureWhite, GL_LINES, 6, 2, matrix );
 }
 
 

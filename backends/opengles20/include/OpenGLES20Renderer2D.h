@@ -24,6 +24,7 @@
 #include "OpenGLES20Renderer.h"
 #include "Renderer2D.h"
 #include "Object.h"
+#include "Image.h"
 #include "Light.h"
 
 class OpenGLES20Renderer2D : public Renderer2D, public OpenGLES20Renderer
@@ -47,15 +48,19 @@ public:
 
 	virtual void Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle );
 	virtual void Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle );
+
 	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text );
+
+	virtual void DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 );
 
 protected:
 	void Compute();
 	void Prerender();
-	void Render( GE::Image* image, int start, int n, const Matrix& matrix );
+	void Render( GE::Image* image, int mode, int start, int n, const Matrix& matrix );
 	bool m2DReady;
 	uint32_t mWidth;
 	uint32_t mHeight;
+	Image* mTextureWhite;
 };
 
 #endif // OPENGLES20RENDERER2D_H

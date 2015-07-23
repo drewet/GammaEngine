@@ -41,7 +41,7 @@ public:
 	Instance() : mDevId(0), mGpuCount(0), mGpus{0}, mDevices{0}, mQueues{0}, mFences{0}, mCpuRamCounter(0), mGpuRamCounter(0) {}
 	virtual ~Instance(){}
 
-	static Instance* Create( const char* appName, uint32_t appVersion, bool easy_instance = true );
+	static Instance* Create( const char* appName, uint32_t appVersion, bool easy_instance = true, const std::string& backend_file = "" );
 	virtual int EnumerateGpus() = 0;
 	virtual Instance* CreateDevice( int devid, int queueCount = 1 ) = 0;
 	virtual uint64_t ReferenceImage( Image* image ) = 0;
