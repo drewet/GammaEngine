@@ -1,0 +1,1224 @@
+/*
+ * This file is just a temprary guess based on https://github.com/Overv/MantleHelloTriangle
+ */
+
+
+
+#ifndef MANTLE_H
+#define MANTLE_H
+
+// #include <Windows.h>
+#include <sys/types.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+/*
+Types and constants
+*/
+
+typedef char VK_CHAR;
+typedef int32_t VK_INT;
+typedef uint32_t VK_UINT;
+typedef uint8_t VK_UINT8;
+typedef uint32_t VK_UINT32;
+typedef uint64_t VK_UINT64;
+typedef float VK_FLOAT;
+typedef uint32_t VK_BOOL;
+typedef void VK_VOID;
+
+typedef size_t VK_SIZE;
+typedef uint64_t VK_GPU_SIZE;
+
+typedef int32_t VK_ENUM;
+typedef int32_t VK_FLAGS;
+typedef uint32_t VK_SAMPLE_MASK; // GR Guess
+
+typedef uint64_t VK_INSTANCE; // VK Guess
+typedef uint64_t VK_PHYSICAL_GPU;
+typedef uint64_t VK_DEVICE;
+typedef uint64_t VK_WSI_WIN_DISPLAY;
+typedef uint64_t VK_QUEUE;
+typedef uint64_t VK_IMAGE;
+typedef uint64_t VK_GPU_MEMORY;
+typedef uint64_t VK_CMD_BUFFER;
+typedef uint64_t VK_FENCE;
+typedef uint64_t VK_BASE_OBJECT;
+typedef uint64_t VK_VIEWPORT_STATE_OBJECT;
+typedef uint64_t VK_COLOR_TARGET_VIEW;
+typedef uint64_t VK_DESCRIPTOR_SET;
+typedef uint64_t VK_OBJECT;
+typedef uint64_t VK_MSAA_STATE_OBJECT;
+typedef uint64_t VK_SAMPLER;
+typedef uint64_t VK_COLOR_BLEND_STATE_OBJECT;
+typedef uint64_t VK_DEPTH_STENCIL_STATE_OBJECT;
+typedef uint64_t VK_RASTER_STATE_OBJECT;
+typedef uint64_t VK_SHADER;
+typedef uint64_t VK_PIPELINE;
+typedef uint64_t VK_IMAGE_VIEW;
+typedef uint64_t VK_DEPTH_STENCIL_VIEW;
+typedef uint64_t VK_STATE_OBJECT;
+
+const uint64_t VK_NULL_HANDLE = 0;
+
+const int VK_MAX_PHYSICAL_GPUS = 4;
+const int VK_API_VERSION = 0x32002;
+const int VK_MAX_PHYSICAL_GPU_NAME = 255; // Guess
+const int VK_MAX_VIEWPORTS = 16; // Guess
+const int VK_MAX_MEMORY_HEAPS = 8;
+const int VK_MAX_COLOR_TARGETS = 16; // Guess
+const int VK_MAX_DESCRIPTOR_SETS = 2;
+
+const VK_BOOL VK_TRUE = 1;
+const VK_BOOL VK_FALSE = 0;
+
+typedef enum _VK_RESULT {
+	VK_SUCCESS = 0x10000,
+	VK_UNSUPPORTED,
+	VK_NOT_READY,
+	VK_TIMEOUT,
+	VK_EVENT_SET,
+	VK_EVENT_RESET,
+
+	VK_ERROR_UNKNOW = 0x11000,
+	VK_ERROR_UNAVAILABLE,
+	VK_ERROR_INITIALIZATION_FAILED,
+	VK_ERROR_OUT_OF_MEMORY,
+	VK_ERROR_OUT_OF_GPU_MEMORY,
+	VK_ERROR_DEVICE_ALREADY_CREATED,
+	VK_ERROR_DEVICE_LOST,
+	VK_ERROR_INVALID_POINTER,
+	VK_ERROR_INVALID_VALUE,
+	VK_ERROR_INVALID_HANDLE,
+	VK_ERROR_INVALID_ORDINAL,
+	VK_ERROR_INVALID_MEMORY_SIZE,
+	VK_ERROR_INVALID_EXTENSION,
+	VK_ERROR_INVALID_FLAGS,
+	VK_ERROR_INVALID_ALIGNMENT,
+	VK_ERROR_INVALID_FORMAT,
+	VK_ERROR_INVALID_IMAGE,
+	VK_ERROR_INVALID_DESCRIPTOR_SET_DATA,
+	VK_ERROR_INVALID_QUEUE_TYPE,
+	VK_ERROR_INVALID_OBJECT_TYPE,
+	VK_ERROR_UNSUPPORTED_SHADER_IL_VERSION,
+	VK_ERROR_BAD_SHADER_CODE,
+	VK_ERROR_BAD_PIPELINE_DATA,
+	VK_ERROR_TOO_MANY_MEMORY_REFERENCES,
+	VK_ERROR_NOT_MAPPABLE,
+	VK_ERROR_MEMORY_MAP_FAILED,
+	VK_ERROR_MEMORY_UNMAP_FAILED,
+	VK_ERROR_INCOMPATIBLE_DEVICE,
+	VK_ERROR_INCOMPATIBLE_DRIVER,
+	VK_ERROR_INCOMPLETE_COMMAND_BUFFER,
+	VK_ERROR_BUILDING_COMMAND_BUFFER,
+	VK_ERROR_MEMORY_NOT_BOUND,
+	VK_ERROR_INCOMPATIBLE_QUEUE,
+	VK_ERROR_NOT_SHAREABLE
+} VK_RESULT;
+
+typedef enum _VK_INFO_TYPE {
+	VK_INFO_TYPE_PHYSICAL_GPU_PROPERTIES = 0x6100,
+	VK_INFO_TYPE_PHYSICAL_GPU_PERFORMANCE,
+	VK_INFO_TYPE_PHYSICAL_GPU_QUEUE_PROPERTIES,
+	VK_INFO_TYPE_PHYSICAL_GPU_MEMORY_PROPERTIES,
+	VK_INFO_TYPE_PHYSICAL_GPU_IMAGE_PROPERTIES,
+	VK_INFO_TYPE_MEMORY_HEAP_PROPERTIES = 0x6200,
+	VK_INFO_TYPE_FORMAT_PROPERTIES = 0x6300,
+	VK_INFO_TYPE_SUBRESOURCE_LAYOUT = 0x6400,
+	VK_INFO_TYPE_MEMORY_REQUIREMENTS = 0x6800,
+	VK_INFO_TYPE_PARENT_DEVICE,
+	VK_INFO_TYPE_PARENT_PHYSICAL_GPU,
+} VK_INFO_TYPE;
+
+typedef enum _VK_PHYSICAL_GPU_TYPE {
+	VK_GPU_TYPE_OTHER = 0x3000,
+	VK_GPU_TYPE_INTEVKATED,
+	VK_GPU_TYPE_DISCRETE,
+	VK_GPU_TYPE_VIRTUAL,
+} VK_PHYSICAL_GPU_TYPE;
+
+typedef enum _VK_QUEUE_TYPE {
+	VK_QUEUE_UNIVERSAL = 0x1000,
+	VK_QUEUE_COMPUTE,
+	VK_EXT_QUEUE_DMA = 0x00300200,
+	VK_EXT_QUEUE_TIMER
+} VK_QUEUE_TYPE;
+
+typedef enum _VK_VALIDATION_LEVEL {
+	VK_VALIDATION_LEVEL_0 = 0x8000,
+	VK_VALIDATION_LEVEL_1,
+	VK_VALIDATION_LEVEL_2,
+	VK_VALIDATION_LEVEL_3,
+	VK_VALIDATION_LEVEL_4,
+} VK_VALIDATION_LEVEL;
+
+typedef enum _VK_DEVICE_CREATE_FLAGS {
+	VK_DEVICE_CREATE_VALIDATION = 0x00000001,
+} VK_DEVICE_CREATE_FLAGS;
+
+typedef enum _VK_CHANNEL_FORMAT {
+	VK_CH_FMT_UNDEFINED,
+	VK_CH_FMT_R4G4,
+	VK_CH_FMT_R4G4B4A4,
+	VK_CH_FMT_R5G6B5,
+	VK_CH_FMT_B5G6R5,
+	VK_CH_FMT_R5G5B5A1,
+	VK_CH_FMT_R8,
+	VK_CH_FMT_R8G8,
+	VK_CH_FMT_R8G8B8A8,
+	VK_CH_FMT_B8G8R8A8,
+	VK_CH_FMT_R10G11B11,
+	VK_CH_FMT_R11G11B10,
+	VK_CH_FMT_R10G10B10A2,
+	VK_CH_FMT_R16,
+	VK_CH_FMT_R16G16,
+	VK_CH_FMT_R16G16B16A16,
+	VK_CH_FMT_R32,
+	VK_CH_FMT_R32G32,
+	VK_CH_FMT_R32G32B32,
+	VK_CH_FMT_R32G32B32A32,
+	VK_CH_FMT_R16G8,
+	VK_CH_FMT_R32G8,
+	VK_CH_FMT_R9G9B9E5,
+	VK_CH_FMT_BC1,
+	VK_CH_FMT_BC2,
+	VK_CH_FMT_BC3,
+	VK_CH_FMT_BC4,
+	VK_CH_FMT_BC5,
+	VK_CH_FMT_BC6U,
+	VK_CH_FMT_BC6S,
+	VK_CH_FMT_BC7
+} VK_CHANNEL_FORMAT;
+
+typedef enum _VK_NUM_FORMAT {
+	VK_NUM_FMT_UNDEFINED,
+	VK_NUM_FMT_UNORM,
+	VK_NUM_FMT_SNORM,
+	VK_NUM_FMT_UINT,
+	VK_NUM_FMT_SINT,
+	VK_NUM_FMT_FLOAT,
+	VK_NUM_FMT_SRGB,
+	VK_NUM_FMT_DS
+} VK_NUM_FORMAT;
+
+typedef enum _VK_IMAGE_USAGE_FLAGS {
+	VK_IMAGE_USAGE_SHADER_ACCESS_READ = 0x00000001,
+	VK_IMAGE_USAGE_SHADER_ACCESS_WRITE = 0x00000002,
+	VK_IMAGE_USAGE_COLOR_TARGET = 0x00000004,
+	VK_IMAGE_USAGE_DEPTH_STENCIL = 0x00000008,
+} VK_IMAGE_USAGE_FLAGS;
+
+typedef enum _VK_WSI_WIN_IMAGE_CREATE_FLAGS {
+	VK_WSI_WIN_IMAGE_CREATE_FULLSCREEN_PRESENT = 0x00000001,
+	VK_WSI_WIN_IMAGE_CREATE_STEREO = 0x00000002,
+} VK_WSI_WIN_IMAGE_CREATE_FLAGS;
+
+typedef enum _VK_CMD_BUFFER_BUILD_FLAGS {
+	VK_CMD_BUFFER_OPTIMIZE_GPU_SMALL_BATCH = 0x00000001,
+	VK_CMD_BUFFER_OPTIMIZE_PIPELINE_SWITCH = 0x00000002,
+	VK_CMD_BUFFER_OPTIMIZE_ONE_TIME_SUBMIT = 0x00000004,
+	VK_CMD_BUFFER_OPTIMIZE_DESCRIPTOR_SET_SWITCH = 0x00000008,
+} VK_CMD_BUFFER_BUILD_FLAGS;
+
+typedef enum _VK_MEMORY_STATE {
+	VK_MEMORY_STATE_DATA_TRANSFER = 0x1300,
+	VK_MEMORY_STATE_GRAPHICS_SHADER_READ_ONLY = 0x1301,
+	VK_MEMORY_STATE_GRAPHICS_SHADER_WRITE_ONLY = 0x1302,
+	VK_MEMORY_STATE_GRAPHICS_SHADER_READ_WRITE = 0x1303,
+	VK_MEMORY_STATE_COMPUTE_SHADER_READ_ONLY = 0x1304,
+	VK_MEMORY_STATE_COMPUTE_SHADER_WRITE_ONLY = 0x1305,
+	VK_MEMORY_STATE_COMPUTE_SHADER_READ_WRITE = 0x1306,
+	VK_MEMORY_STATE_MULTI_SHADER_READ_ONLY = 0x1307,
+	VK_MEMORY_STATE_TARGET_AND_SHADER_READ_ONLY = 0x1308,
+	VK_MEMORY_STATE_UNINITIALIZED = 0x1309,
+	VK_MEMORY_STATE_TARGET_RENDER_ACCESS_OPTIMAL = 0x130a,
+	VK_MEMORY_STATE_TARGET_SHADER_ACCESS_OPTIMAL = 0x130b,
+	VK_MEMORY_STATE_CLEAR = 0x130c,
+	VK_MEMORY_STATE_RESOLVE_SOURCE = 0x130d,
+	VK_MEMORY_STATE_RESOLVE_DESTINATION = 0x130e,
+	VK_MEMORY_STATE_DISCARD = 0x131f,
+	VK_MEMORY_STATE_DATA_TRANSFER_SOURCE = 0x1310,
+	VK_MEMORY_STATE_DATA_TRANSFER_DESTINATION = 0x1311,
+} VK_MEMORY_STATE;
+
+typedef enum _VK_WSI_WIN_IMAGE_STATE {
+	VK_WSI_WIN_IMAGE_STATE_PRESENT_WINDOWED = 0x00200000,
+	VK_WSI_WIN_IMAGE_STATE_PRESENT_FULLSCREEN = 0x00200001,
+} VK_WSI_WIN_IMAGE_STATE;
+
+typedef enum _VK_IMAGE_ASPECT {
+	VK_IMAGE_ASPECT_COLOR = 0x1700,
+	VK_IMAGE_ASPECT_DEPTH = 0x1701,
+	VK_IMAGE_ASPECT_STENCIL = 0x1702,
+} VK_IMAGE_ASPECT;
+
+typedef enum _VK_WSI_WIN_PRESENT_MODE {
+	VK_WSI_WIN_PRESENT_MODE_WINDOWED = 0x00200200,
+	VK_WSI_WIN_PRESENT_MODE_FULLSCREEN = 0x00200201,
+} VK_WSI_WIN_PRESENT_MODE;
+
+typedef enum _VK_WSI_WIN_PRESENT_FLAGS {
+	VK_WSI_WIN_PRESENT_FULLSCREEN_DONOTWAIT = 0x00000001,
+	VK_WSI_WIN_PRESENT_FULLSCREEN_STEREO = 0x00000002,
+} VK_WSI_WIN_PRESENT_FLAGS;
+
+typedef enum _VK_MEMORY_PRIORITY {
+	VK_MEMORY_PRIORITY_NORMAL = 0x1100,
+	VK_MEMORY_PRIORITY_HIGH = 0x1101,
+	VK_MEMORY_PRIORITY_LOW = 0x1102,
+	VK_MEMORY_PRIORITY_UNUSED = 0x1103,
+	VK_MEMORY_PRIORITY_VERY_HIGH = 0x1104,
+	VK_MEMORY_PRIORITY_VERY_LOW = 0x1105,
+} VK_MEMORY_PRIORITY;
+
+typedef enum _VK_COMPARE_FUNC {
+	VK_COMPARE_NEVER = 0x2500,
+	VK_COMPARE_LESS = 0x2501,
+	VK_COMPARE_EQUAL = 0x2502,
+	VK_COMPARE_LESS_EQUAL = 0x2503,
+	VK_COMPARE_VKEATER = 0x2504,
+	VK_COMPARE_NOT_EQUAL = 0x2505,
+	VK_COMPARE_VKEATER_EQUAL = 0x2506,
+	VK_COMPARE_ALWAYS = 0x2507,
+} VK_COMPARE_FUNC;
+
+typedef struct _VK_DEPTH_STENCIL_OP {
+	VK_ENUM stencilFailOp;
+	VK_ENUM stencilPassOp;
+	VK_ENUM stencilDepthFailOp;
+	VK_ENUM stencilFunc;
+	VK_UINT8 stencilRef;
+} VK_DEPTH_STENCIL_OP;
+
+typedef enum _VK_FILL_MODE {
+	VK_FILL_SOLID = 0x2600,
+	VK_FILL_WIREFRAME = 0x2601,
+} VK_FILL_MODE;
+
+typedef enum _VK_CULL_MODE {
+	VK_CULL_NONE = 0x2700,
+	VK_CULL_FRONT = 0x2701,
+	VK_CULL_BACK = 0x2702,
+} VK_CULL_MODE;
+
+typedef enum _VK_FACE_ORIENTATION {
+	VK_FRONT_FACE_CCW = 0x2800,
+	VK_FRONT_FACE_CW = 0x2801,
+} VK_FACE_ORIENTATION;
+
+typedef enum _VK_DESCRIPTOR_SET_SLOT_TYPE {
+	VK_SLOT_UNUSED = 0x1900,
+	VK_SLOT_SHADER_RESOURCE,
+	VK_SLOT_SHADER_UAV,
+	VK_SLOT_SHADER_SAMPLER,
+	VK_SLOT_NEXT_DESCRIPTOR_SET,
+} VK_DESCRIPTOR_SET_SLOT_TYPE;
+
+typedef enum _VK_STATE_BIND_POINT {
+	VK_STATE_BIND_VIEWPORT = 0x1f00,
+	VK_STATE_BIND_RASTER = 0x1f01,
+	VK_STATE_BIND_DEPTH_STENCIL = 0x1f02,
+	VK_STATE_BIND_COLOR_BLEND = 0x1f03,
+	VK_STATE_BIND_MSAA = 0x1f04,
+} VK_STATE_BIND_POINT;
+
+typedef enum _VK_BLEND {
+	VK_BLEND_ZERO = 0x2900,
+	VK_BLEND_ONE = 0x2901,
+	VK_BLEND_SRC_COLOR = 0x2902,
+	VK_BLEND_ONE_MINUS_SRC_COLOR = 0x2903,
+	VK_BLEND_DEST_COLOR = 0x2904,
+	VK_BLEND_ONE_MINUS_DEST_COLOR = 0x2905,
+	VK_BLEND_SRC_ALPHA = 0x2906,
+	VK_BLEND_ONE_MINUS_SRC_ALPHA = 0x2907,
+	VK_BLEND_DEST_ALPHA = 0x2908,
+	VK_BLEND_ONE_MINUS_DEST_ALPHA = 0x2909,
+	VK_BLEND_CONSTANT_COLOR = 0x290a,
+	VK_BLEND_ONE_MINUS_CONSTANT_COLOR = 0x290b,
+	VK_BLEND_CONSTANT_ALPHA = 0x290c,
+	VK_BLEND_ONE_MINUS_CONSTANT_ALPHA = 0x290d,
+	VK_BLEND_SRC_ALPHA_SATURATE = 0x290e,
+	VK_BLEND_SRC1_COLOR = 0x290f,
+	VK_BLEND_ONE_MINUS_SRC1_COLOR = 0x2910,
+	VK_BLEND_SRC1_ALPHA = 0x2911,
+	VK_BLEND_ONE_MINUS_SRC1_ALPHA = 0x2912,
+} VK_BLEND;
+
+typedef enum _VK_BLEND_FUNC {
+	VK_BLEND_FUNC_ADD = 0x2a00,
+	VK_BLEND_FUNC_SUBTRACT = 0x2a01,
+	VK_BLEND_FUNC_REVERSE_SUBTRACT = 0x2a02,
+	VK_BLEND_FUNC_MIN = 0x2a03,
+	VK_BLEND_FUNC_MAX = 0x2a04,
+} VK_BLEND_FUNC;
+
+typedef enum _VK_STENCIL_OP {
+	VK_STENCIL_OP_KEEP = 0x2b00,
+	VK_STENCIL_OP_ZERO = 0x2b01,
+	VK_STENCIL_OP_REPLACE = 0x2b02,
+	VK_STENCIL_OP_INC_CLAMP = 0x2b03,
+	VK_STENCIL_OP_DEC_CLAMP = 0x2b04,
+	VK_STENCIL_OP_INVERT = 0x2b05,
+	VK_STENCIL_OP_INC_WRAP = 0x2b06,
+	VK_STENCIL_OP_DEC_WRAP = 0x2b07,
+} VK_STENCIL_OP;
+
+typedef enum _VK_INDEX_TYPE {
+	VK_INDEX_16 = 0x2100,
+	VK_INDEX_32 = 0x2101,
+} VK_INDEX_TYPE;
+
+typedef enum _VK_PIPELINE_BIND_POINT {
+	VK_PIPELINE_BIND_POINT_COMPUTE = 0x1e00,
+	VK_PIPELINE_BIND_POINT_GRAPHICS = 0x1e01,
+} VK_PIPELINE_BIND_POINT;
+
+typedef enum _VK_PRIMITIVE_TOPOLOGY {
+	VK_TOPOLOGY_POINT_LIST = 0x2000,
+	VK_TOPOLOGY_LINE_LIST = 0x2001,
+	VK_TOPOLOGY_LINE_STRIP = 0x2002,
+	VK_TOPOLOGY_TRIANGLE_LIST = 0x2003,
+	VK_TOPOLOGY_TRIANGLE_STRIP = 0x2004,
+	VK_TOPOLOGY_RECT_LIST = 0x2005,
+	VK_TOPOLOGY_QUAD_LIST = 0x2006,
+	VK_TOPOLOGY_QUAD_STRIP = 0x2007,
+	VK_TOPOLOGY_LINE_LIST_ADJ = 0x2008,
+	VK_TOPOLOGY_LINE_STRIP_ADJ = 0x2009,
+	VK_TOPOLOGY_TRIANGLE_LIST_ADJ = 0x200a,
+	VK_TOPOLOGY_TRIANGLE_STRIP_ADJ = 0x200b,
+	VK_TOPOLOGY_PATCH = 0x200c,
+} VK_PRIMITIVE_TOPOLOGY;
+
+typedef enum _VK_LOGIC_OP {
+	VK_LOGIC_OP_COPY = 0x2c00,
+	VK_LOGIC_OP_CLEAR = 0x2c01,
+	VK_LOGIC_OP_AND = 0x2c02,
+	VK_LOGIC_OP_AND_REVERSE = 0x2c03,
+	VK_LOGIC_OP_AND_INVERTED = 0x2c04,
+	VK_LOGIC_OP_NOOP = 0x2c05,
+	VK_LOGIC_OP_XOR = 0x2c06,
+	VK_LOGIC_OP_OR = 0x2c07,
+	VK_LOGIC_OP_NOR = 0x2c08,
+	VK_LOGIC_OP_EQUIV = 0x2c09,
+	VK_LOGIC_OP_INVERT = 0x2c0a,
+	VK_LOGIC_OP_OR_REVERSE = 0x2c0b,
+	VK_LOGIC_OP_COPY_INVERTED = 0x2c0c,
+	VK_LOGIC_OP_OR_INVERTED = 0x2c0d,
+	VK_LOGIC_OP_NAND = 0x2c0e,
+	VK_LOGIC_OP_SET = 0x2c0f,
+} VK_LOGIC_OP;
+
+typedef enum _VK_SHADER_CREATE_FLAGS {
+	VK_SHADER_CREATE_ALLOW_RE_Z = 0x00000001,
+} VK_SHADER_CREATE_FLAGS;
+
+/*
+Callback functions
+*/
+
+typedef void* (*VK_ALLOC_FUNCTION)(
+	VK_SIZE size,
+	VK_SIZE alignment,
+	VK_ENUM allocType);
+
+typedef void (*VK_FREE_FUNCTION)(
+	VK_VOID* pMem);
+
+typedef void (*VK_DBG_MSG_CALLBACK_FUNCTION)(
+	VK_ENUM msgType,
+	VK_ENUM validationLevel,
+	VK_BASE_OBJECT srcObject,
+	VK_SIZE location,
+	VK_ENUM msgCode,
+	const VK_CHAR* pMsg,
+	VK_VOID* pUserData);
+
+/*
+Structures
+*/
+
+typedef struct _VK_APPLICATION_INFO {
+	const VK_CHAR* pAppName;
+	VK_UINT32 appVersion;
+	const VK_CHAR* pEngineName;
+	VK_UINT32 engineVersion;
+	VK_UINT32 apiVersion;
+} VK_APPLICATION_INFO;
+
+typedef struct _VK_ALLOC_CALLBACKS {
+	VK_ALLOC_FUNCTION pfnAlloc;
+	VK_FREE_FUNCTION pfnFree;
+} VK_ALLOC_CALLBACKS;
+
+typedef struct _VK_PHYSICAL_GPU_PROPERTIES {
+	VK_UINT32 apiVersion;
+	VK_UINT32 driverVersion;
+	VK_UINT32 vendorId;
+	VK_UINT32 deviceId;
+	VK_ENUM gpuType;
+	VK_CHAR gpuName[VK_MAX_PHYSICAL_GPU_NAME];
+	VK_UINT maxMemRefsPerSubmission;
+	VK_GPU_SIZE reserved;
+	VK_GPU_SIZE maxInlineMemoryUpdateSize;
+	VK_UINT maxBoundDescriptorSets;
+	VK_UINT maxThreadGroupSize;
+	VK_UINT64 timestampFrequency;
+	VK_BOOL multiColorTargetClears;
+} VK_PHYSICAL_GPU_PROPERTIES;
+
+typedef struct _VK_PHYSICAL_GPU_PERFORMANCE {
+	VK_FLOAT maxGpuClock;
+	VK_FLOAT aluPerClock;
+	VK_FLOAT texPerClock;
+	VK_FLOAT primsPerClock;
+	VK_FLOAT pixelsPerClock;
+} VK_PHYSICAL_GPU_PERFORMANCE;
+
+typedef struct _VK_PHYSICAL_GPU_QUEUE_PROPERTIES {
+	VK_ENUM queueType;
+	VK_UINT queueCount;
+	VK_UINT maxAtomicCounters;
+	VK_BOOL supportsTimestamps;
+} VK_PHYSICAL_GPU_QUEUE_PROPERTIES;
+
+typedef struct _VK_DEVICE_QUEUE_CREATE_INFO {
+	VK_ENUM queueType;
+	VK_UINT queueCount;
+} VK_DEVICE_QUEUE_CREATE_INFO;
+
+typedef struct _VK_DEVICE_CREATE_INFO {
+	VK_UINT queueRecordCount;
+	const VK_DEVICE_QUEUE_CREATE_INFO* pRequestedQueues;
+	VK_UINT extensionCount;
+	const VK_CHAR*const* ppEnabledExtensionNames;
+	VK_ENUM maxValidationLevel;
+	VK_FLAGS flags;
+} VK_DEVICE_CREATE_INFO;
+
+typedef struct _VK_EXTENT2D {
+	VK_INT width;
+	VK_INT height;
+} VK_EXTENT2D;
+
+typedef struct _VK_EXTENT3D {
+	VK_INT width;
+	VK_INT height;
+	VK_INT depth;
+} VK_EXTENT3D;
+
+typedef struct _VK_FORMAT {
+	VK_UINT32 channelFormat : 16;
+	VK_UINT32 numericFormat : 16;
+} VK_FORMAT;
+
+typedef struct _VK_WSI_WIN_DISPLAY_MODE {
+	VK_EXTENT2D extent;
+	VK_FORMAT format;
+	VK_UINT refreshRate;
+	VK_BOOL stereo;
+	VK_BOOL crossDisplayPresent;
+} VK_WSI_WIN_DISPLAY_MODE;
+
+typedef struct _VK_WSI_WIN_PRESENTABLE_IMAGE_CREATE_INFO {
+	VK_FORMAT format;
+	VK_FLAGS usage;
+	VK_EXTENT2D extent;
+	VK_WSI_WIN_DISPLAY display;
+	VK_FLAGS flags;
+} VK_WSI_WIN_PRESENTABLE_IMAGE_CREATE_INFO;
+
+typedef struct _VK_CMD_BUFFER_CREATE_INFO {
+	VK_ENUM queueType;
+	VK_FLAGS flags;
+} VK_CMD_BUFFER_CREATE_INFO;
+
+typedef struct _VK_MEMORY_REF {
+	VK_GPU_MEMORY mem;
+	VK_FLAGS flags;
+} VK_MEMORY_REF;
+
+typedef struct _VK_IMAGE_SUBRESOURCE_RANGE {
+	VK_ENUM aspect;
+	VK_UINT baseMipLevel;
+	VK_UINT mipLevels;
+	VK_UINT baseArraySlice;
+	VK_UINT arraySize;
+} VK_IMAGE_SUBRESOURCE_RANGE;
+
+typedef struct _VK_IMAGE_STATE_TRANSITION {
+	VK_IMAGE image;
+	VK_ENUM oldState;
+	VK_ENUM newState;
+	VK_IMAGE_SUBRESOURCE_RANGE subresourceRange;
+} VK_IMAGE_STATE_TRANSITION;
+
+#ifdef WIN32
+typedef struct _VK_WSI_WIN_PRESENT_INFO {
+	HWND hWndDest;
+	VK_IMAGE srcImage;
+	VK_ENUM presentMode;
+	VK_UINT presentInterval;
+	VK_FLAGS flags;
+} VK_WSI_WIN_PRESENT_INFO;
+#endif
+
+typedef struct _VK_VIEWPORT {
+	VK_FLOAT originX;
+	VK_FLOAT originY;
+	VK_FLOAT width;
+	VK_FLOAT height;
+	VK_FLOAT minDepth;
+	VK_FLOAT maxDepth;
+} VK_VIEWPORT;
+
+typedef struct _VK_OFFSET2D {
+	VK_INT x;
+	VK_INT y;
+} VK_OFFSET2D;
+
+typedef struct _VK_OFFSET3D {
+	VK_INT x;
+	VK_INT y;
+	VK_INT z;
+} VK_OFFSET3D;
+
+typedef struct _VK_RECT {
+	VK_OFFSET2D offset;
+	VK_EXTENT2D extent;
+} VK_RECT;
+
+typedef struct _VK_VIEWPORT_STATE_CREATE_INFO {
+	VK_UINT viewportCount;
+	VK_BOOL scissorEnable;
+	VK_VIEWPORT viewports[VK_MAX_VIEWPORTS];
+	VK_RECT scissors[VK_MAX_VIEWPORTS];
+} VK_VIEWPORT_STATE_CREATE_INFO;
+
+typedef struct _VK_COLOR_TARGET_VIEW_CREATE_INFO {
+	VK_IMAGE image;
+	VK_FORMAT format;
+	VK_UINT mipLevel;
+	VK_UINT baseArraySlice;
+	VK_UINT arraySize;
+} VK_COLOR_TARGET_VIEW_CREATE_INFO;
+
+typedef struct _VK_MEMORY_ALLOC_INFO {
+	VK_GPU_SIZE size;
+	VK_GPU_SIZE alignment;
+	VK_FLAGS flags;
+	VK_UINT heapCount;
+	VK_UINT heaps[VK_MAX_MEMORY_HEAPS];
+	VK_ENUM memPriority;
+} VK_MEMORY_ALLOC_INFO;
+
+typedef struct _VK_DESCRIPTOR_SET_CREATE_INFO {
+	VK_UINT slots;
+} VK_DESCRIPTOR_SET_CREATE_INFO;
+
+typedef struct _VK_FENCE_CREATE_INFO {
+	VK_FLAGS flags;
+} VK_FENCE_CREATE_INFO;
+
+typedef struct _VK_MSAA_STATE_CREATE_INFO {
+	VK_UINT samples;
+	VK_SAMPLE_MASK sampleMask;
+} VK_MSAA_STATE_CREATE_INFO;
+
+typedef struct _VK_SAMPLER_CREATE_INFO {
+	VK_ENUM filter;
+	VK_ENUM addressU;
+	VK_ENUM addressV;
+	VK_ENUM addressW;
+	VK_FLOAT mipLodBias;
+	VK_UINT maxAnisotropy;
+	VK_ENUM compareFunc;
+	VK_FLOAT minLod;
+	VK_FLOAT maxLod;
+	VK_ENUM borderColor;
+} VK_SAMPLER_CREATE_INFO;
+
+typedef struct _VK_COLOR_TARGET_BLEND_STATE {
+	VK_BOOL blendEnable;
+	VK_ENUM srcBlendColor;
+	VK_ENUM destBlendColor;
+	VK_ENUM blendFuncColor;
+	VK_ENUM srcBlendAlpha;
+	VK_ENUM destBlendAlpha;
+	VK_ENUM blendFuncAlpha;
+} VK_COLOR_TARGET_BLEND_STATE;
+
+typedef struct _VK_COLOR_BLEND_STATE_CREATE_INFO {
+	VK_COLOR_TARGET_BLEND_STATE target[VK_MAX_COLOR_TARGETS];
+	VK_FLOAT blendConst[4];
+} VK_COLOR_BLEND_STATE_CREATE_INFO;
+
+typedef struct _VK_DEPTH_STENCIL_STATE_CREATE_INFO {
+	VK_BOOL depthEnable;
+	VK_BOOL depthWriteEnable;
+	VK_ENUM depthFunc;
+	VK_BOOL depthBoundsEnable;
+	VK_FLOAT minDepth;
+	VK_FLOAT maxDepth;
+	VK_BOOL stencilEnable;
+	VK_UINT8 stencilReadMask;
+	VK_UINT8 stencilWriteMask;
+	VK_DEPTH_STENCIL_OP front;
+	VK_DEPTH_STENCIL_OP back;
+} VK_DEPTH_STENCIL_STATE_CREATE_INFO;
+
+typedef struct _VK_RASTER_STATE_CREATE_INFO {
+	VK_ENUM fillMode;
+	VK_ENUM cullMode;
+	VK_ENUM frontFace;
+	VK_INT depthBias;
+	VK_FLOAT depthBiasClamp;
+	VK_FLOAT slopeScaledDepthBias;
+} VK_RASTER_STATE_CREATE_INFO;
+
+typedef struct _VK_SHADER_CREATE_INFO {
+	VK_SIZE codeSize;
+	const VK_VOID* pCode;
+	VK_FLAGS flags;
+} VK_SHADER_CREATE_INFO;
+
+typedef struct _VK_DESCRIPTOR_SLOT_INFO {
+	VK_ENUM slotObjectType;
+	union {
+		VK_UINT shaderEntityIndex;
+		const struct _VK_DESCRIPTOR_SET_MAPPING* pNextLevelSet;
+	};
+} VK_DESCRIPTOR_SLOT_INFO;
+
+typedef struct _VK_DESCRIPTOR_SET_MAPPING {
+	VK_UINT descriptorCount;
+	const VK_DESCRIPTOR_SLOT_INFO* pDescriptorInfo;
+} VK_DESCRIPTOR_SET_MAPPING;
+
+typedef struct _VK_LINK_CONST_BUFFER {
+	VK_UINT bufferId;
+	VK_SIZE bufferSize;
+	const VK_VOID* pBufferData;
+} VK_LINK_CONST_BUFFER;
+
+typedef struct _VK_DYNAMIC_MEMORY_VIEW_SLOT_INFO {
+	VK_ENUM slotObjectType;
+	VK_UINT shaderEntityIndex;
+} VK_DYNAMIC_MEMORY_VIEW_SLOT_INFO;
+
+typedef struct _VK_PIPELINE_SHADER {
+	VK_SHADER shader;
+	VK_DESCRIPTOR_SET_MAPPING descriptorSetMapping[VK_MAX_DESCRIPTOR_SETS];
+	VK_UINT linkConstBufferCount;
+	const VK_LINK_CONST_BUFFER* pLinkConstBufferInfo;
+	VK_DYNAMIC_MEMORY_VIEW_SLOT_INFO dynamicMemoryViewMapping;
+} VK_PIPELINE_SHADER;
+
+typedef struct _VK_PIPELINE_IA_STATE {
+	VK_ENUM topology;
+	VK_BOOL disableVertexReuse;
+} VK_PIPELINE_IA_STATE;
+
+typedef struct _VK_PIPELINE_TESS_STATE {
+	VK_UINT patchControlPoints;
+	VK_FLOAT optimalTessFactor;
+} VK_PIPELINE_TESS_STATE;
+
+typedef struct _VK_PIPELINE_RS_STATE {
+	VK_BOOL depthClipEnable;
+} VK_PIPELINE_RS_STATE;
+
+typedef struct _VK_PIPELINE_CB_TARGET_STATE {
+	VK_BOOL blendEnable;
+	VK_FORMAT format;
+	VK_UINT8 channelWriteMask;
+} VK_PIPELINE_CB_TARGET_STATE;
+
+typedef struct _VK_PIPELINE_CB_STATE {
+	VK_BOOL alphaToCoverageEnable;
+	VK_BOOL dualSourceBlendEnable;
+	VK_ENUM logicOp;
+	VK_PIPELINE_CB_TARGET_STATE target[VK_MAX_COLOR_TARGETS];
+} VK_PIPELINE_CB_STATE;
+
+typedef struct _VK_PIPELINE_DB_STATE {
+	VK_FORMAT format;
+} VK_PIPELINE_DB_STATE;
+
+typedef struct _VK_GRAPHICS_PIPELINE_CREATE_INFO {
+	VK_PIPELINE_SHADER vs;
+	VK_PIPELINE_SHADER hs;
+	VK_PIPELINE_SHADER ds;
+	VK_PIPELINE_SHADER gs;
+	VK_PIPELINE_SHADER ps;
+	VK_PIPELINE_IA_STATE iaState;
+	VK_PIPELINE_TESS_STATE tessState;
+	VK_PIPELINE_RS_STATE rsState;
+	VK_PIPELINE_CB_STATE cbState;
+	VK_PIPELINE_DB_STATE dbState;
+	VK_FLAGS flags;
+} VK_GRAPHICS_PIPELINE_CREATE_INFO;
+
+typedef struct _VK_COMPUTE_PIPELINE_CREATE_INFO {
+	VK_PIPELINE_SHADER cs;
+	VK_FLAGS flags;
+} VK_COMPUTE_PIPELINE_CREATE_INFO;
+
+typedef struct _VK_MEMORY_VIEW_ATTACH_INFO {
+	VK_GPU_MEMORY mem;
+	VK_GPU_SIZE offset;
+	VK_GPU_SIZE range;
+	VK_GPU_SIZE stride;
+	VK_FORMAT format;
+	VK_ENUM state;
+} VK_MEMORY_VIEW_ATTACH_INFO;
+
+typedef struct _VK_IMAGE_CREATE_INFO {
+	VK_ENUM imageType;
+	VK_FORMAT format;
+	VK_EXTENT3D extent;
+	VK_UINT mipLevels;
+	VK_UINT arraySize;
+	VK_UINT samples;
+	VK_ENUM tiling;
+	VK_FLAGS usage;
+	VK_FLAGS flags;
+} VK_IMAGE_CREATE_INFO;
+
+typedef struct _VK_CHANNEL_MAPPING {
+	VK_ENUM r;
+	VK_ENUM g;
+	VK_ENUM b;
+	VK_ENUM a;
+} VK_CHANNEL_MAPPING;
+
+typedef struct _VK_IMAGE_VIEW_CREATE_INFO {
+	VK_IMAGE image;
+	VK_ENUM viewType;
+	VK_FORMAT format;
+	VK_CHANNEL_MAPPING channels;
+	VK_IMAGE_SUBRESOURCE_RANGE subresourceRange;
+	VK_FLOAT minLod;
+} VK_IMAGE_VIEW_CREATE_INFO;
+
+typedef struct _VK_IMAGE_VIEW_ATTACH_INFO {
+	VK_IMAGE_VIEW view;
+	VK_ENUM state;
+} VK_IMAGE_VIEW_ATTACH_INFO;
+
+typedef struct _VK_IMAGE_SUBRESOURCE {
+	VK_ENUM aspect;
+	VK_UINT mipLevel;
+	VK_UINT arraySlice;
+} VK_IMAGE_SUBRESOURCE;
+
+typedef struct _VK_MEMORY_STATE_TRANSITION {
+	VK_GPU_MEMORY mem;
+	VK_ENUM oldState;
+	VK_ENUM newState;
+	VK_GPU_SIZE offset;
+	VK_GPU_SIZE regionSize;
+} VK_MEMORY_STATE_TRANSITION;
+
+typedef struct _VK_MEMORY_COPY {
+	VK_GPU_SIZE srcOffset;
+	VK_GPU_SIZE destOffset;
+	VK_GPU_SIZE copySize;
+} VK_MEMORY_COPY;
+
+typedef struct _VK_IMAGE_COPY {
+	VK_IMAGE_SUBRESOURCE srcSubresource;
+	VK_OFFSET3D srcOffset;
+	VK_IMAGE_SUBRESOURCE destSubresource;
+	VK_OFFSET3D destOffset;
+	VK_EXTENT3D extent;
+} VK_IMAGE_COPY;
+
+typedef struct _VK_COLOR_TARGET_BIND_INFO {
+	VK_COLOR_TARGET_VIEW view;
+	VK_ENUM colorTargetState;
+} VK_COLOR_TARGET_BIND_INFO;
+
+typedef struct _VK_DEPTH_STENCIL_BIND_INFO {
+	VK_DEPTH_STENCIL_VIEW view;
+	VK_ENUM depthState;
+	VK_ENUM stencilState;
+} VK_DEPTH_STENCIL_BIND_INFO;
+
+typedef struct _VK_MEMORY_IMAGE_COPY {
+	VK_GPU_SIZE memOffset;
+	VK_IMAGE_SUBRESOURCE imageSubresource;
+	VK_OFFSET3D imageOffset;
+	VK_EXTENT3D imageExtent;
+} VK_MEMORY_IMAGE_COPY;
+
+typedef struct _VK_DESCRIPTOR_SET_ATTACH_INFO {
+	VK_DESCRIPTOR_SET descriptorSet;
+	VK_UINT slotOffset;
+} VK_DESCRIPTOR_SET_ATTACH_INFO;
+
+typedef struct _VK_MEMORY_REQUIREMENTS {
+	VK_GPU_SIZE size;
+	VK_GPU_SIZE alignment;
+	VK_UINT heapCount;
+	VK_UINT heaps[VK_MAX_MEMORY_HEAPS];
+} VK_MEMORY_REQUIREMENTS;
+
+typedef struct _VK_MEMORY_HEAP_PROPERTIES {
+	VK_ENUM heapMemoryType;
+	VK_GPU_SIZE heapSize;
+	VK_GPU_SIZE pageSize;
+	VK_FLAGS flags;
+	VK_FLOAT gpuReadPerfRating;
+	VK_FLOAT gpuWritePerfRating;
+	VK_FLOAT cpuReadPerfRating;
+	VK_FLOAT cpuWritePerfRating;
+} VK_MEMORY_HEAP_PROPERTIES;
+
+/*
+API function pointers
+*/
+
+VK_RESULT vkCreateInstance(
+	const VK_APPLICATION_INFO* pAppInfo,
+	const VK_ALLOC_CALLBACKS* pAllocCb,
+	VK_INSTANCE* pInst);
+
+VK_RESULT vkEnumerateGpus(
+	VK_INSTANCE pInst,
+	VK_SIZE arraySize,
+	VK_UINT* pGpuCount,
+	VK_PHYSICAL_GPU gpus[VK_MAX_PHYSICAL_GPUS]);
+
+VK_RESULT vkGetGpuInfo(
+	VK_PHYSICAL_GPU gpu,
+	VK_ENUM infoType,
+	VK_SIZE* pDataSize,
+	VK_VOID* pData);
+
+VK_RESULT vkGetExtensionSupport(
+	VK_PHYSICAL_GPU gpu,
+	const VK_CHAR* pExtName);
+
+VK_RESULT vkCreateDevice(
+	VK_PHYSICAL_GPU gpu,
+	const VK_DEVICE_CREATE_INFO* pCreateInfo,
+	VK_DEVICE* pDevice);
+
+VK_RESULT vkWsiWinGetDisplays(
+	VK_DEVICE device,
+	VK_UINT* pDisplayCount,
+	VK_WSI_WIN_DISPLAY* pDisplayList);
+
+VK_RESULT vkWsiWinGetDisplayModeList(
+	VK_WSI_WIN_DISPLAY display,
+	VK_UINT* pDisplayModeCount,
+	VK_WSI_WIN_DISPLAY_MODE* pDisplayModeList);
+
+VK_RESULT vkGetDeviceQueue(
+	VK_DEVICE device,
+	VK_ENUM queueType,
+	VK_UINT queueId,
+	VK_QUEUE* pQueue);
+
+VK_RESULT vkWsiWinCreatePresentableImage(
+	VK_DEVICE device,
+	const VK_WSI_WIN_PRESENTABLE_IMAGE_CREATE_INFO* pCreateInfo,
+	VK_IMAGE* pImage,
+	VK_GPU_MEMORY* pMem);
+
+VK_RESULT vkCreateCommandBuffer(
+	VK_DEVICE device,
+	const VK_CMD_BUFFER_CREATE_INFO* pCreateInfo,
+	VK_CMD_BUFFER* pCmdBuffer);
+
+VK_RESULT vkBeginCommandBuffer(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_FLAGS flags);
+
+VK_RESULT vkEndCommandBuffer(
+	VK_CMD_BUFFER cmdBuffer);
+
+VK_RESULT vkQueueSubmit(
+	VK_QUEUE queue,
+	VK_UINT cmdBufferCount,
+	const VK_CMD_BUFFER* pCmdBuffers,
+	VK_UINT memRefCount,
+	const VK_MEMORY_REF* pMemRefs,
+	VK_FENCE fence);
+
+void vkCmdPrepareImages(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_UINT transitionCount,
+	const VK_IMAGE_STATE_TRANSITION* pStateTransitions);
+
+void vkCmdClearColorImage(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_IMAGE image,
+	const VK_FLOAT color[4],
+	VK_UINT rangeCount,
+	const VK_IMAGE_SUBRESOURCE_RANGE* pRanges);
+
+#ifdef WIN32
+VK_RESULT vkWsiWinQueuePresent(
+	VK_QUEUE queue,
+	const VK_WSI_WIN_PRESENT_INFO* pPresentInfo);
+#endif
+
+VK_RESULT vkDbgRegisterMsgCallback(
+	VK_DBG_MSG_CALLBACK_FUNCTION pfnMsgCallback,
+	VK_VOID* pUserData);
+
+VK_RESULT vkCreateViewportState(
+	VK_DEVICE device,
+	const VK_VIEWPORT_STATE_CREATE_INFO* pCreateInfo,
+	VK_VIEWPORT_STATE_OBJECT* pState);
+
+VK_RESULT vkGetMemoryHeapCount(
+	VK_DEVICE device,
+	VK_UINT* pCount);
+
+VK_RESULT vkCreateColorTargetView(
+	VK_DEVICE device,
+	const VK_COLOR_TARGET_VIEW_CREATE_INFO* pCreateInfo,
+	VK_COLOR_TARGET_VIEW* pView);
+
+VK_RESULT vkGetMemoryHeapInfo(
+	VK_DEVICE device,
+	VK_UINT heapId,
+	VK_ENUM infoType,
+	VK_SIZE* pDataSize,
+	VK_VOID* pData);
+
+VK_RESULT vkAllocMemory(
+	VK_DEVICE device,
+	const VK_MEMORY_ALLOC_INFO* pAllocInfo,
+	VK_GPU_MEMORY* pMem);
+
+VK_RESULT vkCreateDescriptorSet(
+	VK_DEVICE device,
+	const VK_DESCRIPTOR_SET_CREATE_INFO* pCreateInfo,
+	VK_DESCRIPTOR_SET* pDescriptorSet);
+
+VK_RESULT vkGetObjectInfo(
+	VK_BASE_OBJECT object,
+	VK_ENUM infoType,
+	VK_SIZE* pDataSize,
+	VK_VOID* pData);
+
+VK_RESULT vkBindObjectMemory(
+	VK_OBJECT object,
+	VK_GPU_MEMORY mem,
+	VK_GPU_SIZE offset);
+
+VK_RESULT vkCreateFence(
+	VK_DEVICE device,
+	const VK_FENCE_CREATE_INFO* pCreateInfo,
+	VK_FENCE* pFence);
+
+VK_RESULT vkCreateMsaaState(
+	VK_DEVICE device,
+	const VK_MSAA_STATE_CREATE_INFO* pCreateInfo,
+	VK_MSAA_STATE_OBJECT* pState);
+
+VK_RESULT vkCreateSampler(
+	VK_DEVICE device,
+	const VK_SAMPLER_CREATE_INFO* pCreateInfo,
+	VK_SAMPLER* pSampler);
+
+void vkBeginDescriptorSetUpdate(
+	VK_DESCRIPTOR_SET descriptorSet);
+
+void vkEndDescriptorSetUpdate(
+	VK_DESCRIPTOR_SET descriptorSet);
+
+void vkAttachSamplerDescriptors(
+	VK_DESCRIPTOR_SET descriptorSet,
+	VK_UINT startSlot,
+	VK_UINT slotCount,
+	const VK_SAMPLER* pSamplers);
+
+VK_RESULT vkCreateColorBlendState(
+	VK_DEVICE device,
+	const VK_COLOR_BLEND_STATE_CREATE_INFO* pCreateInfo,
+	VK_COLOR_BLEND_STATE_OBJECT* pState);
+
+VK_RESULT vkCreateDepthStencilState(
+	VK_DEVICE device,
+	const VK_DEPTH_STENCIL_STATE_CREATE_INFO* pCreateInfo,
+	VK_DEPTH_STENCIL_STATE_OBJECT* pState);
+
+VK_RESULT vkCreateRasterState(
+	VK_DEVICE device,
+	const VK_RASTER_STATE_CREATE_INFO* pCreateInfo,
+	VK_RASTER_STATE_OBJECT* pState);
+
+VK_RESULT vkMapMemory(
+	VK_GPU_MEMORY mem,
+	VK_FLAGS flags,
+	VK_VOID** ppData);
+
+VK_RESULT vkUnmapMemory(
+	VK_GPU_MEMORY mem);
+
+VK_RESULT vkCreateShader(
+	VK_DEVICE device,
+	const VK_SHADER_CREATE_INFO* pCreateInfo,
+	VK_SHADER* pShader);
+
+VK_RESULT vkCreateGraphicsPipeline(
+	VK_DEVICE device,
+	const VK_GRAPHICS_PIPELINE_CREATE_INFO* pCreateInfo,
+	VK_PIPELINE* pPipeline);
+
+VK_RESULT vkCreateComputePipeline(
+	VK_DEVICE device,
+	const VK_COMPUTE_PIPELINE_CREATE_INFO* pCreateInfo,
+	VK_PIPELINE* pPipeline);
+
+void vkClearDescriptorSetSlots(
+	VK_DESCRIPTOR_SET descriptorSet,
+	VK_UINT startSlot,
+	VK_UINT slotCount);
+
+void vkAttachMemoryViewDescriptors(
+	VK_DESCRIPTOR_SET descriptorSet,
+	VK_UINT startSlot,
+	VK_UINT slotCount,
+	const VK_MEMORY_VIEW_ATTACH_INFO* pMemViews);
+
+VK_RESULT vkWaitForFences(
+	VK_DEVICE device,
+	VK_UINT fenceCount,
+	const VK_FENCE* pFences,
+	VK_BOOL waitAll,
+	VK_FLOAT timeout);
+
+VK_RESULT vkCreateImage(
+	VK_DEVICE device,
+	const VK_IMAGE_CREATE_INFO* pCreateInfo,
+	VK_IMAGE* pImage);
+
+VK_RESULT vkDestroyObject(
+	VK_OBJECT object);
+
+VK_RESULT vkCreateImageView(
+	VK_DEVICE device,
+	const VK_IMAGE_VIEW_CREATE_INFO* pCreateInfo,
+	VK_IMAGE_VIEW* pView);
+
+void vkAttachImageViewDescriptors(
+	VK_DESCRIPTOR_SET descriptorSet,
+	VK_UINT startSlot,
+	VK_UINT slotCount,
+	const VK_IMAGE_VIEW_ATTACH_INFO* pImageViews);
+
+VK_RESULT vkGetImageSubresourceInfo(
+	VK_IMAGE image,
+	const VK_IMAGE_SUBRESOURCE* pSubresource,
+	VK_ENUM infoType,
+	VK_SIZE* pDataSize,
+	VK_VOID* pData);
+
+VK_RESULT vkResetCommandBuffer(
+	VK_CMD_BUFFER cmdBuffer);
+
+void vkCmdPrepareMemoryRegions(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_UINT transitionCount,
+	const VK_MEMORY_STATE_TRANSITION* pStateTransitions);
+
+void vkCmdCopyMemory(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_GPU_MEMORY srcMem,
+	VK_GPU_MEMORY destMem,
+	VK_UINT regionCount,
+	const VK_MEMORY_COPY* pRegions);
+
+void vkCmdCopyImage(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_IMAGE srcImage,
+	VK_IMAGE destImage,
+	VK_UINT regionCount,
+	const VK_IMAGE_COPY* pRegions);
+
+void vkCmdBindTargets(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_UINT colorTargetCount,
+	const VK_COLOR_TARGET_BIND_INFO* pColorTargets,
+	const VK_DEPTH_STENCIL_BIND_INFO* pDepthTarget);
+
+void vkCmdBindStateObject(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_ENUM stateBindPoint,
+	VK_STATE_OBJECT state);
+
+VK_RESULT vkFreeMemory(
+	VK_GPU_MEMORY mem);
+
+void vkCmdCopyMemoryToImage(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_GPU_MEMORY srcMem,
+	VK_IMAGE destImage,
+	VK_UINT regionCount,
+	const VK_MEMORY_IMAGE_COPY* pRegions);
+
+void vkAttachNestedDescriptors(
+	VK_DESCRIPTOR_SET descriptorSet,
+	VK_UINT startSlot,
+	VK_UINT slotCount,
+	const VK_DESCRIPTOR_SET_ATTACH_INFO* pNestedDescriptorSets);
+
+void vkCmdBindDescriptorSet(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_ENUM pipelineBindPoint,
+	VK_UINT index,
+	VK_DESCRIPTOR_SET descriptorSet,
+	VK_UINT slotOffset);
+
+void vkCmdBindIndexData(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_GPU_MEMORY mem,
+	VK_GPU_SIZE offset,
+	VK_ENUM indexType);
+
+void vkCmdBindPipeline(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_ENUM pipelineBindPoint,
+	VK_PIPELINE pipeline);
+
+void vkCmdDrawIndexed(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_UINT firstIndex,
+	VK_UINT indexCount,
+	VK_INT vertexOffset,
+	VK_UINT firstInstance,
+	VK_UINT instanceCount);
+
+void vkCmdBindDynamicMemoryView(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_ENUM pipelineBindPoint,
+	const VK_MEMORY_VIEW_ATTACH_INFO* pMemView);
+
+void vkCmdDispatch(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_UINT x,
+	VK_UINT y,
+	VK_UINT z);
+
+void vkCmdDraw(
+	VK_CMD_BUFFER cmdBuffer,
+	VK_UINT firstVertex,
+	VK_UINT vertexCount,
+	VK_UINT firstInstance,
+	VK_UINT instanceCount);
+
+
+#ifdef __linux
+#include <X11/Xlib.h>
+typedef struct VK_CONNECTION_INFO {
+	Display* dpy; // Guess
+} VK_CONNECTION_INFO;
+
+VK_RESULT vkWsiX11AssociateConnection(VK_PHYSICAL_GPU gpu, VK_CONNECTION_INFO* pConnectionInfo);
+#endif
+
+#endif
