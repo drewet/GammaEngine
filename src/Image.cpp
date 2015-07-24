@@ -32,15 +32,17 @@ namespace GE {
 std::vector< ImageLoader* > Image::mImageLoaders = std::vector< ImageLoader* >();
 static bool ImageLoaderFirstCall = true;
 
+#if ( defined( GE_IOS ) || defined( GE_ANDROID ) )
 static uint32_t geGetNextPower2( uint32_t width )
 {
-	int b = width;
+	uint32_t b = width;
 	int n;
 	for ( n = 0; b != 0; n++ ) b >>= 1;
 	b = 1 << n;
 	if ( b == 2 * width ) b >>= 1;
 	return b;
 }
+#endif
 
 Image::Image()
 	: mAllocInstance( nullptr )
@@ -59,6 +61,7 @@ Image::Image( File* file, const std::string& extension, Instance* instance )
 	, mData( nullptr )
 	, mColor( 0xFFFFFFFF )
 {
+	mServerRefs.clear();
 	Load( file, extension, mAllocInstance );
 }
 
@@ -73,6 +76,7 @@ Image::Image( const std::string& filename, Instance* instance )
 	File* file = new File( filename, File::READ );
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
 
+	mServerRefs.clear();
 	Load( file, extension, mAllocInstance );
 
 	delete file;
@@ -86,8 +90,9 @@ Image::Image( uint32_t width, uint32_t height, uint32_t backcolor, Instance* ins
 	, mData( nullptr )
 	, mColor( 0xFFFFFFFF )
 {
+	mServerRefs.clear();
 
-#ifdef GE_IOS
+#if ( defined( GE_IOS ) || defined( GE_ANDROID ) )
 	mWidth = geGetNextPower2( mWidth );
 	mHeight = geGetNextPower2( mHeight );
 #endif
@@ -239,6 +244,7 @@ void Image::Release()
 		serverReference( Instance::baseInstance() );
 	}
 	mAllocInstance->Free( mData );
+	mData = nullptr;
 }
 
 

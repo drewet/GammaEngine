@@ -28,6 +28,7 @@ class Matrix
 {
 public:
 	Matrix();
+	virtual ~Matrix();
 
 	void Identity();
 	void Perspective( float fov, float aspect, float zNear, float zFar );
