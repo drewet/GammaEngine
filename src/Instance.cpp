@@ -93,7 +93,7 @@ extern "C" DeferredRenderer* CreateDeferredRenderer( Instance*, uint32_t, uint32
 extern "C" Object* CreateObject( Vertex*, uint32_t, uint32_t*, uint32_t );
 extern "C" Object* LoadObject( const std::string&, Instance* );
 
-Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance )
+Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance, const std::string& backend_file )
 {
 	if ( easy_instance ) {
 		if ( !mBaseInstance ) {
