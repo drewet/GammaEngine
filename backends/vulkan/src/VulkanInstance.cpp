@@ -255,3 +255,9 @@ uint64_t VulkanInstance::ReferenceImage( Image* image )
 	// TODO
 	return 0;
 }
+
+
+void VulkanInstance::UnreferenceImage( uint64_t ref )
+{
+	// TODO
+}

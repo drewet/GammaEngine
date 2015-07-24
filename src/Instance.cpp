@@ -179,7 +179,11 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 		for ( i = 0; i < 10 && !sBackend; i++ ) {
 			sBackend = LoadLib( prefixes[i] + backend_lib + lib_suffix );
 			if ( sBackend == nullptr ) {
+#ifdef GE_WIN32
+				gDebug() << "Backend ( " << backend_lib << " ) loading error : " << ( prefixes[i] + backend_lib + lib_suffix ) << " : " << LibError() << "\n";
+#else
 				gDebug() << "Backend ( " << backend_lib << " ) loading error : " << LibError() << "\n";
+#endif
 			}
 		}
 		if ( sBackend == nullptr ) {

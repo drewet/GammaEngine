@@ -56,6 +56,8 @@ private:
 
 extern "C" {
 #ifdef _WIN32
+// #include <GLES2/gl2.h>
+// #include <GLES2/gl2ext.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/wglext.h>
@@ -65,31 +67,22 @@ extern "C" {
 	#define define_proc(base, name) extern PFNGL##base##PROC name
 #endif
 define_proc(ACTIVETEXTURE, glActiveTexture);
-define_proc(GENVERTEXARRAYS, glGenVertexArrays);
-define_proc(BINDVERTEXARRAY, glBindVertexArray);
 define_proc(ENABLEVERTEXATTRIBARRAY, glEnableVertexAttribArray);
 define_proc(DISABLEVERTEXATTRIBARRAY, glDisableVertexAttribArray);
 define_proc(VERTEXATTRIBPOINTER, glVertexAttribPointer);
-define_proc(VERTEXATTRIBIPOINTER, glVertexAttribIPointer);
 define_proc(GENBUFFERS, glGenBuffers);
 define_proc(DELETEBUFFERS, glDeleteBuffers);
 define_proc(BINDBUFFER, glBindBuffer);
 define_proc(BUFFERDATA, glBufferData);
 define_proc(BUFFERSUBDATA, glBufferSubData);
 define_proc(GETBUFFERPARAMETERIV, glGetBufferParameteriv);
-define_proc(BLITFRAMEBUFFER, glBlitFramebuffer);
+define_proc(RENDERBUFFERSTORAGE, glRenderbufferStorage);
 define_proc(GENRENDERBUFFERS, glGenRenderbuffers);
 define_proc(BINDRENDERBUFFER, glBindRenderbuffer);
-define_proc(RENDERBUFFERSTORAGEMULTISAMPLE, glRenderbufferStorageMultisample);
 define_proc(FRAMEBUFFERRENDERBUFFER, glFramebufferRenderbuffer);
 define_proc(GENFRAMEBUFFERS, glGenFramebuffers);
 define_proc(DELETEFRAMEBUFFERS, glDeleteFramebuffers);
 define_proc(BINDFRAMEBUFFER, glBindFramebuffer);
-define_proc(FRAMEBUFFERTEXTURE, glFramebufferTexture);
-define_proc(FRAMEBUFFERTEXTURE2D, glFramebufferTexture2D);
-define_proc(FRAMEBUFFERTEXTURE3D, glFramebufferTexture3D);
-define_proc(FRAMEBUFFERTEXTURELAYER, glFramebufferTextureLayer);
-define_proc(DRAWBUFFERS, glDrawBuffers);
 define_proc(CREATESHADER, glCreateShader);
 define_proc(SHADERSOURCE, glShaderSource);
 define_proc(COMPILESHADER, glCompileShader);
@@ -123,18 +116,29 @@ define_proc(UNIFORM4IV, glUniform4iv);
 define_proc(UNIFORMMATRIX3FV, glUniformMatrix3fv);
 define_proc(UNIFORMMATRIX4FV, glUniformMatrix4fv);
 define_proc(GETUNIFORMFV, glGetUniformfv);
-define_proc(PATCHPARAMETERI, glPatchParameteri);
-define_proc(BINDBUFFERBASE, glBindBufferBase);
-define_proc(UNIFORMBLOCKBINDING, glUniformBlockBinding);
-define_proc(MAPBUFFER, glMapBuffer);
-define_proc(UNMAPBUFFER, glUnmapBuffer);
-define_proc(BINDFRAGDATALOCATION, glBindFragDataLocation);
-define_proc(VERTEXATTRIBDIVISOR, glVertexAttribDivisor);
-define_proc(GETTEXTUREHANDLEARB, glGetTextureHandleARB);
-define_proc(MAKETEXTUREHANDLERESIDENTARB, glMakeTextureHandleResidentARB);
-define_proc(MULTIDRAWELEMENTSINDIRECT, glMultiDrawElementsIndirect);
-define_proc(MULTIDRAWARRAYSINDIRECT, glMultiDrawArraysIndirect);
-define_proc(RENDERBUFFERSTORAGE, glRenderbufferStorage);
+/*
+define_proc(ENABLE, glEnable);
+define_proc(DISABLE, glDisable);
+
+define_proc(DRAWARRAYS, glDrawArrays);
+define_proc(DRAWELEMENTS, glDrawElements);
+
+define_proc(BLENDFUNC, glBlendFunc);
+
+define_proc(GENTEXTURES, glGenTextures);
+define_proc(DELETETEXTURES, glDeleteTextures);
+define_proc(BINDTEXTURE, glBindTexture);
+define_proc(TEXIMAGE2D, glTexImage2D);
+define_proc(TEXPARAMETERF, glTexParameterf);
+
+define_proc(GETSTRING, glGetString);
+define_proc(CLEAR, glClear);
+define_proc(CLEARCOLOR, glClearColor);
+define_proc(VIEWPORT, glViewport);
+define_proc(FRONTFACE, glFrontFace);
+define_proc(CULLFACE, glCullFace);
+*/
+
 #endif
 };
 

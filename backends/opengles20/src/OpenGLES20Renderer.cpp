@@ -65,10 +65,14 @@ static const char* fragment_shader_include =
 #endif
 	"precision highp float;\n"
 	"uniform sampler2D ge_Texture0;\n"
-	"#define ge_FragColor gl_FragColor\n"
 #if ( defined( GE_ANDROID ) || defined( GE_IOS ) )
 	"#define in varying\n"
 	"#define texture texture2D\n"
+#endif
+#if ( defined( GE_ANDROID ) || defined( GE_IOS ) )
+	"#define ge_FragColor gl_FragColor\n"
+#else
+	"out vec4 ge_FragColor;\n"
 #endif
 ;
 

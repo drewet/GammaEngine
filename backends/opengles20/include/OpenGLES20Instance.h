@@ -20,13 +20,18 @@
 #ifndef OPENGLES20INSTANCE_H
 #define OPENGLES20INSTANCE_H
 
-#ifndef _WIN32
+#ifndef GE_WIN32
 #define GL_GLEXT_PROTOTYPES
 #endif
 
 #ifdef GE_IOS
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
+#elif GE_WIN32
+// #include <GL/gl.h>
+// #include <GL/glext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #else
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

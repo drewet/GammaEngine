@@ -1,4 +1,4 @@
-find_package(ZLIB ${_FIND_ZLIB_ARG})
+find_package(ZLIB REQUIRED)
 
 find_path(PNG16_INCLUDE_DIR png.h
   HINTS
@@ -13,8 +13,26 @@ find_path(PNG16_INCLUDE_DIR png.h
   /opt
   /usr
   /usr/local
+  ${CMAKE_INCLUDE_PATH}
   NO_DEFAULT_PATH
 )
+
+if("${PNG16_INCLUDE_DIR}" MATCHES "")
+find_path(PNG16_INCLUDE_DIR png.h
+  HINTS
+    ENV PNG16_DIR
+  PATH_SUFFIXES include/png16 include/png1.6 include/lua include
+  PATHS
+  ~/Library/Frameworks
+  /Library/Frameworks
+  /sw # Fink
+  /opt/local # DarwinPorts
+  /opt/csw # Blastwave
+  /opt
+)
+endif()
+
+message(STATUS "${CMAKE_INCLUDE_PATH}")
 
 find_library(PNG16_LIBRARY
   NAMES png16 png1.6 png-1.6

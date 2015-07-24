@@ -63,10 +63,11 @@ Matrix* VulkanRenderer::projectionMatrix()
 }
 
 
-int VulkanRenderer::LoadVertexShader( const std::string& file )
+int VulkanRenderer::LoadVertexShader( const void* data, size_t size )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
-	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );
+	vsInfo.pCode = data;
+	vsInfo.codeSize = size;
 
 	vkCreateShader( mInstance->device(), &vsInfo, &mVertexShader );
 
@@ -75,15 +76,32 @@ int VulkanRenderer::LoadVertexShader( const std::string& file )
 }
 
 
-int VulkanRenderer::LoadFragmentShader( const std::string& file )
+int VulkanRenderer::LoadFragmentShader( const void* data, size_t size )
 {
 	VK_SHADER_CREATE_INFO vsInfo = { 0 };
-	vsInfo.pCode = loadShader( file, &vsInfo.codeSize );
+	vsInfo.pCode = data;
+	vsInfo.codeSize = size;
 
 	vkCreateShader( mInstance->device(), &vsInfo, &mFragmentShader );
 
 	mReady = false;
 	return 0;
+}
+
+
+int VulkanRenderer::LoadVertexShader( const std::string& file )
+{
+	size_t size = 0;
+	void* data = loadShader( file, &size );
+	return LoadVertexShader( data, size );
+}
+
+
+int VulkanRenderer::LoadFragmentShader( const std::string& file )
+{
+	size_t size = 0;
+	void* data = loadShader( file, &size );
+	return LoadFragmentShader( data, size );
 }
 
 

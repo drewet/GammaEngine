@@ -56,69 +56,11 @@ OpenGLES20Window::OpenGLES20Window( Instance* instance, const std::string& title
 	int nSamples = 1;
 
 #ifdef GE_WIN32
-	
-	int dwExStyle = 0;
-	int dwStyle = 0;
-	RECT WindowRect;
-	WindowRect.left = 0;
-	WindowRect.top = 0;
-	WindowRect.right = mWidth;
-	WindowRect.bottom = mHeight;
-	// TODO : get style from existing window if possible
-	if ( flags & Window::Fullscreen ) {
-		dwExStyle = WS_EX_APPWINDOW;
-		dwStyle = WS_POPUP;
-	} else {
-		dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-		if ( flags & Window::Resizable ) {
-			dwStyle = ( WS_OVERLAPPEDWINDOW - WS_MAXIMIZEBOX - WS_THICKFRAME ) | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU;
-		} else {
-			dwStyle = ( WS_OVERLAPPEDWINDOW - WS_MAXIMIZEBOX - WS_THICKFRAME ) | WS_BORDER | WS_MINIMIZEBOX | WS_SYSMENU;
-		}
-	}
 
-	mGLContext = wglCreateContext( GetDC( (HWND)mWindow ) );
-	wglMakeCurrent( GetDC( (HWND)mWindow ), (HGLRC)mGLContext );
-	
-	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress( "wglChoosePixelFormatARB" );
-	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress( "wglCreateContextAttribsARB" );
-	int pixelFormat;
-	UINT numFormats;
-	float fAttributes[] = { 0,0 };
-	int iAttributes[] = {
-		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-		WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
-		WGL_COLOR_BITS_ARB, 24,
-		WGL_ALPHA_BITS_ARB, 8,
-		WGL_DEPTH_BITS_ARB, 24,
-		WGL_STENCIL_BITS_ARB, 0,
-		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-		WGL_SAMPLE_BUFFERS_ARB, nSamples > 1 ? GL_TRUE : GL_FALSE,
-		WGL_SAMPLES_ARB, nSamples,
-		0,0
-	};
-	int _ret = wglChoosePixelFormatARB( GetDC( (HWND)mWindow ), iAttributes, fAttributes, 1, &pixelFormat, &numFormats );
-	wglDeleteContext( (HGLRC)mGLContext );
-	ReleaseDC( (HWND)mWindow, GetDC( (HWND)mWindow ) );
-	DestroyWindow( (HWND)mWindow );
-	
-	BaseWindow* thiz = this;
-	mWindow = (uint64_t)CreateWindowEx( dwExStyle, "GammaEngine", title.c_str(), dwStyle|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, WindowRect.right-WindowRect.left, WindowRect.bottom-WindowRect.top, NULL, NULL, (HINSTANCE)hInstance, thiz );
+	mEGLContext = wglCreateContext( GetDC( (HWND)mWindow ) );
+	wglMakeCurrent( GetDC( (HWND)mWindow ), (HGLRC)mEGLContext );
 
-	SetPixelFormat( GetDC( (HWND)mWindow ), pixelFormat, nullptr );
-	int attribList[] = {
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-		WGL_CONTEXT_MINOR_VERSION_ARB, 3,
-		WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-		WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-		0, 0
-	};
-	mGLContext = wglCreateContextAttribsARB( GetDC( (HWND)mWindow ), 0, attribList );
-	
-	wglMakeCurrent( GetDC( (HWND)mWindow ), (HGLRC)mGLContext );
-
-	gDebug() << "OpenGL version : " << glGetString( GL_VERSION ) << "\n";
+	ShowWindow( (HWND)mWindow, SW_SHOWNORMAL );
 
 	if ( !glext_loaded ) {
 		load_glext();
@@ -126,6 +68,7 @@ OpenGLES20Window::OpenGLES20Window( Instance* instance, const std::string& title
 	}
 
 #elif defined(GE_LINUX)
+
 	const int attributes[] = {
 		GLX_RGBA,
 		GLX_DOUBLEBUFFER,
@@ -194,13 +137,15 @@ OpenGLES20Window::OpenGLES20Window( Instance* instance, const std::string& title
 
 #endif
 
+	gDebug() << "OpenGL version : " << glGetString( GL_VERSION ) << "\n";
+
 	glViewport( 0, 0, mWidth, mHeight );
 	glEnable( GL_CULL_FACE );
 	glFrontFace( GL_CCW );
 	glCullFace( GL_BACK );
 	glEnable( GL_DEPTH_TEST );
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 	((OpenGLES20Instance*)Instance::baseInstance())->AffectVRAM( sizeof(uint32_t) * mWidth * mHeight ); // Front
 	((OpenGLES20Instance*)Instance::baseInstance())->AffectVRAM( sizeof(uint32_t) * mWidth * mHeight ); // Back
@@ -297,31 +242,21 @@ static void load_glext()
 	#define load_func(name) name = (decltype(name))GetProcAddress(hOpenGL, #name); if ( !name ) { name = (decltype(name))wglGetProcAddress(#name); } printf("" #name " : 0x%p\n", name)
 	HMODULE hOpenGL = LoadLibrary("opengl32.dll");
 	load_func( glActiveTexture );
-	load_func( glGenVertexArrays );
-	load_func( glBindVertexArray );
 	load_func( glEnableVertexAttribArray );
 	load_func( glDisableVertexAttribArray );
 	load_func( glVertexAttribPointer );
-	load_func( glVertexAttribIPointer );
 	load_func( glGenBuffers );
 	load_func( glDeleteBuffers );
 	load_func( glBindBuffer );
 	load_func( glBufferData );
 	load_func( glBufferSubData );
 	load_func( glGetBufferParameteriv );
-	load_func( glBlitFramebuffer );
 	load_func( glGenRenderbuffers );
 	load_func( glBindRenderbuffer );
-	load_func( glRenderbufferStorageMultisample );
 	load_func( glFramebufferRenderbuffer );
 	load_func( glGenFramebuffers );
 	load_func( glDeleteFramebuffers );
 	load_func( glBindFramebuffer );
-	load_func( glFramebufferTexture );
-	load_func( glFramebufferTexture2D );
-	load_func( glFramebufferTexture3D );
-	load_func( glFramebufferTextureLayer );
-	load_func( glDrawBuffers );
 	load_func( glCreateShader );
 	load_func( glShaderSource );
 	load_func( glCompileShader );
@@ -355,17 +290,25 @@ static void load_glext()
 	load_func( glUniformMatrix3fv );
 	load_func( glUniformMatrix4fv );
 	load_func( glGetUniformfv );
-	load_func( glPatchParameteri );
-	load_func( glBindBufferBase );
-	load_func( glUniformBlockBinding );
-	load_func( glMapBuffer );
-	load_func( glUnmapBuffer );
-	load_func( glBindFragDataLocation );
-	load_func( glVertexAttribDivisor );
-	load_func( glGetTextureHandleARB );
-	load_func( glMakeTextureHandleResidentARB );
-	load_func( glMultiDrawElementsIndirect );
-	load_func( glMultiDrawArraysIndirect );
 	load_func( glRenderbufferStorage );
+/*
+	load_func( glDrawArrays );
+	load_func( glDrawElements );
+	load_func( glBlendFunc );
+	load_func( glBindTexture );
+	load_func( glEnable );
+	load_func( glDisable );
+	load_func( glGenTextures );
+	load_func( glDeleteTextures );
+	load_func( glBindTexture );
+	load_func( glTexImage2D );
+	load_func( glTexParameterf );
+	load_func( glGetString );
+	load_func( glClear );
+	load_func( glClearColor );
+	load_func( glViewport );
+	load_func( glFrontFace );
+	load_func( glCullFace );
+*/
 }
 #endif

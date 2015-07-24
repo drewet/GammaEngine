@@ -46,7 +46,7 @@ static const char vertices_shader_base[] = GLSL(
 	{
 		ge_Color = ge_VertexColor;
 		ge_TextureCoord = ge_VertexTexcoord.xy;
-		gl_Position = ge_ProjectionMatrix /* ge_ViewMatrix*/ * ge_ObjectMatrix * vec4(ge_VertexPosition.xy, 1.0, 1.0);
+		ge_Position = ge_ProjectionMatrix /* ge_ViewMatrix*/ * ge_ObjectMatrix * vec4(ge_VertexPosition.xy, 0.0, 1.0);
 	}
 );
 
@@ -56,7 +56,7 @@ static const char fragment_shader_base[] = GLSL(
 
 	void main()
 	{
-		gl_FragColor = ge_Color * texture( ge_Texture0, ge_TextureCoord.xy );
+		ge_FragColor = ge_Color * texture( ge_Texture0, ge_TextureCoord.xy );
 	}
 );
 

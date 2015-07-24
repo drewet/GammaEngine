@@ -23,9 +23,12 @@
 #include "Font.h"
 
 #include <sys/types.h>
-#include <freetype2/ft2build.h>
-#include <freetype2/freetype.h>
-#include <freetype2/ftglyph.h>
+//#include <freetype2/ft2build.h>
+//#include <freetype2/freetype.h>
+//#include <freetype2/ftglyph.h>
+#include <ft2build.h>
+#include <freetype.h>
+#include <ftglyph.h>
 
 namespace GE {
 

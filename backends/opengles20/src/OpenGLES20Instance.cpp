@@ -18,6 +18,7 @@
  */
 
 #include "OpenGLES20Instance.h"
+#include "OpenGLES20Window.h"
 #include "Vertex.h"
 #include "Image.h"
 #include "Debug.h"

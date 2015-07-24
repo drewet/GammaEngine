@@ -22,6 +22,6 @@ add_library(backend_vulkan
 )
 
 SET_TARGET_PROPERTIES(backend_vulkan PROPERTIES PREFIX "")
-target_link_libraries(backend_vulkan -lvulkangl -pthread)
+target_link_libraries(backend_vulkan gammaengine -lvulkangl -pthread)
 
 INSTALL(TARGETS backend_vulkan ARCHIVE DESTINATION /usr/lib/gammaengine LIBRARY DESTINATION /usr/lib/gammaengine)
