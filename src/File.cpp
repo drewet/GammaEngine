@@ -79,11 +79,9 @@ File::File( File* side, std::string filename, File::MODE mode )
 {
 	fDebug( side, filename, mode );
 
-	if ( filename.length() <= 0 ) {
-		((int*)0)[0] = 0;
-	}
-
 	std::string path = side->mPath.substr( 0, side->mPath.rfind( "/" ) + 1 ) + filename;
+
+	gDebug() << "Resulting path : '" << path << "'\n";
 
 	std::ios_base::openmode std_mode = std::ios_base::binary;
 
@@ -112,7 +110,7 @@ File::File( File* side, std::string filename, File::MODE mode )
 		mStream = _ge_iOSOpen( filename.c_str(), std_mode );
 	}
 #else
-	mStream = new std::fstream( filename, std_mode );
+	mStream = new std::fstream( path, std_mode );
 #endif
 }
 

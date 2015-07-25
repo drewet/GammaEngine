@@ -106,7 +106,6 @@ Image::Image( uint32_t width, uint32_t height, uint32_t backcolor, Instance* ins
 
 Image::~Image()
 {
-	((int*)0)[0] = 0;
 	decltype(mServerRefs)::iterator it;
 
 	if ( mData ) {
