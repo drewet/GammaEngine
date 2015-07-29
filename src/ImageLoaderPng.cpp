@@ -80,7 +80,7 @@ void ImageLoaderPng::png_read_from_File( png_structp png_ptr, png_bytep data, pn
 png_voidp ImageLoaderPng::ge_png_malloc( png_structp png_ptr, png_size_t size )
 {
 	Instance* instance = (Instance*)png_ptr;
-// 	return instance->Malloc(size);
+//	return instance->Malloc(size);
 
 	uintptr_t* buf = ( uintptr_t* )instance->Malloc( size * 4 );
 	uintptr_t ptr = (uintptr_t)buf;
@@ -95,9 +95,10 @@ png_voidp ImageLoaderPng::ge_png_malloc( png_structp png_ptr, png_size_t size )
 void ImageLoaderPng::ge_png_free( png_structp png_ptr, png_voidp data )
 {
 	Instance* instance = (Instance*)png_ptr;
-// 	instance->Free(data);
 
-// 	return;
+//	instance->Free(data);
+//	return;
+
 	decltype(mPngAllocs)::iterator it = mPngAllocs.find( (uintptr_t)data );
 
 	if ( it != mPngAllocs.end() ) {
@@ -142,16 +143,20 @@ void ImageLoaderPng::Load( Instance* instance, File* file, uint32_t pref_w, uint
 		return;
 	}
 
-	png_set_mem_fn( png_ptr, nullptr, ge_png_malloc, ge_png_free );
+#ifndef GE_IOS
+// 	png_set_mem_fn( png_ptr, nullptr, ge_png_malloc, ge_png_free );
+#endif
 	png_set_error_fn( png_ptr, nullptr, nullptr, nullptr );
+	png_set_read_fn( png_ptr, ( png_voidp* )file, png_read_from_File );
+
 	if ( ( info_ptr = png_create_info_struct( png_ptr ) ) == nullptr ) {
 		png_destroy_read_struct( &png_ptr, nullptr, nullptr );
 		return;
 	}
 
-	png_set_read_fn( png_ptr, ( png_voidp* )file, png_read_from_File );
-
+//	png_read_png( png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr );
 	png_read_info( png_ptr, info_ptr );
+
 	png_get_IHDR( png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, nullptr, nullptr );
 	mWidth = ( pref_w > 0 ) ? pref_w : width;
 	mHeight = ( pref_h > 0 ) ? pref_h : height;

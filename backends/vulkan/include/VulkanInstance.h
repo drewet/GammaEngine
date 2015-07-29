@@ -41,6 +41,7 @@ public:
 	virtual int EnumerateGpus();
 	virtual Instance* CreateDevice( int devid, int queueCount = 1 );
 	virtual uint64_t ReferenceImage( Image* image );
+	virtual void UnreferenceImage( uint64_t ref );
 
 	VK_MEMORY_REF AllocateObject( VK_OBJECT object );
 	VK_MEMORY_REF AllocateMappableBuffer( size_t size );

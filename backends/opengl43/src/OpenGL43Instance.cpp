@@ -82,6 +82,20 @@ uint64_t OpenGL43Instance::ReferenceImage( Image* image )
 }
 
 
+void OpenGL43Instance::UnreferenceImage( uint64_t ref )
+{
+	if ( ref != 0 ) {
+		uint32_t glTextureID = (uint32_t)ref;
+		int width = 0, height = 0;
+		glBindTexture( GL_TEXTURE_2D, glTextureID );
+		glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width );
+		glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height );
+		((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( -1 * width * height * sizeof( uint32_t ) );
+		glDeleteTextures( 1, &glTextureID );
+	}
+}
+
+
 void OpenGL43Instance::AffectVRAM( int64_t sz )
 {
 	mGpuRamCounter += sz;

@@ -18,9 +18,10 @@
  */
 
 #include "Matrix.h"
+#include "Instance.h"
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <cmath>
 
 #define PI_OVER_360 0.0087266f
@@ -30,10 +31,18 @@
 namespace GE {
 
 Matrix::Matrix()
-	: m ( (float*)malloc(sizeof(float) * 16) )
+	: m ( (float*) Instance::baseInstance()->Malloc( sizeof(float) * 16 ) )
 	, mAllocedData( true )
 {
 	Identity();
+}
+
+
+Matrix::~Matrix()
+{
+	if ( m && mAllocedData ) {
+		Instance::baseInstance()->Free( m );
+	}
 }
 
 
@@ -43,7 +52,7 @@ void Matrix::setDataPointer( float* d, bool keep_current_data )
 		memcpy( d, m, sizeof(float) * 16 );
 	}
 	if ( mAllocedData ) {
-		free( m );
+		Instance::baseInstance()->Free( m );
 		mAllocedData = false;
 	}
 	m = d;

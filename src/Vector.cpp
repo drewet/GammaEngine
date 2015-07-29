@@ -17,37 +17,79 @@
  *
  */
 
+#if ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) ) )
+
 #include "Instance.h"
 #include "Vector.h"
 #include "Debug.h"
 #include <cmath>
 
-namespace GE {
+#define VEC_OP( r, a, op, b ) \
+	r x = a x op b x; \
+	if ( n > 1 ) { \
+		r y = a y op b y; \
+		if ( n > 2 ) { \
+			r z = a z op b z; \
+			if ( n > 3 ) { \
+				r w = a w op b w; \
+			} \
+		} \
+	}
 
+#define VEC_IM( r, a, op, im ) \
+	r x = a x op im; \
+	if ( n > 1 ) { \
+		r y = a y op im; \
+		if ( n > 2 ) { \
+			r z = a z op im; \
+			if ( n > 3 ) { \
+				r w = a w op im; \
+			} \
+		} \
+	}
+	
+#define VEC_ADD( r, a, op, b ) \
+	r += a x op b x; \
+	if ( n > 1 ) { \
+		r += a y op b y; \
+		if ( n > 2 ) { \
+			r += a z op b z; \
+			if ( n > 3 ) { \
+				r += a w op b w; \
+			} \
+		} \
+	}
 
+#define VEC_ADD_IM( r, a, op, im ) \
+	r += a x op im; \
+	if ( n > 1 ) { \
+		r += a y op im; \
+		if ( n > 2 ) { \
+			r += a z op im; \
+			if ( n > 3 ) { \
+				r += a w op im; \
+			} \
+		} \
+	}
+
+using namespace GE;
 
 //template <typename T, int n> Vector<T,n>::Vector( T x, T y, T z, T w ) : x( x ), y( y ), z( z ), w( w ) {}
 
 template <typename T, int n> void Vector<T,n>::normalize() {
 	T add = 0;
-	for ( int i = 0; i < n; i++ ) {
-		add += ( &x )[i] * ( &x )[i];
-	}
+	VEC_ADD( add, this-> , * , this-> );
 	T l = std::sqrt( add );
 	if ( l > 0.00001f ) {
 		T il = 1 / l;
-		for ( int i = 0; i < n; i++ ) {
-			( &x )[i] *= il;
-		}
+		VEC_IM( this-> , this-> , * , il );
 	}
 }
 
 
 template <typename T, int n> T Vector<T,n>::length() {
 	T add = 0;
-	for ( int i = 0; i < n; i++ ) {
-		add += ( &x )[i] * ( &x )[i];
-	}
+	VEC_ADD( add, this-> , * , this-> );
 	return std::sqrt( add );
 }
 
@@ -58,71 +100,61 @@ template <typename T, int n> T Vector<T,n>::operator[]( int i ) const
 }
 
 
+template <typename T, int n> T& Vector<T,n>::operator[]( int i )
+{
+	return ( &x )[i];
+}
+
+
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator-() const
 {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = -( &x )[i];
-	}
+	VEC_IM( ret. , - this-> , + , 0.0f );
 	return ret;
 }
 
 
 template <typename T, int n> void Vector<T,n>::operator+=( const Vector<T,n>& v ) {
-	for ( int i = 0; i < n; i++ ) {
-		( &x )[i] += ( &v.x )[i];
-	}
+	VEC_OP( this-> , this-> , + , v. );
 }
 
 
 template <typename T, int n> void Vector<T,n>::operator-=( const Vector<T,n>& v ) {
-	for ( int i = 0; i < n; i++ ) {
-		( &x )[i] -= ( &v.x )[i];
-	}
+	VEC_OP( this-> , this-> , - , v. );
 }
 
 template <typename T, int n> void Vector<T,n>::operator*=( T v ) {
-	for ( int i = 0; i < n; i++ ) {
-		( &x )[i] *= v;
-	}
+	VEC_IM( this-> , this-> , * , v );
 }
 
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator+( const Vector<T,n>& v ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &x )[i] + ( &v.x )[i];
-	}
+	VEC_OP( ret. , this-> , + , v. );
 	return ret;
 }
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator-( const Vector<T,n>& v ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &x )[i] - ( &v.x )[i];
-	}
+	VEC_OP( ret. , this-> , - , v. );
 	return ret;
 }
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator*( T im ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &x )[i] * im;
-	}
+	VEC_IM( ret. , this-> , * , im );
 	return ret;
 }
 
 template <typename T, int n> T Vector<T,n>::operator*( const Vector<T,n>& v ) const {
 	T ret = 0;
-	for ( int i = 0; i < n; i++ ) {
-		ret += ( &x )[i] * ( &v.x )[i];
-	}
+	VEC_ADD( ret, this-> , * , v. );
 	return ret;
 }
 
 template <typename T, int n> Vector<T,n> Vector<T,n>::operator^( const Vector<T,n>& v ) const {
 	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
+	for ( int i = 0; i < n; i++ ) { // TODO : direct op
 		T a = ( &x )[ ( i + 1 ) % n ];
 		T b = ( &v.x )[ ( i + 2 ) % n ];
 		T c = ( &x )[ ( i + 2 ) % n ];
@@ -132,33 +164,20 @@ template <typename T, int n> Vector<T,n> Vector<T,n>::operator^( const Vector<T,
 	return ret;
 }
 
-template <typename T, int n> Vector<T, n> operator*( T im, const Vector<T, n>& v ) {
-	Vector<T, n> ret;
-	for ( int i = 0; i < n; i++ ) {
-		( &ret.x )[i] = ( &v.x )[i] * im;
-	}
-	return ret;
-}
-
-
-template <typename T, int n> bool operator==( const Vector<T, n>& v1, const Vector<T,n>& v2 ) {
-	bool ret = true;
-	for ( int i = 0; i < n; i++ ) {
-		ret = ret && ( ( &v1.x )[i] == ( &v2.x )[i] );
-	}
-	return ret;
-}
-
-static void dummy_vectors()
+#if ( !defined(GE_ANDROID) && !defined(GE_IOS) )
+static void _init_dummy_vectors()
 {
-	dummy_vectors();
+	_init_dummy_vectors();
 	{
 		Vector2i v( 0, 0 );
 		v += -v + ( v ^ v ) - v * ( 0 * v ) + v * 0;
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector2i& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector3i v( 0, 0, 0 );
@@ -166,7 +185,10 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector3i& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector4i v( 0, 0, 0, 0 );
@@ -174,7 +196,10 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector4i& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector2f v( 0, 0 );
@@ -182,7 +207,10 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector2f& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector3f v( 0, 0, 0 );
@@ -190,7 +218,10 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector3f& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector4f v( 0, 0, 0, 0 );
@@ -198,7 +229,10 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector4f& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector2d v( 0, 0 );
@@ -206,7 +240,10 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector2d& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector3d v( 0, 0, 0 );
@@ -214,7 +251,10 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector3d& v2 = v;
+		v[0] = v2[0];
 	}
 	{
 		Vector4d v( 0, 0, 0, 0 );
@@ -222,8 +262,14 @@ static void dummy_vectors()
 		v.normalize();
 		v *= 0 * v.length();
 		v.x = v[0];
+		v[0] = v.x;
 		v -= v * (v == v);
+		const Vector4d& v2 = v;
+		v[0] = v2[0];
 	}
 }
+#endif // GE_ANDROID || GE_IOS
 
-} // namespace GE
+#endif // ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) ) )
+
+// } // namespace GE

@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <iostream>
 
 #include "Instance.h"
@@ -9,6 +10,7 @@
 #include "Renderer2D.h"
 #include "Object.h"
 #include "Image.h"
+#include "Font.h"
 #include "Camera.h"
 #include "Time.h"
 #include "Input.h"
@@ -48,10 +50,14 @@ int main( int argc, char** argv )
 {
 	srand( time(nullptr) );
 
-	Instance* instance = Instance::Create( "GammaEngine test", 42 );
+	Instance* instance = Instance::Create( "GammaEngine test", 42, true, "opengl43" );
 	Window* window = instance->CreateWindow( "Hello GammaEngine !", 1280, 720, Window::Resizable );
 	Input* input = new Input( window );
 	LightsThread* thread = new LightsThread( window );
+
+	Font* font = new Font( "scene/Downlink.ttf" );
+	gDebug() << "font->texture() : " << font->texture() << "\n";
+// 	return 0;
 
 	std::list< Object* > scene_objects = Object::LoadObjects( "scene/street.obj", instance );
 //	std::list< Object* > scene_objects = Object::LoadObjects( "scene/city.obj", instance );
@@ -132,12 +138,9 @@ int main( int argc, char** argv )
 	float fps_min = 1.0e34f;
 	float fps_max = 0.0f;
 	float time = Time::GetSeconds();
-	uint32_t ticks = Time::GetTick();
 	uint32_t img = 0;
 
 	while ( 1 ) {
-		float dt = Time::Delta();
-
 		input->Update();
 		if ( input->pressed( 'Z' ) ) {
 			camera->WalkForward( 10.0 );
@@ -176,7 +179,8 @@ int main( int argc, char** argv )
 // 		deferredRenderer->Unbind();
 		sky->Render( camera );
 
- //		renderer2d->Draw( 0, 0, texture );
+// 		renderer2d->Draw( 0, 0, font->texture() );
+		renderer2d->Draw(0, 0, font, 0xFFFFFFFF, "FPS : " + std::to_string( (int)fps ) );
 
 		window->SwapBuffers();
 		Time::GlobalSync();
@@ -188,7 +192,7 @@ int main( int argc, char** argv )
 			fps_max = std::max( fps_max, fps );
 			time = Time::GetSeconds();
 			img = 0;
-			printf("FPS : %.2f  ( %.2f - %.2f )\n", fps, fps_min, fps_max); fflush(stdout);
+// 			printf("FPS : %.2f  ( %.2f - %.2f )\n", fps, fps_min, fps_max); fflush(stdout);
 // 			printf(" RAM : %lu kB\n", instance->cpuRamCounter() / 1024);
 // 			printf("VRAM : %lu kB\n", instance->gpuRamCounter() / 1024);
 		}

@@ -53,6 +53,7 @@ public:
 	Vector2i& cursorWarp();
 
 	void SwapBuffersBase();
+	float fps() const;
 
 protected:
 	void pEventThread();
@@ -66,6 +67,10 @@ protected:
 	bool mKeys[512];
 	Vector2i mCursor;
 	Vector2i mCursorWarp;
+
+	float mFps;
+	int mFpsImages;
+	uint64_t mFpsTimer;
 
 protected://private:
 	Display* mDisplay;

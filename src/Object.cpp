@@ -17,13 +17,13 @@
  *
  */
 
+#include <algorithm>
+
 #include "Instance.h"
 #include "Object.h"
 #include "ObjectLoaderObj.h"
 #include "File.h"
 #include "Debug.h"
-
-#include <algorithm>
 
 
 namespace GE {
@@ -65,7 +65,8 @@ Object::Object( const std::string filename, Instance* instance )
 		mVerticesCount = loader->mVerticesCount;
 		mIndicesCount = loader->mIndicesCount;
 
-		delete loader;
+// 		delete loader;
+		free( loader );
 	}
 
 	delete file;
@@ -84,7 +85,8 @@ std::list< Object* > Object::LoadObjects( const std::string filename, Instance* 
 	if ( loader ) {
 		loader = loader->NewInstance();
 		ret = loader->LoadObjects( instance, file );
-		delete loader;
+// 		delete loader;
+		free( loader );
 	}
 
 	delete file;
@@ -108,9 +110,6 @@ ObjectLoader* Object::GetLoader( const std::string filename, File* file )
 	uint32_t file_magic = 0;
 	file->Read( &file_magic, sizeof(file_magic) );
 	file->Rewind();
-	printf("  extension : '%s'\n", extension.c_str());
-	printf("  first_line : '%s'\n", first_line.c_str());
-	printf("  mObjectLoaders.size() : '%d'\n", mObjectLoaders.size());
 
 	for ( size_t i = 0; i < mObjectLoaders.size(); i++ ) {
 		if ( mObjectLoaders.at(i)->fileType() == ObjectLoader::BINARY ) {

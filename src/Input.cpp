@@ -39,6 +39,7 @@ Input::~Input()
 
 void Input::Update()
 {
+	memcpy( mLastKeys, mKeys, sizeof( mKeys ) );
 	mWindow->ReadKeys( mKeys );
 
 	mCursorLast = mCursor;
@@ -47,13 +48,36 @@ void Input::Update()
 }
 
 
-bool Input::pressed( unsigned int keycode )
+bool Input::pressed( unsigned int keycode ) const
 {
 	return mKeys[ keycode ];
 }
 
 
-Vector2f Input::cursorWarp()
+bool Input::toggled( unsigned int keycode ) const
+{
+	return mKeys[ keycode ] && !mLastKeys[ keycode ];
+}
+
+
+bool Input::untoggled( unsigned int keycode ) const
+{
+	return mLastKeys[ keycode ] && !mKeys[ keycode ];
+}
+
+
+Vector2f Input::cursor() const
+{
+	Vector2f ret;
+
+	ret.x = (float)mCursor.x / mWindow->width();
+	ret.y = (float)mCursor.y / mWindow->height();
+
+	return ret;
+}
+
+
+Vector2f Input::cursorWarp() const
 {
 	Vector2f ret;
 

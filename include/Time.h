@@ -32,16 +32,17 @@ public:
 	static void setTime( int64_t t );
 	static void GlobalSync();
 	static double Delta();
-	static uint32_t GetTick();
+	static uint64_t GetTick();
 	static float GetSeconds();
-	static uint32_t WaitTick( uint32_t t, uint32_t last );
-	static void Sleep( uint32_t t );
+	static uint64_t WaitTick( uint64_t t, uint64_t last );
+	static void Sleep( uint64_t t );
 
 protected:
 	double Sync();
 	double SlowSync( double min );
 
 private:
+	static int64_t sStartTime;
 	static int64_t sTime;
 	static double sDt;
 

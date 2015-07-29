@@ -208,6 +208,7 @@ newmtl Mat_riau__26
 	Ke 0.000000 0.000000 0.000000
 	map_Ka ./maps/road.png
 	map_Kd ./maps/road.png
+	map_bump ./maps/road_normal.jpg
 
 newmtl Mat_riau__2069
 	Ns 9.999999

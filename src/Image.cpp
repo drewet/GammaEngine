@@ -32,41 +32,88 @@ namespace GE {
 std::vector< ImageLoader* > Image::mImageLoaders = std::vector< ImageLoader* >();
 static bool ImageLoaderFirstCall = true;
 
+#if ( defined( GE_IOS ) || defined( GE_ANDROID ) )
+static uint32_t geGetNextPower2( uint32_t width )
+{
+	uint32_t b = width;
+	int n;
+	for ( n = 0; b != 0; n++ ) b >>= 1;
+	b = 1 << n;
+	if ( b == 2 * width ) b >>= 1;
+	return b;
+}
+#endif
+
 Image::Image()
-	: mWidth( 0 )
+	: mAllocInstance( nullptr )
+	, mWidth( 0 )
 	, mHeight( 0 )
 	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
 {
 }
 
 
 Image::Image( File* file, const std::string& extension, Instance* instance )
-	: Image()
+	: mAllocInstance( instance ? instance : Instance::baseInstance() )
+	, mWidth( 0 )
+	, mHeight( 0 )
+	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
 {
-	if ( !instance ) {
-		instance = Instance::baseInstance();
-	}
-	Load( file, extension, instance );
+	mServerRefs.clear();
+	Load( file, extension, mAllocInstance );
 }
 
 
-Image::Image( const std::string filename, Instance* instance )
-	: Image()
+Image::Image( const std::string& filename, Instance* instance )
+	: mAllocInstance( instance ? instance : Instance::baseInstance() )
+	, mWidth( 0 )
+	, mHeight( 0 )
+	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
 {
-	if ( !instance ) {
-		instance = Instance::baseInstance();
-	}
 	File* file = new File( filename, File::READ );
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
 
-	Load( file, extension, instance );
+	mServerRefs.clear();
+	Load( file, extension, mAllocInstance );
 
 	delete file;
 }
 
 
+Image::Image( uint32_t width, uint32_t height, uint32_t backcolor, Instance* instance )
+	: mAllocInstance( instance ? instance : Instance::baseInstance() )
+	, mWidth( width )
+	, mHeight( height )
+	, mData( nullptr )
+	, mColor( 0xFFFFFFFF )
+{
+	mServerRefs.clear();
+
+#if ( defined( GE_IOS ) || defined( GE_ANDROID ) )
+	mWidth = geGetNextPower2( mWidth );
+	mHeight = geGetNextPower2( mHeight );
+#endif
+
+	mData = (uint32_t*)mAllocInstance->Malloc( sizeof(uint32_t) * mWidth * mHeight );
+	for ( uint32_t i = 0; i < mWidth * mHeight; i++ ) {
+		mData[ i ] = backcolor;
+	}
+}
+
+
 Image::~Image()
 {
+	decltype(mServerRefs)::iterator it;
+
+	if ( mData ) {
+		mAllocInstance->Free( mData );
+	}
+	for ( it = mServerRefs.begin(); it != mServerRefs.end(); ++it ) {
+		(*it).first->UnreferenceImage( (*it).second );
+	}
 }
 
 
@@ -119,28 +166,45 @@ void Image::Load( File* file, const std::string& extension, Instance* instance )
 	if ( loader ) {
 		loader = loader->NewInstance();
 		loader->Load( instance, file );
-		*this = static_cast< Image >( *loader );
-		delete loader;
+// 		*this = static_cast< Image >( *loader );
+// 		*this = *((Image*)loader);
+		mWidth = loader->mWidth;
+		mHeight = loader->mHeight;
+		mData = loader->mData;
+// 		delete loader;
+		free( loader );
 // 		gDebug() << "Image loaded, size = " << mWidth << " x " << mHeight << "\n";
 	}
 }
 
 
-uint32_t Image::width()
+uint32_t Image::width() const
 {
 	return mWidth;
 }
 
 
-uint32_t Image::height()
+uint32_t Image::height() const
 {
 	return mHeight;
 }
 
 
-uint32_t* Image::data()
+uint32_t* Image::data() const
 {
 	return mData;
+}
+
+
+uint32_t Image::color() const
+{
+	return mColor;
+}
+
+
+void Image::setColor( uint32_t c )
+{
+	mColor = c;
 }
 
 
@@ -152,6 +216,34 @@ uint64_t Image::serverReference( Instance* instance )
 	uint64_t ref = instance->ReferenceImage( this );
 	mServerRefs.insert( std::make_pair( instance, ref ) );
 	return ref;
+}
+
+
+void Image::Resize( uint32_t width, uint32_t height )
+{
+	uint32_t* data = ( uint32_t* )mAllocInstance->Malloc( sizeof(uint32_t) * width * height );
+
+	for ( uint32_t j = 0; j < height; j++ ) {
+		for ( uint32_t i = 0; i < width; i++ ) {
+			// TODO / TBD : Linear lookup ?
+			data[ j * width + i ] = mData[ ( j * mHeight / height * width ) + ( i * mWidth / width ) ];
+		}
+	}
+
+	mAllocInstance->Free( mData );
+	mData = data;
+	mWidth = width;
+	mHeight = height;
+}
+
+
+void Image::Release()
+{
+	if ( mServerRefs.size() == 0 ) {
+		serverReference( Instance::baseInstance() );
+	}
+	mAllocInstance->Free( mData );
+	mData = nullptr;
 }
 
 

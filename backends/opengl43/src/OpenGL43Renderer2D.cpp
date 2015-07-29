@@ -31,6 +31,7 @@
 #include "File.h"
 #include "Camera.h"
 #include "Image.h"
+#include "Font.h"
 
 #define GLSL(version, shader)  "#version " #version "\n" #shader
 
@@ -72,7 +73,6 @@ static const char fragment_shader_base[] = GLSL(420,
 	void main()
 	{
 		gl_FragColor = ge_Color * texture2D( ge_Texture0, ge_TextureCoord.xy );
-		gl_FragColor.a = 1.0;
 	}
 );
 
@@ -86,6 +86,8 @@ OpenGL43Renderer2D::OpenGL43Renderer2D( Instance* instance, uint32_t width, uint
 {
 	mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
 	mMatrixView->Identity();
+
+	mTextureWhite = new Image( 1, 1, 0xFFFFFFFF, instance );
 
 	OpenGL43Renderer::LoadVertexShader( vertices_shader_base, sizeof(vertices_shader_base) + 1 );
 	OpenGL43Renderer::LoadFragmentShader( fragment_shader_base, sizeof(fragment_shader_base) + 1 );
@@ -155,9 +157,10 @@ void OpenGL43Renderer2D::Compute()
 	glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(float) * 16 );
 
+	// Pre-allocate 32 quads
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-	glBufferData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex), nullptr, GL_STATIC_DRAW );
-	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(Vertex) * 6 );
+	glBufferData( GL_ARRAY_BUFFER, 32 * 6 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW );
+	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( sizeof(Vertex) * 32 * 6 );
 
 	glEnableVertexAttribArray( 0 );
 	glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, sizeof( Vertex ), (void*)( 0 ) );
@@ -175,7 +178,7 @@ void OpenGL43Renderer2D::Compute()
 }
 
 
-void OpenGL43Renderer2D::Draw( int x, int y, Image* image )
+void OpenGL43Renderer2D::Prerender()
 {
 	if ( !m2DReady ) {
 		Compute();
@@ -185,47 +188,11 @@ void OpenGL43Renderer2D::Draw( int x, int y, Image* image )
 		mHeight = mAssociatedWindow->height();
 		mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
 	}
+}
 
-	Vertex vertices[6];
-	memset( vertices, 0, sizeof(vertices) );
-	vertices[0].u = 0.0f;
-	vertices[0].v = 0.0f;
-	vertices[0].x = x;
-	vertices[0].y = y;
 
-	vertices[1].u = 1.0f;
-	vertices[1].v = 1.0f;
-	vertices[1].x = x + image->width();
-	vertices[1].y = y + image->height();
-
-	vertices[2].u = 1.0f;
-	vertices[2].v = 0.0f;
-	vertices[2].x = x + image->width();
-	vertices[2].y = y;
-
-	vertices[3].u = 0.0f;
-	vertices[3].v = 0.0f;
-	vertices[3].x = x;
-	vertices[3].y = y;
-
-	vertices[4].u = 0.0f;
-	vertices[4].v = 1.0f;
-	vertices[4].x = x;
-	vertices[4].y = y + image->height();
-
-	vertices[5].u = 1.0f;
-	vertices[5].v = 1.0f;
-	vertices[5].x = x + image->width();
-	vertices[5].y = y + image->height();
-
-	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
-	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
-	vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
-	vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
-
-	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
-	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
-
+void OpenGL43Renderer2D::Render( GE::Image* image, int mode, int start, int n, const Matrix& matrix )
+{
 	const uint32_t binding_proj = 0;
 	const uint32_t binding_view = 1;
 
@@ -244,10 +211,315 @@ void OpenGL43Renderer2D::Draw( int x, int y, Image* image )
 	glBindBuffer( GL_UNIFORM_BUFFER, mMatrixViewID );
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, mMatrixView->data() );
 
+	glUniform1f( mFloatTimeID, Time::GetSeconds() );
+	glUniformMatrix4fv( mMatrixObjectID, 1, GL_FALSE, matrix.constData() );
 
-	glDrawArrays( GL_TRIANGLES, 0, 6 );
+	glDisable( GL_DEPTH_TEST );
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+	glDrawArrays( mode, start, n );
+
+	glEnable( GL_DEPTH_TEST );
 
 
 	glBindVertexArray( 0 );
 	glUseProgram( 0 );
+}
+
+
+void OpenGL43Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle )
+{
+	Prerender();
+
+	if ( tw == -1 ) {
+		tw = image->width();
+	}
+	if ( th == -1 ) {
+		th = image->height();
+	}
+
+	Vertex vertices[6];
+	memset( vertices, 0, sizeof(vertices) );
+	vertices[0].u = (float)tx / image->width();
+	vertices[0].v = (float)ty / image->height();
+	vertices[0].x = x;
+	vertices[0].y = y;
+
+	vertices[1].u = (float)(tx+tw) / image->width();
+	vertices[1].v = (float)(ty+th) / image->height();
+	vertices[1].x = x + image->width();
+	vertices[1].y = y + image->height();
+
+	vertices[2].u = (float)(tx+tw) / image->width();
+	vertices[2].v = (float)ty / image->height();
+	vertices[2].x = x + image->width();
+	vertices[2].y = y;
+
+	vertices[3].u = (float)tx / image->width();
+	vertices[3].v = (float)ty / image->height();
+	vertices[3].x = x;
+	vertices[3].y = y;
+
+	vertices[4].u = (float)tx / image->width();
+	vertices[4].v = (float)(ty+th) / image->height();
+	vertices[4].x = x;
+	vertices[4].y = y + image->height();
+
+	vertices[5].u = (float)(tx+tw) / image->width();
+	vertices[5].v = (float)(ty+th) / image->height();
+	vertices[5].x = x + image->width();
+	vertices[5].y = y + image->height();
+
+	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
+	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
+	vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
+	vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
+
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
+
+	Matrix m;
+	if ( angle != 0.0f ) {
+		m.Translate( x + image->width() / 2, y + image->height() / 2, 0.0f );
+		m.RotateZ( -angle );
+		m.Translate( -x - image->width() / 2, -y - image->height() / 2, 0.0f );
+	}
+
+	Render( image, GL_TRIANGLES, 0, 6, m );
+}
+
+
+void OpenGL43Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle )
+{
+	Prerender();
+
+	if ( tw == -1 ) {
+		tw = image->width();
+	}
+	if ( th == -1 ) {
+		th = image->height();
+	}
+
+	Vertex vertices[6];
+	memset( vertices, 0, sizeof(vertices) );
+	vertices[0].u = (float)tx / image->width();
+	vertices[0].v = (float)ty / image->height();
+	vertices[0].x = x;
+	vertices[0].y = y;
+
+	vertices[1].u = (float)(tx+tw) / image->width();
+	vertices[1].v = (float)(ty+th) / image->height();
+	vertices[1].x = x + w;
+	vertices[1].y = y + h;
+
+	vertices[2].u = (float)(tx+tw) / image->width();
+	vertices[2].v = (float)ty / image->height();
+	vertices[2].x = x + w;
+	vertices[2].y = y;
+
+	vertices[3].u = (float)tx / image->width();
+	vertices[3].v = (float)ty / image->height();
+	vertices[3].x = x;
+	vertices[3].y = y;
+
+	vertices[4].u = (float)tx / image->width();
+	vertices[4].v = (float)(ty+th) / image->height();
+	vertices[4].x = x;
+	vertices[4].y = y + h;
+
+	vertices[5].u = (float)(tx+tw) / image->width();
+	vertices[5].v = (float)(ty+th) / image->height();
+	vertices[5].x = x + w;
+	vertices[5].y = y + h;
+
+	vertices[0].color[0] = vertices[1].color[0] = vertices[2].color[0] = vertices[3].color[0] = vertices[4].color[0] = vertices[5].color[0] = 1.0f;
+	vertices[0].color[1] = vertices[1].color[1] = vertices[2].color[1] = vertices[3].color[1] = vertices[4].color[1] = vertices[5].color[1] = 1.0f;
+	vertices[0].color[2] = vertices[1].color[2] = vertices[2].color[2] = vertices[3].color[2] = vertices[4].color[2] = vertices[5].color[2] = 1.0f;
+	vertices[0].color[3] = vertices[1].color[3] = vertices[2].color[3] = vertices[3].color[3] = vertices[4].color[3] = vertices[5].color[3] = 1.0f;
+
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 0, 6 * sizeof(Vertex), vertices );
+
+	Matrix m;
+	if ( angle != 0.0f ) {
+		m.Translate( x + image->width() / 2, y + image->height() / 2, 0.0f );
+		m.RotateZ( -angle );
+		m.Translate( -x - image->width() / 2, -y - image->height() / 2, 0.0f );
+	}
+
+	Render( image, GL_TRIANGLES, 0, 6, m );
+}
+
+void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::string& text )
+{
+	Prerender();
+
+	y += font->size();
+	const int base_x = x;
+	const char* data = text.data();
+	const uint32_t len = text.length();
+
+	const float rx = 1.0f / font->texture()->width();
+	const float ry = 1.0f / font->texture()->height();
+	uint32_t iBuff = 0;
+
+	Matrix m;
+	Vertex vertices[6*32];
+	memset( vertices, 0, sizeof(vertices) );
+
+	for ( uint32_t i = 0; i < len; i++ ) {
+		int _c = data[i];
+		uint8_t c = _c;
+
+		if ( data[i] == '\n' ) {
+			x = base_x;
+			y += font->size();
+			continue;
+		}
+
+		float sx = ( (float)font->glyphs()[c].x ) * rx;
+		float sy = ( (float)font->glyphs()[c].y ) * ry;
+		float texMaxX = ( (float)font->glyphs()[c].w ) * rx;
+		float texMaxY = ( (float)font->glyphs()[c].h ) * ry;
+		float width = font->glyphs()[c].w;
+		float height = font->glyphs()[c].h;
+		float fy = (float)y - font->glyphs()[c].posY;
+
+		vertices[iBuff + 0].u = sx;
+		vertices[iBuff + 0].v = sy;
+		vertices[iBuff + 0].x = x;
+		vertices[iBuff + 0].y = fy;
+// 		vertices[iBuff + 0].z = 0.0f;
+
+		vertices[iBuff + 1].u = sx+texMaxX;
+		vertices[iBuff + 1].v = sy+texMaxY;
+		vertices[iBuff + 1].x = x+width;
+		vertices[iBuff + 1].y = fy+height;
+// 		vertices[iBuff + 1].z = 0.0f;
+
+		vertices[iBuff + 2].u = sx+texMaxX;
+		vertices[iBuff + 2].v = sy;
+		vertices[iBuff + 2].x = x+width;
+		vertices[iBuff + 2].y = fy;
+// 		vertices[iBuff + 2].z = 0.0f;
+		
+		vertices[iBuff + 3].u = sx;
+		vertices[iBuff + 3].v = sy;
+		vertices[iBuff + 3].x = x;
+		vertices[iBuff + 3].y = fy;
+// 		vertices[iBuff + 3].z = 0.0f;
+
+		vertices[iBuff + 4].u = sx;
+		vertices[iBuff + 4].v = sy+texMaxY;
+		vertices[iBuff + 4].x = x;
+		vertices[iBuff + 4].y = fy+height;
+// 		vertices[iBuff + 4].z = 0.0f;
+
+		vertices[iBuff + 5].u = sx+texMaxX;
+		vertices[iBuff + 5].v = sy+texMaxY;
+		vertices[iBuff + 5].x = x+width;
+		vertices[iBuff + 5].y = fy+height;
+// 		vertices[iBuff + 5].z = 0.0f;
+
+		vertices[iBuff + 0].color[0] = vertices[iBuff + 1].color[0] = vertices[iBuff + 2].color[0] = vertices[iBuff + 3].color[0] = vertices[iBuff + 4].color[0] = vertices[iBuff + 5].color[0] = ( (float)( color & 0xFF ) ) / 255.0f;
+		vertices[iBuff + 0].color[1] = vertices[iBuff + 1].color[1] = vertices[iBuff + 2].color[1] = vertices[iBuff + 3].color[1] = vertices[iBuff + 4].color[1] = vertices[iBuff + 5].color[1] = ( (float)( ( color >> 8 ) & 0xFF ) ) / 255.0f;
+		vertices[iBuff + 0].color[2] = vertices[iBuff + 1].color[2] = vertices[iBuff + 2].color[2] = vertices[iBuff + 3].color[2] = vertices[iBuff + 4].color[2] = vertices[iBuff + 5].color[2] = ( (float)( ( color >> 16 ) & 0xFF ) ) / 255.0f;
+		vertices[iBuff + 0].color[3] = vertices[iBuff + 1].color[3] = vertices[iBuff + 2].color[3] = vertices[iBuff + 3].color[3] = vertices[iBuff + 4].color[3] = vertices[iBuff + 5].color[3] = ( (float)( ( color >> 24 ) & 0xFF ) ) / 255.0f;
+
+		vertices[iBuff + 0].color[0] = vertices[iBuff + 1].color[0] = vertices[iBuff + 2].color[0] = vertices[iBuff + 3].color[0] = vertices[iBuff + 4].color[0] = vertices[iBuff + 5].color[0] = 1.0;
+		vertices[iBuff + 0].color[1] = vertices[iBuff + 1].color[1] = vertices[iBuff + 2].color[1] = vertices[iBuff + 3].color[1] = vertices[iBuff + 4].color[1] = vertices[iBuff + 5].color[1] = 1.0;
+		vertices[iBuff + 0].color[2] = vertices[iBuff + 1].color[2] = vertices[iBuff + 2].color[2] = vertices[iBuff + 3].color[2] = vertices[iBuff + 4].color[2] = vertices[iBuff + 5].color[2] = 1.0;
+		vertices[iBuff + 0].color[3] = vertices[iBuff + 1].color[3] = vertices[iBuff + 2].color[3] = vertices[iBuff + 3].color[3] = vertices[iBuff + 4].color[3] = vertices[iBuff + 5].color[3] = 1.0;
+
+		x += font->glyphs()[c].advX;
+		iBuff += 6;
+
+		if ( iBuff >= 6*32 && i + 1 < len ) {
+			glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+			glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
+			Render( font->texture(), GL_TRIANGLES, 0, iBuff, m );
+			iBuff = 0;
+		}
+	}
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
+	Render( font->texture(), GL_TRIANGLES, 0, iBuff, m );
+}
+
+
+void OpenGL43Renderer2D::DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 )
+{
+	Matrix matrix;
+	Vertex2D vertices[6*2];
+	memset( vertices, 0, sizeof(vertices) );
+
+	vertices[0].x = x0;
+	vertices[0].y = y0;
+	vertices[0].u = 0.0f;
+	vertices[0].v = 0.0f;
+	vertices[0].color = color0;
+
+	vertices[1].x = x1;
+	vertices[1].y = y1;
+	vertices[1].u = 0.0f;
+	vertices[1].v = 0.0f;
+	vertices[1].color = color1;
+
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), 2 * sizeof(Vertex2D), vertices );
+	Render( mTextureWhite, GL_LINES, 6, 2, matrix );
+}
+
+
+uintptr_t OpenGL43Renderer2D::attributeID( const std::string& name )
+{
+	if ( !m2DReady ) {
+		Compute();
+	}
+	return glGetAttribLocation( mShader, name.c_str() );
+}
+
+
+uintptr_t OpenGL43Renderer2D::uniformID( const std::string& name )
+{
+	if ( !m2DReady ) {
+		Compute();
+	}
+	return glGetUniformLocation( mShader, name.c_str() );
+}
+
+
+void OpenGL43Renderer2D::uniformUpload( const uintptr_t id, const float f )
+{
+	glUseProgram( mShader );
+	glUniform1f( id, f );
+}
+
+
+void OpenGL43Renderer2D::uniformUpload( const uintptr_t id, const Vector2f& v )
+{
+	glUseProgram( mShader );
+	glUniform2f( id, v.x, v.y );
+}
+
+
+void OpenGL43Renderer2D::uniformUpload( const uintptr_t id, const Vector3f& v )
+{
+	glUseProgram( mShader );
+	glUniform3f( id, v.x, v.y, v.z );
+}
+
+
+void OpenGL43Renderer2D::uniformUpload( const uintptr_t id, const Vector4f& v )
+{
+	glUseProgram( mShader );
+	glUniform4f( id, v.x, v.y, v.z, v.w );
+}
+
+
+void OpenGL43Renderer2D::uniformUpload( const uintptr_t id, const Matrix& v )
+{
+	glUseProgram( mShader );
+	glUniformMatrix4fv( id, 1, GL_FALSE, v.constData() );
 }

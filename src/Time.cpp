@@ -20,15 +20,18 @@
 #include <cmath>
 #include <unistd.h>
 #include <time.h>
-#include "Time.h"
+#include <sys/time.h>
+#include <stdint.h>
+#include "include/Time.h"
 
 #ifdef GE_WIN32
 	#include <windows.h>
 #endif
 
-namespace GE {
+using namespace GE;
 
 
+int64_t Time::sStartTime = 0;
 int64_t Time::sTime = 0;
 double Time::sDt = 0.0;
 
@@ -105,36 +108,45 @@ double Time::SlowSync( double min )
 }
 
 
-uint32_t Time::GetTick()
+uint64_t Time::GetTick()
 {
+	if ( sStartTime == 0 ) {
+	#ifdef GE_WIN32
+		sStartTime = timeGetTime();
+	#elif GE_IOS
+		struct timeval cTime;
+		gettimeofday( &cTime, 0 );
+		sStartTime = ( cTime.tv_sec * 1000 ) + ( cTime.tv_usec / 1000 );
+	#else
+		struct timespec now;
+		clock_gettime( CLOCK_MONOTONIC, &now );
+		sStartTime = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+	#endif
+	}
+
 #ifdef GE_WIN32
-	return timeGetTime();
+	return timeGetTime() - sStartTime;
+#elif GE_IOS
+	struct timeval cTime;
+	gettimeofday( &cTime, 0 );
+	return ( cTime.tv_sec * 1000 ) + ( cTime.tv_usec / 1000 ) - sStartTime;
 #else
 	struct timespec now;
 	clock_gettime( CLOCK_MONOTONIC, &now );
-	return now.tv_sec * 1000 + now.tv_nsec / 1000000;
+	return now.tv_sec * 1000 + now.tv_nsec / 1000000 - sStartTime;
 #endif
 }
 
 
 float Time::GetSeconds()
 {
-#ifdef GE_WIN32
-	return (float)( (double)timeGetTime() / 1000.0 );
-#else
-	struct timespec now;
-	clock_gettime( CLOCK_MONOTONIC, &now );
-	float ret = (float)now.tv_sec;
-	uint32_t ms = now.tv_nsec / 1000000;
-	ret += ( (float)ms ) / 1000.0;
-	return ret;
-#endif
+	return (double)GetTick() / 1000.0;
 }
 
 
-uint32_t Time::WaitTick( uint32_t t, uint32_t last )
+uint64_t Time::WaitTick( uint64_t t, uint64_t last )
 {
-	uint32_t ticks = GetTick();
+	uint64_t ticks = GetTick();
 	if ( ( ticks - last ) < t ) {
 		Sleep( t - (ticks - last) - 1);
 	}
@@ -142,10 +154,7 @@ uint32_t Time::WaitTick( uint32_t t, uint32_t last )
 }
 
 
-void Time::Sleep( uint32_t t )
+void Time::Sleep( uint64_t t )
 {
 	usleep( t * 1000 );
 }
-
-
-} // namespace GE

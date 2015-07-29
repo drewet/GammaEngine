@@ -43,6 +43,7 @@ public:
 	Vector2i& cursorWarp();
 
 	void SwapBuffersBase();
+	float fps() const;
 
 protected:
 	Instance* mInstance;
@@ -54,6 +55,10 @@ protected:
 	bool mKeys[512];
 	Vector2i mCursor;
 	Vector2i mCursorWarp;
+
+	float mFps;
+	int mFpsImages;
+	uint64_t mFpsTimer;
 
 private:
 	static uintptr_t CALLBACK sWindowProcedure( uint64_t window, uint64_t message, uint64_t wParam, uint64_t lParam );

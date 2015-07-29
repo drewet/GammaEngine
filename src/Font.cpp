@@ -17,14 +17,195 @@
  *
  */
 
-#include "include/Font.h"
+#include <algorithm>
+
+#include "Image.h"
+#include "Font.h"
+#include "FontLoaderTtf.h"
+#include "Instance.h"
+#include "File.h"
+#include "Debug.h"
 
 using namespace GE;
 
-Font::Font() {
+std::vector< FontLoader* > Font::mFontLoaders = std::vector< FontLoader* >();
+static bool FontLoaderFirstCall = true;
 
+
+Font::Font()
+	: mSize( 0 )
+	, mTexture( nullptr )
+	, mData( nullptr )
+	, mFace( nullptr )
+	, mGlyphs { { 0, 0, 0, 0, 0, 0 } }
+	, mModInstance( nullptr )
+{
 }
 
-Font::~Font() {
 
+Font::Font( File* file, int size, const std::string& extension, Instance* instance )
+	: Font()
+{
+	if ( !instance ) {
+		instance = Instance::baseInstance();
+	}
+	Load( file, size, extension, instance );
+	setSize( size );
+}
+
+
+Font::Font( const std::string filename, int size, Instance* instance )
+	: Font()
+{
+	if ( !instance ) {
+		instance = Instance::baseInstance();
+	}
+	File* file = new File( filename, File::READ );
+	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
+
+	Load( file, size, extension, instance );
+	setSize( size );
+
+	delete file;
+}
+
+
+Font::~Font()
+{
+}
+
+
+void Font::Load( File* file, int size, const std::string& extension, Instance* instance )
+{
+	FontLoader* loader = nullptr;
+
+	if ( FontLoaderFirstCall ) {
+		AddFontLoader( new FontLoaderTtf() );
+		FontLoaderFirstCall = false;
+	}
+
+	char first_line[32];
+	file->Rewind();
+	file->Read( first_line, sizeof(first_line) );
+	file->Rewind();
+
+	for ( size_t i = 0; i < mFontLoaders.size(); i++ ) {
+		std::vector< std::string > patterns = mFontLoaders.at(i)->contentPatterns();
+		for ( size_t j = 0; j < patterns.size(); j++ ) {
+			std::string test_case = patterns[j];
+			for ( size_t k = 0; k < sizeof(first_line)-test_case.length(); k++ ) {
+				if ( !memcmp( first_line + k, test_case.c_str(), test_case.length() ) ) {
+					loader = mFontLoaders.at(i);
+					break;
+				}
+			}
+		}
+	}
+
+	if ( !loader && extension.length() > 0 ) {
+		for ( size_t i = 0; i < mFontLoaders.size(); i++ ) {
+			std::vector< std::string > extensions = mFontLoaders.at(i)->extensions();
+			for ( size_t j = 0; j < extensions.size(); j++ ) {
+				std::string test_case = extensions[j];
+				std::transform( test_case.begin(), test_case.end(), test_case.begin(), ::tolower );
+				if ( extension.find( test_case ) ) {
+					loader = mFontLoaders.at(i);
+					break;
+				}
+			}
+		}
+	}
+
+	if ( loader ) {
+		FontLoader* modInstance = loader;
+		loader = loader->NewInstance();
+		loader->Load( instance, file, size );
+		*this = static_cast< Font >( *loader );
+		delete loader;
+		mModInstance = modInstance;
+	}
+}
+
+
+uint32_t Font::size() const
+{
+	return mSize;
+}
+
+
+void* Font::face() const
+{
+	return mFace;
+}
+
+
+Font::Glyph* Font::glyphs()
+{
+	return mGlyphs;
+}
+
+
+Image* Font::texture() const
+{
+	return mTexture;
+}
+
+
+void Font::setSize( uint32_t size )
+{
+	fDebug( size, mModInstance );
+
+	if ( size <= 0 || !mModInstance ) {
+		return;
+	}
+
+	mSize = size;
+	mModInstance->resize( this, size );
+}
+
+
+void Font::measureString( const std::string& str, int* width, int* height )
+{
+	int i = 0;
+	int mx = 0;
+	int x = 0;
+	int y = 0;
+
+	for ( i = 0; str[i]; i++ ) {
+		if ( str[i] == '\n' ) {
+			if ( x > mx ) {
+				mx = x;
+			}
+			x = 0;
+			y += mSize;
+			continue;
+		}
+		x += mGlyphs[ (uint8_t)str[i] ].advX;
+	}
+	if ( x > mx ) {
+		mx = x;
+	}
+	if ( mx == 0 ) {
+		mx = x;
+	}
+
+	*width = mx;
+	*height = y + mSize + (mSize * 0.4);
+}
+
+
+Image* Font::reallocTexture( int width, int height )
+{
+	if ( mTexture ) {
+		delete mTexture;
+	}
+	mTexture = new Image( width, height, 0x00000000, Instance::baseInstance() );
+	return mTexture;
+}
+
+
+FontLoader* Font::AddFontLoader( FontLoader* loader )
+{
+	mFontLoaders.insert( mFontLoaders.begin(), loader );
+	return loader;
 }

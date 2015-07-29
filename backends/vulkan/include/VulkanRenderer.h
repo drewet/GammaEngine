@@ -53,6 +53,16 @@ public:
 	void Draw();
 	void Look( Camera* cam );
 
+	virtual Matrix* projectionMatrix();
+
+	virtual uintptr_t attributeID( const std::string& name );
+	virtual uintptr_t uniformID( const std::string& name );
+	virtual void uniformUpload( const uintptr_t id, const float f );
+	virtual void uniformUpload( const uintptr_t id, const Vector2f& v );
+	virtual void uniformUpload( const uintptr_t id, const Vector3f& v );
+	virtual void uniformUpload( const uintptr_t id, const Vector4f& v );
+	virtual void uniformUpload( const uintptr_t id, const Matrix& v );
+
 private:
 	uint8_t* loadShader( const std::string& filename, size_t* sz );
 	void createPipeline();

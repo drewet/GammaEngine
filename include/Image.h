@@ -24,8 +24,6 @@
 #include <vector>
 #include <map>
 
-#include <vulkan.h>
-
 namespace GE {
 
 class Instance;
@@ -37,23 +35,31 @@ class Image
 public:
 	Image();
 	Image( File* file, const std::string& extension = "", Instance* instance = nullptr );
-	Image( const std::string filename, Instance* instance = nullptr );
+	Image( const std::string& filename, Instance* instance = nullptr );
+	Image( uint32_t width, uint32_t height, uint32_t backcolor = 0x00000000, Instance* instance = nullptr );
 	~Image();
 
-	uint32_t width();
-	uint32_t height();
-	uint32_t* data();
+	uint32_t width() const;
+	uint32_t height() const;
+	uint32_t* data() const;
+	uint32_t color() const;
 	uint64_t serverReference( Instance* instance );
+
+	void setColor( uint32_t c );
+	void Resize( uint32_t width, uint32_t height );
+	void Release();
 
 	static ImageLoader* AddImageLoader( ImageLoader* loader );
 
 protected:
-	void Load(  File* file, const std::string& extension, Instance* instance );
+	void Load( File* file, const std::string& extension, Instance* instance );
+	Instance* mAllocInstance;
 	uint32_t mWidth;
 	uint32_t mHeight;
 	uint32_t* mData;
+	uint32_t mColor;
 
-	std::map< std::pair< Instance*, int >, VK_MEMORY_REF > mVkRefs;
+	std::map< std::pair< Instance*, int >, uint64_t > mVkRefs;
 	std::map< Instance*, uint64_t > mServerRefs;
 
 	static std::vector< ImageLoader* > mImageLoaders;

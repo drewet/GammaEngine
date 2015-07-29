@@ -20,6 +20,8 @@
 #include <string.h>
 #include "Vertex.h"
 
+#define COLORf(r, g, b, a) ( ( ( (uint32_t)( a * 255.0f ) & 0xFF ) << 24 ) | ( ( (uint32_t)( b * 255.0f ) & 0xFF ) << 16 ) | ( ( (uint32_t)( g * 255.0f ) & 0xFF ) << 8 ) | ( ( (uint32_t)( r * 255.0f ) & 0xFF ) ) )
+
 namespace GE {
 
 Vertex::Vertex( const Vector3f& pos, const Vector4f& color, const Vector3f& normal, const Vector3f& texcoords )
@@ -34,6 +36,19 @@ Vertex::Vertex( const Vector3f& pos, const Vector4f& color, const Vector3f& norm
 bool Vertex::operator==( const Vertex& other ) const
 {
 	return memcmp( this, &other, sizeof( Vertex ) ) == 0;
+}
+
+Vertex2D::Vertex2D( const Vector2f& pos, const Vector4f& color, const Vector2f& texcoords )
+	: color( COLORf( color.x, color.y, color.z, color.w ) )
+	, u( texcoords.x ), v( texcoords.y )
+	, x( pos.x ), y( pos.y )
+{
+}
+
+
+bool Vertex2D::operator==( const Vertex2D& other ) const
+{
+	return memcmp( this, &other, sizeof( Vertex2D ) ) == 0;
 }
 
 

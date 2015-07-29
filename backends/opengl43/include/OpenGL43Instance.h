@@ -50,6 +50,7 @@ public:
 	virtual int EnumerateGpus();
 	virtual Instance* CreateDevice( int devid, int queueCount = 1 );
 	virtual uint64_t ReferenceImage( Image* image );
+	virtual void UnreferenceImage( uint64_t ref );
 
 	void AffectVRAM( int64_t sz );
 private:

@@ -30,6 +30,31 @@
 #include "File.h"
 #include "Camera.h"
 
+
+#ifdef GE_WIN32
+#include <windows.h>
+static HINSTANCE hOpenGL = 0;
+	void* SymLib( const char* name ) {
+		if ( !hOpenGL ) {
+			hOpenGL = LoadLibrary("opengl32.dll");
+		}
+		return (void*)GetProcAddress( hOpenGL, name );
+	}
+#elif defined(GE_LINUX)
+typedef void (*__GLXextFuncPtr)(void);
+extern "C" __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
+	void* SymLib( const char* name ) {
+		return (void*)glXGetProcAddressARB( (GLubyte*)name );
+	}
+#else
+	void* SymLib( const char* name ) {
+		return nullptr;
+	}
+#endif
+
+static PFNGLGETTEXTUREHANDLEARBPROC glGetTextureHandle = 0;
+static PFNGLMAKETEXTUREHANDLERESIDENTARBPROC glMakeTextureHandleResident = 0;
+
 extern "C" GE::Renderer* CreateRenderer( GE::Instance* instance ) {
 	return new OpenGL43Renderer( instance );
 }
@@ -75,6 +100,15 @@ OpenGL43Renderer::OpenGL43Renderer( Instance* instance )
 	, mVertexShader( 0 )
 	, mFragmentShader( 0 )
 {
+	if ( !glGetTextureHandle ) {
+		glGetTextureHandle = (PFNGLGETTEXTUREHANDLEARBPROC)SymLib( "glGetTextureHandleARB" );
+	}
+	if ( !glMakeTextureHandleResident ) {
+		glMakeTextureHandleResident = (PFNGLMAKETEXTUREHANDLERESIDENTARBPROC)SymLib( "glMakeTextureHandleResidentARB" );
+	}
+
+	mFloatTimeID = 32;
+
 	mMatrixProjection = new Matrix();
 	mMatrixProjection->Perspective( 60.0f, 16.0f / 9.0f, 0.01f, 1000.0f );
 	mMatrixView = new Matrix();
@@ -268,8 +302,8 @@ void OpenGL43Renderer::Compute()
 			uint64_t stride_data = ( (uint64_t)( textures->size() ) ) | (( (uint64_t)textureHandles.size() ) << 32);
 			for ( size_t j = 0; j < textures->size(); j++ ) {
 				if ( (*textures)[j].first != nullptr ) {
-					uint64_t handle = glGetTextureHandleARB( (*textures)[j].second );
-					glMakeTextureHandleResidentARB( handle );
+					uint64_t handle = glGetTextureHandle( (*textures)[j].second );
+					glMakeTextureHandleResident( handle );
 					textureHandles.emplace_back( handle );
 				} else {
 					textureHandles.emplace_back( 0 );
@@ -411,7 +445,7 @@ void OpenGL43Renderer::Draw()
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16 * mObjects.size(), mMatrixObjects );
 	glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
-	glUniform1f( 32, Time::GetSeconds() );
+	glUniform1f( mFloatTimeID, Time::GetSeconds() );
 
 	glMultiDrawElementsIndirect( mRenderMode, GL_UNSIGNED_INT, nullptr, mObjects.size(), 0 );
 
@@ -427,6 +461,59 @@ void OpenGL43Renderer::Look( Camera* cam )
 {
 	memcpy( mMatrixView->data(), cam->data(), sizeof( float ) * 16 );
 	// TODO / TBD : upload matrix to shader here
+}
+
+
+uintptr_t OpenGL43Renderer::attributeID( const std::string& name )
+{
+	if ( !mReady ) {
+		createPipeline();
+	}
+	return glGetAttribLocation( mShader, name.c_str() );
+}
+
+
+uintptr_t OpenGL43Renderer::uniformID( const std::string& name )
+{
+	if ( !mReady ) {
+		createPipeline();
+	}
+	return glGetUniformLocation( mShader, name.c_str() );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const float f )
+{
+	glUseProgram( mShader );
+	glUniform1f( id, f );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Vector2f& v )
+{
+	glUseProgram( mShader );
+	glUniform2f( id, v.x, v.y );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Vector3f& v )
+{
+	glUseProgram( mShader );
+	glUniform3f( id, v.x, v.y, v.z );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Vector4f& v )
+{
+	glUseProgram( mShader );
+	glUniform4f( id, v.x, v.y, v.z, v.w );
+}
+
+
+void OpenGL43Renderer::uniformUpload( const uintptr_t id, const Matrix& v )
+{
+	glUseProgram( mShader );
+	glUniformMatrix4fv( id, 1, GL_FALSE, v.constData() );
 }
 
 

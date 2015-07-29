@@ -49,6 +49,7 @@ public:
 	Vector<T,2> yz() const { return Vector<T,2>( y, z ); }
 
 	T operator[]( int i ) const;
+	T& operator[]( int i );
 	Vector<T,n> operator-() const;
  	void operator+=( const Vector<T,n>& v );
  	void operator-=( const Vector<T,n>& v );
@@ -67,8 +68,34 @@ public:
 	T w;
 } __attribute__((packed));
 
-template <typename T, int n> Vector<T, n> operator*( T im, const Vector<T, n>& v );
-template <typename T, int n> bool operator==( const Vector<T,n>& v1, const Vector<T,n>& v2 );
+// template <typename T, int n> Vector<T, n> operator*( T im, const Vector<T, n>& v );
+// template <typename T, int n> bool operator==( const Vector<T,n>& v1, const Vector<T,n>& v2 );
+
+template <typename T, int n> Vector<T, n> operator*( T im, const Vector<T, n>& v ) {
+	Vector<T, n> ret;
+	for ( int i = 0; i < n; i++ ) {
+		( &ret.x )[i] = ( &v.x )[i] * im;
+	}
+	return ret;
+}
+
+
+template <typename T, int n> bool operator==( const Vector<T, n>& v1, const Vector<T,n>& v2 ) {
+	bool ret = true;
+	for ( int i = 0; i < n; i++ ) {
+		ret = ret && ( ( &v1.x )[i] == ( &v2.x )[i] );
+	}
+	return ret;
+}
+
+
+template <typename T, int n> bool operator!=( const Vector<T, n>& v1, const Vector<T,n>& v2 ) {
+	bool ret = true;
+	for ( int i = 0; i < n; i++ ) {
+		ret = ret && ( ( &v1.x )[i] != ( &v2.x )[i] );
+	}
+	return ret;
+}
 
 
 typedef Vector<int, 2> Vector2i;
@@ -85,5 +112,14 @@ typedef Vector<double, 4> Vector4d;
 
 
 } // namespace GE
+
+#if ( (defined(GE_ANDROID) || defined(GE_IOS))/* && defined(GE_LIB)*/ )
+#define GE_VECTOR_CPP_INC
+#ifdef GE_LIB
+#include "../src/Vector.cpp"
+#else
+#include "Vector.cpp"
+#endif
+#endif
 
 #endif // VECTOR_H

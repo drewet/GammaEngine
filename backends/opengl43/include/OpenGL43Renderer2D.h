@@ -26,7 +26,6 @@
 #include "Object.h"
 #include "Light.h"
 
-
 class OpenGL43Renderer2D : public Renderer2D, public OpenGL43Renderer
 {
 public:
@@ -38,13 +37,29 @@ public:
 	virtual int LoadFragmentShader( const std::string& file );
 	virtual int LoadFragmentShader( const void* data, size_t size );
 
-	virtual void Draw( int x, int y, Image* image );
+	virtual uintptr_t attributeID( const std::string& name );
+	virtual uintptr_t uniformID( const std::string& name );
+	virtual void uniformUpload( const uintptr_t id, const float f );
+	virtual void uniformUpload( const uintptr_t id, const Vector2f& v );
+	virtual void uniformUpload( const uintptr_t id, const Vector3f& v );
+	virtual void uniformUpload( const uintptr_t id, const Vector4f& v );
+	virtual void uniformUpload( const uintptr_t id, const Matrix& v );
+
+	virtual void Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle );
+	virtual void Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle );
+
+	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text );
+
+	virtual void DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 );
 
 protected:
 	void Compute();
+	void Prerender();
+	void Render( GE::Image* image, int mode, int start, int n, const Matrix& matrix );
 	bool m2DReady;
 	uint32_t mWidth;
 	uint32_t mHeight;
+	Image* mTextureWhite;
 };
 
 #endif // OPENGL43RENDERER2D_H

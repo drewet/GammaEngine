@@ -20,13 +20,64 @@
 #ifndef GE_FONT_H
 #define GE_FONT_H
 
+#include <string>
+#include <vector>
+
 namespace GE {
+
+class Instance;
+class FontLoader;
+class File;
+class Image;
 
 class Font
 {
 public:
+	typedef struct Glyph {
+		int x, y, w, h, advX, posY;
+	} Glyph;
+
 	Font();
+	Font( File* file, int size = 16, const std::string& extension = "", Instance* instance = nullptr );
+	Font( const std::string filename, int size = 16, Instance* instance = nullptr );
 	~Font();
+
+	uint32_t size() const;
+	void* face() const;
+	Glyph* glyphs();
+	Image* texture() const;
+	void setSize( uint32_t size );
+
+	void measureString( const std::string& str, int* width, int* height );
+
+	Image* reallocTexture( int width, int height );
+	static FontLoader* AddFontLoader( FontLoader* loader );
+
+protected:
+	void Load( File* file, int size, const std::string& extension, Instance* instance );
+
+	int mSize;
+	Image* mTexture;
+	uint8_t* mData;
+	void* mFace;
+	Glyph mGlyphs[256];
+	FontLoader* mModInstance;
+
+	static std::vector< FontLoader* > mFontLoaders;
+};
+
+
+class FontLoader : public Font
+{
+public:
+	FontLoader() : Font() { ; }
+	virtual ~FontLoader() { ; }
+	virtual std::vector< std::string > contentPatterns() = 0;
+	virtual std::vector< std::string > extensions() = 0;
+	virtual FontLoader* NewInstance() = 0;
+	virtual void Load( Instance* instance, File* file, uint32_t size ) = 0;
+
+	virtual void resize( Font* font, int size ) = 0;
 };
 
 }

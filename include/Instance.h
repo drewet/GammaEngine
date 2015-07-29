@@ -20,6 +20,8 @@
 #ifndef INSTANCE_H
 #define INSTANCE_H
 
+#include <stdint.h>
+#include <typeinfo>
 #include <string>
 
 namespace GE {
@@ -39,10 +41,11 @@ public:
 	Instance() : mDevId(0), mGpuCount(0), mGpus{0}, mDevices{0}, mQueues{0}, mFences{0}, mCpuRamCounter(0), mGpuRamCounter(0) {}
 	virtual ~Instance(){}
 
-	static Instance* Create( const char* appName, uint32_t appVersion, bool easy_instance = true );
+	static Instance* Create( const char* appName, uint32_t appVersion, bool easy_instance = true, const std::string& backend_file = "" );
 	virtual int EnumerateGpus() = 0;
 	virtual Instance* CreateDevice( int devid, int queueCount = 1 ) = 0;
 	virtual uint64_t ReferenceImage( Image* image ) = 0;
+	virtual void UnreferenceImage( uint64_t ref ) = 0;
 
 	Window* CreateWindow( const std::string& title, int width, int height, int flags = 0 );
 	Renderer* CreateRenderer();
@@ -85,5 +88,20 @@ protected:
 };
 
 } // namespace GE
+
+#if ( defined( GE_ANDROID ) )
+#include <sstream>
+namespace std {
+template<typename T> static inline string to_string(const T& t) {
+	ostringstream os;
+	os << t;
+	return os.str();
+}
+}
+#endif
+
+#if ( defined(GE_IOS) && !defined(GE_LIB) )
+#define main _ge_main
+#endif
 
 #endif // INSTANCE_H

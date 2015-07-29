@@ -21,6 +21,10 @@
 #define RENDERER_H
 
 #include <vector>
+#include <string>
+#include <stdint.h>
+#include "Vector.h"
+#include "Matrix.h"
 
 namespace GE {
 
@@ -28,7 +32,6 @@ class Instance;
 class Object;
 class Light;
 class Camera;
-class Matrix;
 
 class Renderer
 {
@@ -49,6 +52,14 @@ public:
 	virtual void Look( Camera* cam ) = 0;
 
 	virtual Matrix* projectionMatrix() = 0;
+
+	virtual uintptr_t attributeID( const std::string& name ) = 0;
+	virtual uintptr_t uniformID( const std::string& name ) = 0;
+	virtual void uniformUpload( const uintptr_t id, const float f ) = 0;
+	virtual void uniformUpload( const uintptr_t id, const Vector2f& v ) = 0;
+	virtual void uniformUpload( const uintptr_t id, const Vector3f& v ) = 0;
+	virtual void uniformUpload( const uintptr_t id, const Vector4f& v ) = 0;
+	virtual void uniformUpload( const uintptr_t id, const Matrix& v ) = 0;
 };
 
 } // namespace GE

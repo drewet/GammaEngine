@@ -18,8 +18,7 @@
  */
  
  
-
-
+#include <stdlib.h>
 #include "Instance.h"
 #include "Debug.h"
 
@@ -30,8 +29,8 @@
 #ifdef GE_WIN32
 	#include <windows.h>
 	#undef CreateWindow
-	void* LoadLib( const char* file ) {
-		return LoadLibrary( file );
+	void* LoadLib( const std::string& file ) {
+		return LoadLibrary( file.c_str() );
 	}
 	void* SymLib( void* lib, const char* name ) {
 		return (void*)GetProcAddress( (HMODULE)lib, name );
@@ -49,8 +48,8 @@
 	}
 #else
 	#include <dlfcn.h>
-	void* LoadLib( const char* file ) {
-		return dlopen( file, RTLD_LAZY );
+	void* LoadLib( const std::string& file ) {
+		return dlopen( file.c_str(), RTLD_LAZY );
 	}
 	void* SymLib( void* lib, const char* name ) {
 		return dlsym( lib, name );
@@ -60,7 +59,8 @@
 	}
 #endif
 
-namespace GE {
+using namespace GE;
+
 
 Instance* Instance::mBaseInstance = nullptr;
 void* Instance::sBackend = nullptr;
@@ -83,21 +83,113 @@ void* Instance::backend()
 	return sBackend;
 }
 
+#ifdef GE_STATIC_BACKEND
 
-Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance )
+extern "C" Instance* CreateInstance( const char*, uint32_t );
+extern "C" Window* CreateWindow( Instance*, const std::string&, int, int, int );
+extern "C" Renderer* CreateRenderer( Instance* );
+extern "C" Renderer2D* CreateRenderer2D( Instance*, uint32_t, uint32_t );
+extern "C" DeferredRenderer* CreateDeferredRenderer( Instance*, uint32_t, uint32_t );
+extern "C" Object* CreateObject( Vertex*, uint32_t, uint32_t*, uint32_t );
+extern "C" Object* LoadObject( const std::string&, Instance* );
+
+Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance, const std::string& backend_file )
 {
-	gDebug() << "aa\n";
+	if ( easy_instance ) {
+		if ( !mBaseInstance ) {
+			mBaseInstance = CreateInstance( appName, appVersion );
+			mBaseThread = (uint64_t)pthread_self();
+		}
+		Instance* ret = mBaseInstance->CreateDevice( 0, 1 );
+		if ( !mBaseInstance || mBaseInstance->device() == 0 ) {
+			mBaseInstance = ret;
+		}
+		return ret;
+	}
+	return CreateInstance( appName, appVersion );
+}
+
+Window* Instance::CreateWindow( const std::string& title, int width, int height, int flags )
+{
+	return ::CreateWindow( this, title, width, height, flags );
+}
+
+
+Renderer* Instance::CreateRenderer()
+{
+	return ::CreateRenderer( this );
+}
+
+
+Renderer2D* Instance::CreateRenderer2D( uint32_t width, uint32_t height )
+{
+	return ::CreateRenderer2D( this, width, height );
+}
+
+
+DeferredRenderer* Instance::CreateDeferredRenderer( uint32_t width, uint32_t height )
+{
+	return ::CreateDeferredRenderer( this, width, height );
+}
+
+
+Object* Instance::CreateObject( Vertex* verts, uint32_t nVert, uint32_t* indices, uint32_t nIndices )
+{
+	return ::CreateObject( verts, nVert, indices, nIndices );
+}
+
+
+Object* Instance::LoadObject( const std::string& filename )
+{
+	return ::LoadObject( filename, this );
+}
+
+#else // GE_STATIC_BACKEND
+
+Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance, const std::string& backend_file )
+{
 	if ( !sBackend ) {
 #ifdef GE_WIN32
-//		sBackend = LoadLib( "backends/vulkan/backend_vulkan.dll" );
-		sBackend = LoadLib( "backend_opengl43.dll" );
-#elif defined(GE_LINUX)
-// 		sBackend = LoadLib( "backend_vulkan.so" );
-		sBackend = LoadLib( "backend_opengl43.so" );
+		std::string lib_suffix = ".dll";
+#else
+		std::string lib_suffix = ".so";
 #endif
+#if ( defined( GE_ANDROID ) || defined( GE_IOS ) )
+		std::string backend_lib = "opengles20";
+#else
+// 		std::string backend_lib = "vulkan";
+		std::string backend_lib = "opengl43";
+#endif
+		std::string prefixes[10] = {
+			"backend_",
+			"backends/",
+			"gammaengine/backend_",
+			"gammaengine/backends/",
+			"/usr/local/lib/backend_",
+			"/usr/local/lib/gammaengine/backend_",
+			"/usr/local/lib/gammaengine/backends/",
+			"/usr/lib/backend_",
+			"/usr/lib/gammaengine/backend_",
+			"/usr/lib/gammaengine/backends/",
+		};
+		if ( backend_file != "" ) {
+			backend_lib = backend_file;
+		}
+		int i = 0;
+		for ( i = 0; i < 10 && !sBackend; i++ ) {
+			sBackend = LoadLib( prefixes[i] + backend_lib + lib_suffix );
+			if ( sBackend == nullptr ) {
+#ifdef GE_WIN32
+				gDebug() << "Backend ( " << backend_lib << " ) loading error : " << ( prefixes[i] + backend_lib + lib_suffix ) << " : " << LibError() << "\n";
+#else
+				gDebug() << "Backend ( " << backend_lib << " ) loading error : " << LibError() << "\n";
+#endif
+			}
+		}
 		if ( sBackend == nullptr ) {
-			gDebug() << "Backend loading error : " << LibError() << ")\n";
 			exit(0);
+		} else {
+			gDebug() << "Backend file " << prefixes[--i] << backend_lib << lib_suffix << " loaded !\n";
 		}
 	}
 
@@ -164,15 +256,7 @@ Object* Instance::LoadObject( const std::string& filename )
 	f_type fLoadObject = (f_type)SymLib( backend(), "LoadObject" );
 	return fLoadObject( filename, this );
 }
-
-/*
-std::vector< Object* > Instance::LoadObjects( const std::string& filename )
-{
-	typedef std::vector< Object* > (*f_type)( const std::string&, Instance* );
-	f_type fLoadObjects = (f_type)dlsym( backend(), "LoadObjects" );
-	return fLoadObjects( filename, this );
-}
-*/
+#endif // GE_STATIC_BACKEND
 
 static uintptr_t _ge_AllocMemBlock( uintptr_t size )
 {
@@ -286,4 +370,4 @@ uint64_t Instance::queue()
 	return mQueues[mDevId];
 }
 
-} // namespace GE
+// } // namespace GE

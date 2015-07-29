@@ -42,9 +42,18 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 	, mHasResized( false )
 	, mWindow( 0 )
 	, mKeys{ false }
+	, mFps( 0.0f )
+	, mFpsImages( 0 )
+	, mFpsTimer( 0 )
 	, mDisplay( 0 )
 {
 	Window::Flags flags = static_cast<Window::Flags>( _flags );
+
+	// TODO / TBD : XFree86 screen scaling ?
+	if ( flags & Window::Fullscreen ) {
+		width = -1;
+		height = -1;
+	}
 
 	mDisplay = XOpenDisplay(0);
 	mScreen = DefaultScreen( mDisplay );
@@ -60,8 +69,8 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 		None
 	};
 	mVisualInfo = glXChooseVisual( mDisplay, mScreen, (int*)attributes );
-
 	mColorMap = XCreateColormap( mDisplay, RootWindow( mDisplay, mScreen ), mVisualInfo->visual, AllocNone );
+
 	mWindowAttributes = (XSetWindowAttributes*)mInstance->Malloc( sizeof(XSetWindowAttributes) );
 	mWindowAttributes->colormap = mColorMap;
 	mWindowAttributes->border_pixel = 0;
@@ -96,9 +105,10 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 	XMapRaised( mDisplay, mWindow );
 
 	if ( flags & Window::Fullscreen ) {
-		printf("fs\n");
+// 		int unused = 0;
 		Atom wm_fullscreen = XInternAtom( mDisplay, "_NET_WM_STATE_FULLSCREEN", true );
 		XChangeProperty( mDisplay, mWindow, XInternAtom( mDisplay, "_NET_WM_STATE", true), XA_ATOM, 32, PropModeReplace, (unsigned char *)&wm_fullscreen, 1 );
+// 		XGetGeometry( mDisplay, mWindow, (::Window*)&unused, &unused, &unused, &mWidth, &mHeight, (uint32_t*)&unused, (uint32_t*)&unused );
 	}
 
 
@@ -151,6 +161,12 @@ Vector2i& BaseWindow::cursorWarp()
 }
 
 
+float BaseWindow::fps() const
+{
+	return mFps;
+}
+
+
 void BaseWindow::SwapBuffersBase()
 {
 	pEventThread();
@@ -172,7 +188,12 @@ void BaseWindow::SwapBuffersBase()
 		}
 	}
 
-// 	glXSwapBuffers( mDisplay, mWindow );
+	mFpsImages++;
+	if ( Time::GetTick() - mFpsTimer > 500 ) {
+		mFps = mFpsImages * 1000.0f / ( Time::GetTick() - mFpsTimer );
+		mFpsTimer = Time::GetTick();
+		mFpsImages = 0;
+	}
 }
 
 

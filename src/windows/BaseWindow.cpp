@@ -160,6 +160,12 @@ Vector2i& BaseWindow::cursorWarp()
 }
 
 
+float BaseWindow::fps() const
+{
+	return mFps;
+}
+
+
 void BaseWindow::SwapBuffersBase()
 {
 	MSG message;
@@ -176,6 +182,13 @@ void BaseWindow::SwapBuffersBase()
 	mCursorWarp.y = point.y - mCursor.y;
 	mCursor.x = point.x;
 	mCursor.y = point.y;
+
+	mFpsImages++;
+	if ( Time::GetTick() - mFpsTimer > 500 ) {
+		mFps = mFpsImages * 1000.0f / ( Time::GetTick() - mFpsTimer );
+		mFpsTimer = Time::GetTick();
+		mFpsImages = 0;
+	}
 }
 
 
