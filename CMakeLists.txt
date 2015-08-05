@@ -84,6 +84,7 @@ set(INCLUDES
 	include/Scene.h
 	include/SkyRenderer.h
 	include/Thread.h
+	include/MetaObject.h
 	include/Time.h
 	include/Vector.h
 	include/Vertex.h
@@ -120,6 +121,7 @@ set(SOURCES ${SOURCES}
 	src/Time.cpp
 	src/Input.cpp
 	src/Thread.cpp
+	src/MetaObject.cpp
 	src/Debug.cpp
 # 	fake/dummy_vk.cpp
 )
