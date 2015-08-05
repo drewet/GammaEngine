@@ -49,6 +49,7 @@ public:
 	void setSize( uint32_t size );
 
 	void measureString( const std::string& str, int* width, int* height );
+	void Release();
 
 	Image* reallocTexture( int width, int height );
 	static FontLoader* AddFontLoader( FontLoader* loader );
@@ -56,6 +57,7 @@ public:
 protected:
 	void Load( File* file, int size, const std::string& extension, Instance* instance );
 
+	Instance* mAllocInstance;
 	int mSize;
 	Image* mTexture;
 	uint8_t* mData;

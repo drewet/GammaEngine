@@ -18,7 +18,7 @@ SRC := $(wildcard ../src/*.cpp)
 SRC += $(wildcard ../backends/opengles20/src/*.cpp)
 SRC += $(wildcard ../src/android/*.cpp)
 SRC := $(filter-out ../src/Vector.cpp, $(SRC))
-SRC := $(filter-out ../src/m.cpp, $(SRC))
+SRC := $(filter-out $(wildcard ../src/main*.cpp), $(SRC))
 
 $(info $(SRC))
 

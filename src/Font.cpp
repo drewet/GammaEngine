@@ -33,7 +33,8 @@ static bool FontLoaderFirstCall = true;
 
 
 Font::Font()
-	: mSize( 0 )
+	: mAllocInstance( nullptr )
+	, mSize( 0 )
 	, mTexture( nullptr )
 	, mData( nullptr )
 	, mFace( nullptr )
@@ -49,6 +50,7 @@ Font::Font( File* file, int size, const std::string& extension, Instance* instan
 	if ( !instance ) {
 		instance = Instance::baseInstance();
 	}
+
 	Load( file, size, extension, instance );
 	setSize( size );
 }
@@ -60,6 +62,7 @@ Font::Font( const std::string filename, int size, Instance* instance )
 	if ( !instance ) {
 		instance = Instance::baseInstance();
 	}
+
 	File* file = new File( filename, File::READ );
 	std::string extension = filename.substr( filename.rfind( "." ) + 1 );
 
@@ -123,6 +126,7 @@ void Font::Load( File* file, int size, const std::string& extension, Instance* i
 		*this = static_cast< Font >( *loader );
 		delete loader;
 		mModInstance = modInstance;
+		mAllocInstance = instance;
 	}
 }
 
@@ -191,6 +195,18 @@ void Font::measureString( const std::string& str, int* width, int* height )
 
 	*width = mx;
 	*height = y + mSize + (mSize * 0.4);
+}
+
+
+void Font::Release()
+{
+	if ( mTexture ) {
+		mTexture->Release();
+	}
+	if ( mData ) {
+		mAllocInstance->Free( mData );
+		mData = nullptr;
+	}
 }
 
 
