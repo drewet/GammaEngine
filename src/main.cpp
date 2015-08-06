@@ -50,7 +50,7 @@ int main( int argc, char** argv )
 {
 	srand( time(nullptr) );
 
-	Instance* instance = Instance::Create( "GammaEngine test", 42 );
+	Instance* instance = Instance::Create( "GammaEngine test", 42, true, "opengl43" );
 	Window* window = instance->CreateWindow( "Hello GammaEngine !", 1280, 720, Window::Resizable );
 	Input* input = new Input( window );
 	LightsThread* thread = new LightsThread( window );

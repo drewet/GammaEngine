@@ -188,7 +188,12 @@ void OpenGLES20Renderer2D::Render( Image* image, int mode, int start, int n, con
 void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle )
 {
 	Prerender();
-
+/*
+	// Ensure for gles:width/height variables
+	image->serverReference( mInstance );
+	int width = image->meta( "gles:width" );
+	int height = image->meta( "gles:height" );
+*/
 	if ( tw == -1 ) {
 		tw = image->width();
 	}
@@ -196,35 +201,39 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 		th = image->height();
 	}
 
+	image->serverReference( mInstance );
+	const float rx = 1.0f / image->meta( "gles:width", (float)image->width() );
+	const float ry = 1.0f / image->meta( "gles:height", (float)image->height() );
+
 	Vertex2D vertices[6];
 	memset( vertices, 0, sizeof(vertices) );
-	vertices[0].u = (float)tx / image->width();
-	vertices[0].v = (float)ty / image->height();
+	vertices[0].u = (float)tx * rx;
+	vertices[0].v = (float)ty * ry;
 	vertices[0].x = x;
 	vertices[0].y = y;
 
-	vertices[1].u = (float)(tx+tw) / image->width();
-	vertices[1].v = (float)(ty+th) / image->height();
+	vertices[1].u = (float)(tx+tw) * rx;
+	vertices[1].v = (float)(ty+th) * ry;
 	vertices[1].x = x + image->width();
 	vertices[1].y = y + image->height();
 
-	vertices[2].u = (float)(tx+tw) / image->width();
-	vertices[2].v = (float)ty / image->height();
+	vertices[2].u = (float)(tx+tw) * rx;
+	vertices[2].v = (float)ty * ry;
 	vertices[2].x = x + image->width();
 	vertices[2].y = y;
 
-	vertices[3].u = (float)tx / image->width();
-	vertices[3].v = (float)ty / image->height();
+	vertices[3].u = (float)tx * rx;
+	vertices[3].v = (float)ty * ry;
 	vertices[3].x = x;
 	vertices[3].y = y;
 
-	vertices[4].u = (float)tx / image->width();
-	vertices[4].v = (float)(ty+th) / image->height();
+	vertices[4].u = (float)tx * rx;
+	vertices[4].v = (float)(ty+th) * ry;
 	vertices[4].x = x;
 	vertices[4].y = y + image->height();
 
-	vertices[5].u = (float)(tx+tw) / image->width();
-	vertices[5].v = (float)(ty+th) / image->height();
+	vertices[5].u = (float)(tx+tw) * rx;
+	vertices[5].v = (float)(ty+th) * ry;
 	vertices[5].x = x + image->width();
 	vertices[5].y = y + image->height();
 
@@ -268,35 +277,39 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 		th = image->height();
 	}
 
+	image->serverReference( mInstance );
+	const float rx = 1.0f / image->meta( "gles:width", (float)image->width() );
+	const float ry = 1.0f / image->meta( "gles:height", (float)image->height() );
+
 	Vertex2D vertices[6];
 	memset( vertices, 0, sizeof(vertices) );
-	vertices[0].u = (float)tx / image->width();
-	vertices[0].v = (float)ty / image->height();
+	vertices[0].u = (float)tx * rx;
+	vertices[0].v = (float)ty * ry;
 	vertices[0].x = x;
 	vertices[0].y = y;
 
-	vertices[1].u = (float)(tx+tw) / image->width();
-	vertices[1].v = (float)(ty+th) / image->height();
+	vertices[1].u = (float)(tx+tw) * rx;
+	vertices[1].v = (float)(ty+th) * ry;
 	vertices[1].x = x + w;
 	vertices[1].y = y + h;
 
-	vertices[2].u = (float)(tx+tw) / image->width();
-	vertices[2].v = (float)ty / image->height();
+	vertices[2].u = (float)(tx+tw) * rx;
+	vertices[2].v = (float)ty * ry;
 	vertices[2].x = x + w;
 	vertices[2].y = y;
 
-	vertices[3].u = (float)tx / image->width();
-	vertices[3].v = (float)ty / image->height();
+	vertices[3].u = (float)tx * rx;
+	vertices[3].v = (float)ty * ry;
 	vertices[3].x = x;
 	vertices[3].y = y;
 
-	vertices[4].u = (float)tx / image->width();
-	vertices[4].v = (float)(ty+th) / image->height();
+	vertices[4].u = (float)tx * rx;
+	vertices[4].v = (float)(ty+th) * ry;
 	vertices[4].x = x;
 	vertices[4].y = y + h;
 
-	vertices[5].u = (float)(tx+tw) / image->width();
-	vertices[5].v = (float)(ty+th) / image->height();
+	vertices[5].u = (float)(tx+tw) * rx;
+	vertices[5].v = (float)(ty+th) * ry;
 	vertices[5].x = x + w;
 	vertices[5].y = y + h;
 
@@ -325,8 +338,9 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	const char* data = text.data();
 	const uint32_t len = text.length();
 
-	const float rx = 1.0f / font->texture()->width();
-	const float ry = 1.0f / font->texture()->height();
+	font->texture()->serverReference( mInstance );
+	const float rx = 1.0f / font->texture()->meta( "gles:width", (float)font->texture()->width() );
+	const float ry = 1.0f / font->texture()->meta( "gles:height", (float)font->texture()->height() );
 	uint32_t iBuff = 0;
 
 	Matrix matrix;

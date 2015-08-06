@@ -23,9 +23,17 @@
 #include "Image.h"
 #include "Debug.h"
 
-#ifndef ALIGN
-	#define ALIGN(x, align) (((x)+((align)-1))&~((align)-1))
-#endif
+
+static uint32_t geGetNextPower2( uint32_t width )
+{
+	uint32_t b = width;
+	int n;
+	for ( n = 0; b != 0; n++ ) b >>= 1;
+	b = 1 << n;
+	if ( b == 2 * width ) b >>= 1;
+	return b;
+}
+
 
 extern "C" GE::Instance* CreateInstance( const char* appName, uint32_t appVersion ) {
 	return new OpenGLES20Instance( appName, appVersion );
@@ -72,7 +80,22 @@ uint64_t OpenGLES20Instance::ReferenceImage( Image* image )
 	glGenTextures( 1, &glTextureID );
 	glBindTexture( GL_TEXTURE_2D, glTextureID );
 
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, image->width(), image->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data() );
+	int textureWidth = geGetNextPower2( image->width() );
+	int textureHeight = geGetNextPower2( image->height() );
+	image->setMeta( "gles:width", textureWidth );
+	image->setMeta( "gles:height", textureHeight );
+
+	if ( textureWidth != (int)image->width() or textureHeight != (int)image->height() ) {
+		uint32_t* data = (uint32_t*)Instance::baseInstance()->Malloc( textureWidth * textureHeight * sizeof( uint32_t ), false );
+		for ( uint32_t y = 0; y < image->height(); y++ ) {
+			memcpy( &data[ y * textureWidth ], &image->data()[ y * image->width() ], sizeof( uint32_t ) * image->width() );
+		}
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+		Instance::baseInstance()->Free( data );
+	} else {
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, image->width(), image->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data() );
+	}
+
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
