@@ -49,6 +49,7 @@ public:
 	virtual void Draw( int x, int y, int w, int h, Image* image, int tx, int ty, int tw, int th, float angle );
 
 	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text );
+	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::wstring& text );
 
 	virtual void DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 );
 

@@ -129,6 +129,7 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 
 // 	mEventThread = new std::thread( &BaseWindow::pEventThread, this );
 
+	Instance::setLocale( std::string( getenv( "LANG" ) ).substr( 0, 2 ) );
 }
 
 

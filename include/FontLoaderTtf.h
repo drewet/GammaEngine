@@ -47,6 +47,8 @@ public:
 	virtual void Load( Instance* instance, File* file, uint32_t size );
 
 	virtual void resize( Font* font, int size );
+	virtual void RenderGlyphs( Font* font );
+	virtual uint32_t glyphWidth( Font* font, wchar_t c );
 
 private:
 	static void fontPrintTextImpl2( FT_Bitmap* bitmap, int xofs, int yofs, uint32_t* framebuffer, int width, int height );

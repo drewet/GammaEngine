@@ -66,6 +66,10 @@ Instance* Instance::mBaseInstance = nullptr;
 void* Instance::sBackend = nullptr;
 uint64_t Instance::mBaseThread = 0;
 
+std::string Instance::sLocale = "";
+std::string Instance::sUserName = "";
+std::string Instance::sUserEmail = "";
+
 Instance* Instance::baseInstance()
 {
 	return mBaseInstance;
@@ -369,5 +373,42 @@ uint64_t Instance::queue()
 {
 	return mQueues[mDevId];
 }
+
+
+std::string Instance::locale()
+{
+	return sLocale;
+}
+
+
+std::string Instance::username()
+{
+	return sUserName;
+}
+
+
+std::string Instance::useremail()
+{
+	return sUserEmail;
+}
+
+
+void Instance::setLocale( const std::string& s )
+{
+	sLocale = s;
+}
+
+
+void Instance::setUserName( const std::string& s )
+{
+	sUserName = s;
+}
+
+
+void Instance::setUserEmail( const std::string& s )
+{
+	sUserEmail = s;
+}
+
 
 // } // namespace GE

@@ -17,6 +17,7 @@ typedef struct in_addr IN_ADDR;
 #endif
 #include <string.h>
 #include <string>
+#include <cstdlib>
 
 #include "Instance.h"
 #include "Socket.h"
@@ -51,7 +52,6 @@ int Socket::Connect( const std::string& server, short unsigned int port, PortTyp
 		ptype = SOCK_DGRAM;
 	}
 
-	errno = 0;
 	addr.s_addr = inet_addr( server.c_str() );
 	hp = gethostbyname( server.c_str() );
 

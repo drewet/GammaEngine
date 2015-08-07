@@ -56,15 +56,7 @@ int main( int argc, char** argv )
 	Input* input = new Input( window );
 	LightsThread* thread = new LightsThread( window );
 
-	Socket* sock = new Socket();
-	sock->Connect( "drich.fr", 90 );
-	sock->HTTPGet( "/stats" );
-	std::string header;
-	gDebug() << "Response : \n" << sock->HTTPResponse( &header );
-	gDebug() << "Header : \n" << header << "\n";
-	return 0;
-
-	Font* font = new Font( "scene/Downlink.ttf" );
+	Font* font = new Font( "scene/Arial Unicode MS.ttf" );
 	gDebug() << "font->texture() : " << font->texture() << "\n";
 // 	return 0;
 
@@ -189,7 +181,8 @@ int main( int argc, char** argv )
 		sky->Render( camera );
 
 // 		renderer2d->Draw( 0, 0, font->texture() );
-		renderer2d->Draw(0, 0, font, 0xFFFFFFFF, "FPS : " + std::to_string( (int)fps ) );
+		renderer2d->Draw( 0, 0, font, 0xFFFFFFFF, "FPS : " + std::to_string( (int)fps ) );
+		renderer2d->Draw( 10, 256, font, 0xFFFFFFFF,  L"\x20ac \x21ac \x22ac \x23ac \x24ac 漢 字 汉 字" );
 
 		window->SwapBuffers();
 		Time::GlobalSync();

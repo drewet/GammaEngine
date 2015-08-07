@@ -17,6 +17,7 @@
  *
  */
 
+#include <cmath>
 #include "FontLoaderTtf.h"
 #include "File.h"
 #include "Image.h"
@@ -85,11 +86,19 @@ void FontLoaderTtf::resize( Font* font, int size )
 	fDebug( font, size );
 
 	FT_Set_Pixel_Sizes( (FT_Face)font->face(), 0, size );
+}
+
+
+void FontLoaderTtf::RenderGlyphs( Font* font )
+{
+	fDebug( font );
+
+	FT_Set_Pixel_Sizes( (FT_Face)font->face(), 0, font->size() );
 
 	FT_Face face = (FT_Face)font->face();
 	FT_GlyphSlot slot = face->glyph;
+	std::map< wchar_t, Font::Glyph >& glyphs = font->glyphs();
 	uint16_t n;
-	uint16_t chr = 0;
 	int x = 0;
 	int y = 0;
 	bool first_null_char = true;
@@ -97,51 +106,65 @@ void FontLoaderTtf::resize( Font* font, int size )
 	int total_width = 0;
 	int advY = 0;
 	int advX = 0;
+	int count = 0;
 
-	for ( n = 0; n < 256; n++ ) {
-		chr = n;
-		FT_UInt glyph_index = FT_Get_Char_Index( face, chr );
+	for ( std::map< wchar_t, Font::Glyph >::const_iterator it = glyphs.begin(); it != glyphs.end(); it++, count++ ) {
+		n = (*it).first;
+		FT_UInt glyph_index = FT_Get_Char_Index( face, n );
 		int error = FT_Load_Glyph( face, glyph_index, FT_LOAD_DEFAULT );
 		if ( error ) continue;
-		error = FT_Render_Glyph( face->glyph, FT_RENDER_MODE_NORMAL );
+		error = FT_Render_Glyph( slot, FT_RENDER_MODE_NORMAL );
 		if ( error ) continue;
 		if ( !glyph_index && !first_null_char ) {
 			continue;
 		}
-		total_width += slot->bitmap.width;
-		advX = std::max( advX, std::max( (int)slot->advance.x >> 6, std::max( (int)slot->bitmap.width, mSize ) ) );
+		advX = std::max( advX, std::max( (int)slot->advance.x >> 6, std::max( (int)slot->bitmap.width, (int)font->size() ) ) );
 		advY = std::max( advY, (int)slot->bitmap.rows );
+		total_width += advX;
 		first_null_char = false;
 	}
 
 //	int side = std::max( advX * 16, advY * 16 );
 //	Image* texture = font->reallocTexture( side, side );
-	Image* texture = font->reallocTexture( advX * 16, advY * 16 );
+	int width = advX * 2 + std::sqrt( (double)( advX * advY * count ) );
+	int height = advY * 2 + std::sqrt( (double)( advX * advY * count ) );
+	Image* texture = font->reallocTexture( width, height );
+// 	Image* texture = font->reallocTexture( advX * 16, advY * 16 );
 
 	first_null_char = true;
 	y = advY;
 
-	for ( n = 0; n < 256; n++ ) {
-		chr = n;
-		FT_UInt glyph_index = FT_Get_Char_Index( face, chr );
+	for ( std::map< wchar_t, Font::Glyph >::const_iterator it = glyphs.begin(); it != glyphs.end(); it++ ) {
+		n = (*it).first;
+		FT_UInt glyph_index = FT_Get_Char_Index( face, n );
 		int error = FT_Load_Glyph( face, glyph_index, FT_LOAD_DEFAULT );
-		if ( error ) continue;
-		error = FT_Render_Glyph( face->glyph, FT_RENDER_MODE_NORMAL );
-		if ( error ) continue;
+		if ( error ) {
+			memcpy( font->glyph(n), font->glyph(0), sizeof( Font::Glyph ) );
+			font->glyph(n)->c = n;
+			continue;
+		}
+		error = FT_Render_Glyph( slot, FT_RENDER_MODE_NORMAL );
+		if ( error ) {
+			memcpy( font->glyph(n), font->glyph(0), sizeof( Font::Glyph ) );
+			font->glyph(n)->c = n;
+			continue;
+		}
 
 		if ( (uint32_t)( x + advX ) > texture->width() ) {
 			x = 0;
 			y += advY;
 		}
 
-		font->glyphs()[n].x = std::max( x, 0 );
-		font->glyphs()[n].y = y - slot->bitmap_top;
-		font->glyphs()[n].w = slot->bitmap.width + slot->bitmap_left;
-		font->glyphs()[n].h = slot->bitmap.rows;
-		font->glyphs()[n].advX = slot->advance.x >> 6;
-		font->glyphs()[n].posY = slot->bitmap_top;
+		font->glyph(n)->x = std::max( x, 0 );
+		font->glyph(n)->y = y - slot->bitmap_top;
+		font->glyph(n)->w = slot->bitmap.width + slot->bitmap_left;
+		font->glyph(n)->h = slot->bitmap.rows;
+		font->glyph(n)->advX = slot->advance.x >> 6;
+		font->glyph(n)->posY = slot->bitmap_top;
 
 		if ( !glyph_index && !first_null_char ) {
+			memcpy( font->glyph(n), font->glyph(0), sizeof( Font::Glyph ) );
+			font->glyph(n)->c = n;
 			continue;
 		}
 
@@ -175,6 +198,38 @@ void FontLoaderTtf::fontPrintTextImpl2( FT_Bitmap* bitmap, int xofs, int yofs, u
 		fbLine += width;
 	}
 }
+
+
+uint32_t FontLoaderTtf::glyphWidth( Font* font, wchar_t c )
+{
+	if ( font->glyphs().count( c ) <= 0 ) {
+		Font::Glyph g = {
+			.c = c,
+			.x = 0,
+			.y = 0,
+			.w = 0,
+			.h = 0,
+			.advX = 0,
+			.posY = 0
+		};
+		font->glyphs().insert( std::make_pair( c, g ) );
+		font->RenderGlyphs();
+	}
+	return font->glyph( c )->advX;
+/*
+	FT_Set_Pixel_Sizes( (FT_Face)font->face(), 0, font->size() );
+
+	FT_UInt glyph_index = FT_Get_Char_Index( (FT_Face)font->face(), c );
+	int error = FT_Load_Glyph( (FT_Face)font->face(), glyph_index, FT_LOAD_DEFAULT );
+	if ( error ) { gDebug() << "err1 " << error << " (" << font->size() << ")\n"; return 0; }
+// 	error = FT_Render_Glyph( (FT_Face)font->face()->glyph, FT_RENDER_MODE_NORMAL );
+// 	if ( error ) { gDebug() << "err2 " << error << "\n"; return 0; }
+	gDebug() << "ret : " << ( ((FT_Face)font->face())->glyph->advance.x >> 6 ) << "\n";
+	return font->size();
+	return ( ((FT_Face)font->face())->glyph->advance.x >> 6 );
+*/
+}
+
 
 
 } // namespace GE

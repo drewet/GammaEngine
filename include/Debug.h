@@ -63,9 +63,9 @@ private:
 static inline std::string className(const std::string& prettyFunction)
 {
 	size_t colons = prettyFunction.find("::");
-	if ( prettyFunction.find( "GE::" ) ) {
-		colons += 2 + prettyFunction.substr(colons + 2).find( "::" );
-	}
+// 	if ( prettyFunction.find( "GE::" ) ) {
+// 		colons += 2 + prettyFunction.substr(colons + 2).find( "::" );
+// 	}
 	if (colons == std::string::npos)
 		return "<none>";
 	size_t begin = prettyFunction.substr(0,colons).rfind(" ") + 1;

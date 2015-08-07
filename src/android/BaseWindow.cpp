@@ -28,23 +28,23 @@
 #include "Input.h"
 #include "Debug.h"
 
-int main( int, char** );
-
-namespace GE {
-
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "GE", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "GE", __VA_ARGS__))
 
-Engine* BaseWindow::mEngine = nullptr;
-struct android_app* BaseWindow::mState = nullptr;
+int main( int, char** );
 
-void android_main( struct android_app* state )
+extern "C" void android_main( struct android_app* state )
 {
 	LOGW("\n\n\n\n");
 	LOGW("===================== GammaEngine for Android =====================\n");
 
-	BaseWindow::AndroidInit( state );
+	GE::BaseWindow::AndroidInit( state );
 }
+
+namespace GE {
+
+Engine* BaseWindow::mEngine = nullptr;
+struct android_app* BaseWindow::mState = nullptr;
 
 bool BaseWindow::mKeys[512];
 Vector2i BaseWindow::mCursor;
@@ -283,7 +283,6 @@ int32_t BaseWindow::engine_handle_input( struct android_app* app, AInputEvent* e
 		int pointer_index = ( AMotionEvent_getAction( event ) & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK ) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
 
 		for ( int j = 0; j < n; j++ ) {
-			gDebug() << "touch " << j << "\n";
 			ATouch* touch = nullptr;
 			for ( uint32_t i = 0; i < 16; i++ ) {
 				if ( touches[i].used && ( ( touches[i].action == AMOTION_EVENT_ACTION_UP ) || ( touches[i].action == AMOTION_EVENT_ACTION_POINTER_UP ) ) ) {
@@ -297,7 +296,6 @@ int32_t BaseWindow::engine_handle_input( struct android_app* app, AInputEvent* e
 					break;
 				}
 			}
-			gDebug() << "touch : " << touch << "\n";
 			if ( !touch ) {
 				for ( uint32_t i = 0; i < 16; i++ ) {
 					if ( touches[i].used == false ) {
@@ -308,7 +306,6 @@ int32_t BaseWindow::engine_handle_input( struct android_app* app, AInputEvent* e
 					}
 				}
 			}
-			gDebug() << "touch : " << touch << "\n";
 			if( touch ) {
 				if ( j == pointer_index ) {
 					touch->action = action;
@@ -329,7 +326,6 @@ int32_t BaseWindow::engine_handle_input( struct android_app* app, AInputEvent* e
 					Vector2i lastCursor = mCursor;
 					mCursor.x = (int)touch->x;
 					mCursor.y = (int)touch->y;
-					gDebug() << "touch : " << mCursor.x << ", " << mCursor.y << "\n";
 // 					if ( !engine->last_cPress ) {
 // 						mouse_last_x = libge_context->mouse_x;
 // 						mouse_last_y = libge_context->mouse_y;
@@ -383,15 +379,37 @@ extern "C" JNIEXPORT void JNICALL Java_com_drich_libge_LibGE_setSurface( JNIEnv*
 	BaseWindow::androidEngine()->ofsx = ofsx;
 	BaseWindow::androidEngine()->ofsy = ofsy;
 	BaseWindow::androidEngine()->aSurface = ANativeWindow_fromSurface( env, surface );
-	gDebug() << " ===> " << BaseWindow::androidEngine()->aSurface;
+	gDebug() << " ===> " << BaseWindow::androidEngine()->aSurface << "\n";
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_drich_libge_LibGE_setHasSurface(JNIEnv* env, jobject obj, jint _hasSurface)
+
+extern "C" JNIEXPORT void JNICALL Java_com_drich_libge_LibGE_setHasSurface( JNIEnv* env, jobject obj, jint _hasSurface )
 {
+	fDebug( env, obj, _hasSurface );
+
 	while ( !BaseWindow::androidEngine() ) {
 		Time::Sleep( 1 );
 	}
 	BaseWindow::androidEngine()->hasSurface = _hasSurface;
+}
+
+
+static std::string ge_jstring_to_string( JNIEnv* env, jstring string )
+{
+	const char* s = env->GetStringUTFChars(string, nullptr );
+	std::string ret = std::string( s );
+	env->ReleaseStringUTFChars( string, s );
+	return ret;
+}
+
+
+extern "C" JNIEXPORT void JNICALL Java_com_drich_libge_LibGE_AndroidInit( JNIEnv* env, jobject obj, jstring locale, jstring username, jstring email )
+{
+	fDebug( env, obj, ge_jstring_to_string( env, locale ), ge_jstring_to_string( env, username ), ge_jstring_to_string( env, email ) );
+
+	Instance::setLocale( ge_jstring_to_string( env, locale ) );
+	Instance::setUserName( ge_jstring_to_string( env, username ) );
+	Instance::setUserEmail( ge_jstring_to_string( env, email ) );
 }
 
 } // namespace GE 

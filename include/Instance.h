@@ -67,6 +67,13 @@ public:
 	uint64_t cpuRamCounter();
 	uint64_t gpuRamCounter();
 
+	static std::string locale();
+	static std::string username();
+	static std::string useremail();
+	static void setLocale( const std::string& s );
+	static void setUserName( const std::string& s );
+	static void setUserEmail( const std::string& s );
+
 	static Instance* baseInstance();
 	static uint64_t baseThread();
 	static void* backend();
@@ -75,6 +82,9 @@ protected:
 	static Instance* mBaseInstance;
 	static uint64_t mBaseThread;
 	static void* sBackend;
+	static std::string sLocale;
+	static std::string sUserName;
+	static std::string sUserEmail;
 
 	int mDevId;
 	uint32_t mGpuCount;

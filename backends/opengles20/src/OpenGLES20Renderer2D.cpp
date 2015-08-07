@@ -19,6 +19,8 @@
 
 #include <fstream>
 #include <vector>
+#include <locale>
+#include <iomanip>
 
 #include "Window.h"
 #include "Instance.h"
@@ -357,13 +359,13 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 			continue;
 		}
 
-		float sx = ( (float)font->glyphs()[c].x ) * rx;
-		float sy = ( (float)font->glyphs()[c].y ) * ry;
-		float texMaxX = ( (float)font->glyphs()[c].w ) * rx;
-		float texMaxY = ( (float)font->glyphs()[c].h ) * ry;
-		float width = font->glyphs()[c].w;
-		float height = font->glyphs()[c].h;
-		float fy = (float)y - font->glyphs()[c].posY;
+		float sx = ( (float)font->glyph(c)->x ) * rx;
+		float sy = ( (float)font->glyph(c)->y ) * ry;
+		float texMaxX = ( (float)font->glyph(c)->w ) * rx;
+		float texMaxY = ( (float)font->glyph(c)->h ) * ry;
+		float width = font->glyph(c)->w;
+		float height = font->glyph(c)->h;
+		float fy = (float)y - font->glyph(c)->posY;
 
 		vertices[iBuff + 0].u = sx;
 		vertices[iBuff + 0].v = sy;
@@ -403,7 +405,118 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 
 		vertices[iBuff + 0].color = vertices[iBuff + 1].color = vertices[iBuff + 2].color = vertices[iBuff + 3].color = vertices[iBuff + 4].color = vertices[iBuff + 5].color = 0xFFFFFFFF;
 
-		x += font->glyphs()[c].advX;
+		x += font->glyph(c)->advX;
+		iBuff += 6;
+
+		if ( iBuff >= 6*32 && i + 1 < len ) {
+			glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+			glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
+			Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+			iBuff = 0;
+		}
+	}
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
+	Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+}
+
+
+void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::wstring& text )
+{
+	const wchar_t* data = text.data();
+	const uint32_t len = text.length();
+	bool rerender = false;
+	std::map< wchar_t, Font::Glyph >& glyphs = font->glyphs();
+
+	for ( uint32_t i = 0; i < len; i++ ) {
+		wchar_t c = data[i];
+		if ( glyphs.count( c ) <= 0 ) {
+			Font::Glyph g = {
+				.c = c,
+				.x = 0,
+				.y = 0,
+				.w = 0,
+				.h = 0,
+				.advX = 0,
+				.posY = 0
+			};
+			glyphs.insert( std::make_pair( c, g ) );
+			rerender = true;
+		}
+	}
+	if ( rerender ) {
+		font->RenderGlyphs();
+	}
+
+	Prerender();
+
+	y += font->size();
+	const int base_x = x;
+	font->texture()->serverReference( mInstance );
+	const float rx = 1.0f / font->texture()->meta( "gles:width", (float)font->texture()->width() );
+	const float ry = 1.0f / font->texture()->meta( "gles:height", (float)font->texture()->height() );
+	uint32_t iBuff = 0;
+
+	Matrix matrix;
+	Vertex2D vertices[6*32];
+	memset( vertices, 0, sizeof(vertices) );
+
+	for ( uint32_t i = 0; i < len; i++ ) {
+		wchar_t c = data[i];
+
+		if ( data[i] == '\n' ) {
+			x = base_x;
+			y += font->size();
+			continue;
+		}
+
+		float sx = ( (float)font->glyph(c)->x ) * rx;
+		float sy = ( (float)font->glyph(c)->y ) * ry;
+		float texMaxX = ( (float)font->glyph(c)->w ) * rx;
+		float texMaxY = ( (float)font->glyph(c)->h ) * ry;
+		float width = font->glyph(c)->w;
+		float height = font->glyph(c)->h;
+		float fy = (float)y - font->glyph(c)->posY;
+
+		vertices[iBuff + 0].u = sx;
+		vertices[iBuff + 0].v = sy;
+		vertices[iBuff + 0].x = x;
+		vertices[iBuff + 0].y = fy;
+// 		vertices[iBuff + 0].z = 0.0f;
+
+		vertices[iBuff + 1].u = sx+texMaxX;
+		vertices[iBuff + 1].v = sy+texMaxY;
+		vertices[iBuff + 1].x = x+width;
+		vertices[iBuff + 1].y = fy+height;
+// 		vertices[iBuff + 1].z = 0.0f;
+
+		vertices[iBuff + 2].u = sx+texMaxX;
+		vertices[iBuff + 2].v = sy;
+		vertices[iBuff + 2].x = x+width;
+		vertices[iBuff + 2].y = fy;
+// 		vertices[iBuff + 2].z = 0.0f;
+		
+		vertices[iBuff + 3].u = sx;
+		vertices[iBuff + 3].v = sy;
+		vertices[iBuff + 3].x = x;
+		vertices[iBuff + 3].y = fy;
+// 		vertices[iBuff + 3].z = 0.0f;
+
+		vertices[iBuff + 4].u = sx;
+		vertices[iBuff + 4].v = sy+texMaxY;
+		vertices[iBuff + 4].x = x;
+		vertices[iBuff + 4].y = fy+height;
+// 		vertices[iBuff + 4].z = 0.0f;
+
+		vertices[iBuff + 5].u = sx+texMaxX;
+		vertices[iBuff + 5].v = sy+texMaxY;
+		vertices[iBuff + 5].x = x+width;
+		vertices[iBuff + 5].y = fy+height;
+// 		vertices[iBuff + 5].z = 0.0f;
+
+		vertices[iBuff + 0].color = vertices[iBuff + 1].color = vertices[iBuff + 2].color = vertices[iBuff + 3].color = vertices[iBuff + 4].color = vertices[iBuff + 5].color = 0xFFFFFFFF;
+
+		x += font->glyph(c)->advX;
 		iBuff += 6;
 
 		if ( iBuff >= 6*32 && i + 1 < len ) {

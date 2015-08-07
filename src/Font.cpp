@@ -38,9 +38,21 @@ Font::Font()
 	, mTexture( nullptr )
 	, mData( nullptr )
 	, mFace( nullptr )
-	, mGlyphs { { 0, 0, 0, 0, 0, 0 } }
+// 	, mGlyphs { { 0, 0, 0, 0, 0, 0 } }
 	, mModInstance( nullptr )
 {
+	for ( uint16_t n = 0; n < 256; n++ ) {
+		Glyph g = {
+			.c = n,
+			.x = 0,
+			.y = 0,
+			.w = 0,
+			.h = 0,
+			.advX = 0,
+			.posY = 0
+		};
+		mGlyphs.insert( std::make_pair( n, g ) );
+	}
 }
 
 
@@ -143,9 +155,18 @@ void* Font::face() const
 }
 
 
-Font::Glyph* Font::glyphs()
+std::map< wchar_t, Font::Glyph >& Font::glyphs()
 {
 	return mGlyphs;
+}
+
+
+Font::Glyph* Font::glyph( wchar_t c ) const
+{
+	if ( mGlyphs.count( c ) > 0 ) {
+		return (Font::Glyph*)&mGlyphs.at( c );
+	}
+	return nullptr;
 }
 
 
@@ -159,12 +180,25 @@ void Font::setSize( uint32_t size )
 {
 	fDebug( size, mModInstance );
 
-	if ( size <= 0 || !mModInstance ) {
+	if ( size <= 0 or !mModInstance ) {
 		return;
 	}
 
 	mSize = size;
 	mModInstance->resize( this, size );
+	mModInstance->RenderGlyphs( this );
+}
+
+
+void Font::RenderGlyphs()
+{
+	fDebug0();
+
+	if ( !mModInstance ) {
+		return;
+	}
+
+	mModInstance->RenderGlyphs( this );
 }
 
 
@@ -194,7 +228,37 @@ void Font::measureString( const std::string& str, int* width, int* height )
 	}
 
 	*width = mx;
-	*height = y + mSize + (mSize * 0.4);
+	*height = y + mSize + ( mSize * 0.4 );
+}
+
+
+void Font::measureString( const std::wstring& str, int* width, int* height )
+{
+	int i = 0;
+	int mx = 0;
+	int x = 0;
+	int y = 0;
+
+	for ( i = 0; str[i]; i++ ) {
+		if ( str[i] == '\n' ) {
+			if ( x > mx ) {
+				mx = x;
+			}
+			x = 0;
+			y += mSize;
+			continue;
+		}
+		x += mModInstance->glyphWidth( this, str[i] );
+	}
+	if ( x > mx ) {
+		mx = x;
+	}
+	if ( mx == 0 ) {
+		mx = x;
+	}
+
+	*width = mx;
+	*height = y + mSize + ( mSize * 0.4 );
 }
 
 
