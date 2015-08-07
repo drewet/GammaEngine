@@ -83,6 +83,7 @@ set(INCLUDES
 	include/Renderer.h
 	include/Scene.h
 	include/SkyRenderer.h
+	include/Socket.h
 	include/Thread.h
 	include/MetaObject.h
 	include/Time.h
@@ -120,6 +121,7 @@ set(SOURCES ${SOURCES}
 	src/File.cpp
 	src/Time.cpp
 	src/Input.cpp
+	src/Socket.cpp
 	src/Thread.cpp
 	src/MetaObject.cpp
 	src/Debug.cpp

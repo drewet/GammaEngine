@@ -17,6 +17,7 @@
 #include "PhysicalBody.h"
 #include "PhysicalGraph.h"
 #include "Thread.h"
+#include "Socket.h"
 #include "Light.h"
 #include "DeferredRenderer.h"
 #include "SkyRenderer.h"
@@ -54,6 +55,14 @@ int main( int argc, char** argv )
 	Window* window = instance->CreateWindow( "Hello GammaEngine !", 1280, 720, Window::Resizable );
 	Input* input = new Input( window );
 	LightsThread* thread = new LightsThread( window );
+
+	Socket* sock = new Socket();
+	sock->Connect( "drich.fr", 90 );
+	sock->HTTPGet( "/stats" );
+	std::string header;
+	gDebug() << "Response : \n" << sock->HTTPResponse( &header );
+	gDebug() << "Header : \n" << header << "\n";
+	return 0;
 
 	Font* font = new Font( "scene/Downlink.ttf" );
 	gDebug() << "font->texture() : " << font->texture() << "\n";

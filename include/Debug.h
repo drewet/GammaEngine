@@ -110,9 +110,9 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 		Debug() << ", ";
 	}
 // 	Debug() << "[" << type << "]";
-	Debug() << cap;
+	if ( cap ) Debug() << cap;
 	Debug() << arg1;
-	Debug() << cap;
+	if ( cap ) Debug() << cap;
 	fDebug_base( end, false, args... );
 }
 

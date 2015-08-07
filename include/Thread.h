@@ -31,10 +31,11 @@ class Thread
 {
 public:
 	Thread( Window* shared_graphics_window = nullptr );
-	~Thread();
+	virtual ~Thread();
 
 	void Start();
 	void Pause();
+	void Stop();
 	void Join();
 	bool running();
 
