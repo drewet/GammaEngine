@@ -256,7 +256,7 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 					}
 
 					if ( iBuff + 1 >= maxBuff ) {
-						buff = ( Vertex* )instance->Realloc( buff, maxBuff + 1024 );
+						buff = ( Vertex* )instance->Realloc( buff, sizeof( Vertex ) * ( maxBuff + 1024 ) );
 						maxBuff += 1024;
 					}
 					iBuff++;
@@ -266,7 +266,7 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 			}
 			if ( n == 3 ) { // Triangle
 				if ( iIndices + 3 >= maxIndices ) {
-					indices = ( uint32_t* )instance->Realloc( indices, maxIndices + 128 * 3 );
+					indices = ( uint32_t* )instance->Realloc( indices, sizeof( uint32_t ) * ( maxIndices + 128 * 3 ) );
 					maxIndices += 128 * 3;
 				}
 				memcpy( &indices[iIndices], face_indices, sizeof( uint32_t ) * 3 );
