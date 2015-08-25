@@ -1,6 +1,8 @@
 # GammaEngine
 The Gamma Engine Library is a heavy game engine, providing every functions to create a complete game without any other external library. It will be multi-threaded by design, and only working with latest rendering technologies (except for GL ES 2.0 which is getting old, but many mobile devices are still using it).
 
+Current status : far away from release
+
 # Building
 To compile GammaEngine, you will need the following dependancies :
  * CMake
