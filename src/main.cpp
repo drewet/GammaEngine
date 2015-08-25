@@ -60,7 +60,8 @@ int main( int argc, char** argv )
 	gDebug() << "font->texture() : " << font->texture() << "\n";
 // 	return 0;
 
-	std::list< Object* > scene_objects = Object::LoadObjects( "scene/street.obj", instance );
+// 	std::list< Object* > scene_objects = Object::LoadObjects( "scene/street.obj", instance );
+	std::list< Object* > scene_objects = Object::LoadObjects( "scene/Paris/paris.obj", instance );
 //	std::list< Object* > scene_objects = Object::LoadObjects( "scene/city.obj", instance );
 
 	Object* cube = instance->LoadObject( "scene/cube.obj" );
@@ -92,20 +93,27 @@ int main( int argc, char** argv )
 	Light* light4 = new Light( Vector4f( 1.0, 1.0, 1.0, 4.0 ), Vector3f( 2.8f, -100.0f, 5.9f ), Vector3f( -0.4f, 0.0f, -1.0f ), 30.0f, 50.0f );
 
 
+	gDebug() << "A\n";
 	Renderer* renderer = instance->CreateRenderer();
+	gDebug() << "B\n";
 	renderer->LoadVertexShader( "shaders/basic.vert" );
 	renderer->LoadFragmentShader( "shaders/basic.frag" );
+	gDebug() << "C\n";
 	renderer->AddObject( cube );
+	gDebug() << "D\n";
 // 	renderer->AddObject( cube2 );
 	for ( decltype(scene_objects)::iterator it = scene_objects.begin(); it != scene_objects.end(); ++it ) {
 		renderer->AddObject( *it );
 	}
+	gDebug() << "E\n";
 	renderer->Compute();
+	gDebug() << "F\n";
 
 	Renderer2D* renderer2d = instance->CreateRenderer2D();
 	renderer2d->AssociateSize( window );
 
 	DeferredRenderer* deferredRenderer = instance->CreateDeferredRenderer( window->width(), window->height() );
+	deferredRenderer->AssociateSize( window );
 // 	deferredRenderer->setAmbientColor( Vector4f( 0.15f, 0.15f, 0.15f, 1.0f ) );
 	deferredRenderer->setAmbientColor( Vector4f( 0.5f, 0.5f, 0.5f, 1.0f ) );
 	deferredRenderer->AddSunLight( sun_light );
@@ -123,6 +131,7 @@ int main( int argc, char** argv )
 
 // 	SkyRenderer* sky = new SkyRenderer( instance, 100000.0f );
 	SkyRenderer* sky = new SkyRenderer( instance, 1378114.0f );
+	sky->AssociateSize( window );
 
 	thread->deferredRenderer = deferredRenderer;
 	thread->lights = lights;
@@ -140,6 +149,8 @@ int main( int argc, char** argv )
 	float fps_max = 0.0f;
 	float time = Time::GetSeconds();
 	uint32_t img = 0;
+
+// 	exit(0);
 
 	while ( 1 ) {
 		input->Update();
@@ -173,11 +184,12 @@ int main( int argc, char** argv )
 		window->Clear( 0xFF202020 );
 		window->BindTarget();
 
+		renderer->projectionMatrix()->Perspective( 60.0f, (float)window->width() / window->height(), 0.01f, 1000.0f );
+
 		deferredRenderer->Bind();
 		scene->Draw( camera );
 		deferredRenderer->Look( camera );
 		deferredRenderer->Render();
-// 		deferredRenderer->Unbind();
 		sky->Render( camera );
 
 // 		renderer2d->Draw( 0, 0, font->texture() );

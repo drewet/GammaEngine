@@ -77,7 +77,7 @@ uint64_t OpenGL43Instance::ReferenceImage( Image* image )
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	((OpenGL43Instance*)Instance::baseInstance())->AffectVRAM( image->width() * image->height() * sizeof( uint32_t ) );
 
-	gDebug() << "New texture referenced\n";
+	gDebug() << "New texture referenced ( VRAM usage : " << ( ((OpenGL43Instance*)Instance::baseInstance())->mGpuRamCounter / 1024 ) << " KB )\n";
 	return glTextureID;
 }
 

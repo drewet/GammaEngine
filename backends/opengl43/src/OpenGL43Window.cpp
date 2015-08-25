@@ -96,6 +96,7 @@ OpenGL43Window::OpenGL43Window( Instance* instance, const std::string& title, in
 	DestroyWindow( (HWND)mWindow );
 	
 	BaseWindow* thiz = this;
+	AdjustWindowRectEx( &WindowRect, dwStyle, FALSE, dwExStyle );
 	mWindow = (uint64_t)CreateWindowEx( dwExStyle, "GammaEngine", title.c_str(), dwStyle|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, WindowRect.right-WindowRect.left, WindowRect.bottom-WindowRect.top, NULL, NULL, (HINSTANCE)hInstance, thiz );
 
 	SetPixelFormat( GetDC( (HWND)mWindow ), pixelFormat, nullptr );
@@ -240,6 +241,7 @@ static void load_glext()
 	load_func( glGetBufferParameteriv );
 	load_func( glBlitFramebuffer );
 	load_func( glGenRenderbuffers );
+	load_func( glDeleteRenderbuffers );
 	load_func( glBindRenderbuffer );
 	load_func( glRenderbufferStorageMultisample );
 	load_func( glFramebufferRenderbuffer );
