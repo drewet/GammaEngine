@@ -98,23 +98,13 @@ BaseWindow::BaseWindow( Instance* instance, const std::string& title, int width,
 	}
 */
 
-	if ( fullscreen ) {
-		dwExStyle = WS_EX_APPWINDOW;
-		dwStyle = WS_POPUP;
-	} else {
-		dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-		if ( resizable ) {
-			dwStyle = ( WS_OVERLAPPEDWINDOW - WS_MAXIMIZEBOX - WS_THICKFRAME ) | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU;
-		} else {
-			dwStyle = ( WS_OVERLAPPEDWINDOW - WS_MAXIMIZEBOX - WS_THICKFRAME ) | WS_BORDER | WS_MINIMIZEBOX | WS_SYSMENU;
-		}
-	}
+	dwStyle = WS_OVERLAPPEDWINDOW;
+	dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 
 	AdjustWindowRectEx( &WindowRect, dwStyle, FALSE, dwExStyle );
 
 	gDebug() << "this base : " << (void*)this << "\n";
-
-	mWindow = (uint64_t)CreateWindowEx( dwExStyle, "GammaEngine", title.c_str(), dwStyle|WS_CLIPSIBLINGS|WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT, WindowRect.right-WindowRect.left, WindowRect.bottom-WindowRect.top, NULL, NULL, (HINSTANCE)hInstance, this);
+	mWindow = (uint64_t)CreateWindowEx( dwExStyle, "GammaEngine", title.c_str(), WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, WindowRect.right-WindowRect.left, WindowRect.bottom-WindowRect.top, NULL, NULL, (HINSTANCE)hInstance, this);
 
 	static	PIXELFORMATDESCRIPTOR pfd;
 	ZeroMemory(&pfd, sizeof (pfd));
@@ -189,6 +179,8 @@ void BaseWindow::SwapBuffersBase()
 		mFpsTimer = Time::GetTick();
 		mFpsImages = 0;
 	}
+
+	mInitializing = false;
 }
 
 
@@ -235,14 +227,15 @@ uintptr_t CALLBACK BaseWindow::WindowProcedure( uint64_t _window, uint64_t _mess
 		exit(0);
 	}
 
-/*
+
 	if ( !mInitializing && message == WM_SIZE ) {
 		if ( lParam != 0 ) {
 				mWidth = (lParam & 0x0000FFFF);
 				mHeight = ((lParam & 0xFFFF0000) >> 16);
+				mHasResized = true;
 		}
 	}
-*/
+
 //	if ( !mInitializing && has_focus )
 	{
 		switch ( message ) {

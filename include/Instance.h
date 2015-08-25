@@ -24,6 +24,8 @@
 #include <typeinfo>
 #include <string>
 
+#undef CreateWindow
+
 namespace GE {
 
 class Window;
