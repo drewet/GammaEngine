@@ -54,6 +54,8 @@ public:
 
 	virtual void Update( Light* light = nullptr );
 
+	virtual void AssociateSize( Window* window ) { mAssociatedWindow = window; };
+
 private:
 	typedef struct LightData {
 		Vector4f position;
@@ -82,6 +84,7 @@ private:
 	uint32_t mLightsDataID[2];
 	uint32_t mVAOs[2];
 	uint32_t mFBO;
+	uint32_t mDepthBuffer;
 	uint32_t mTextureDiffuse;
 	uint32_t mTextureDepth;
 	uint32_t mTextureNormals;

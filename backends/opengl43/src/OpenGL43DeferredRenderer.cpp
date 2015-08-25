@@ -83,16 +83,17 @@ void OpenGL43DeferredRenderer::AddSunLight( Light* sun_light )
 
 void OpenGL43DeferredRenderer::Compute()
 {
-	OpenGL43Renderer2D::Compute();
+	if ( !m2DReady ) {
+		OpenGL43Renderer2D::Compute();
+	}
 
     glGenFramebuffers( 1, (GLuint*)&mFBO );
 	glBindFramebuffer( GL_FRAMEBUFFER, mFBO );
 
-	uint32_t m_depthBuffer;
-	glGenRenderbuffers(1, &m_depthBuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, m_depthBuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mWidth, mHeight);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER, m_depthBuffer);
+	glGenRenderbuffers( 1, &mDepthBuffer );
+	glBindRenderbuffer (GL_RENDERBUFFER, mDepthBuffer );
+	glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mWidth, mHeight );
+	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER, mDepthBuffer );
 
 	glGenTextures( 1, &mTextureDiffuse );
 	glBindTexture( GL_TEXTURE_2D, mTextureDiffuse );
@@ -338,27 +339,19 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 
 void OpenGL43DeferredRenderer::Bind()
 {
-	glBindFramebuffer( GL_FRAMEBUFFER, mFBO );
-// 	GLenum buffers[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT };
-// 	glDrawBuffers( 4, buffers );
-	glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-}
-
-
-void OpenGL43DeferredRenderer::Unbind()
-{
-	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
-}
-
-
-void OpenGL43DeferredRenderer::Render()
-{
-	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 	if ( mAssociatedWindow != nullptr && ( mAssociatedWindow->width() != mWidth || mAssociatedWindow->height() != mHeight ) ) {
+		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 		mWidth = mAssociatedWindow->width();
 		mHeight = mAssociatedWindow->height();
-		// TODO : resize framebuffers
+
+		glDeleteFramebuffers( 1, (GLuint*)&mFBO );
+		glDeleteRenderbuffers( 1, &mDepthBuffer );
+		glDeleteTextures( 1, &mTextureDiffuse );
+		glDeleteTextures( 1, &mTextureDepth );
+		glDeleteTextures( 1, &mTextureNormals );
+		glDeleteTextures( 1, &mTexturePositions );
+		Compute();
+
 		Vertex vertices[4];
 		memset( vertices, 0, sizeof(vertices) );
 		vertices[0].u = 42.0f;
@@ -389,6 +382,22 @@ void OpenGL43DeferredRenderer::Render()
 		glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 		glBufferSubData( GL_ARRAY_BUFFER, 0, 4 * sizeof(Vertex), vertices );
 	}
+
+	glBindFramebuffer( GL_FRAMEBUFFER, mFBO );
+	glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+}
+
+
+void OpenGL43DeferredRenderer::Unbind()
+{
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+}
+
+
+void OpenGL43DeferredRenderer::Render()
+{
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 	if ( !mCommandListReady ) {
 		ComputeCommandList();
 	}

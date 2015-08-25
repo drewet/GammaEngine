@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_map>
 #include "Instance.h"
+#include "Window.h"
 #include "SkyRenderer.h"
 #include "Object.h"
 #include "Light.h"
@@ -49,6 +50,7 @@ void SkyRenderer::BuilderModCB( MeshBuilder::Face* face, void* data )
 
 SkyRenderer::SkyRenderer( Instance* instance, float domeRadius )
 	: mRenderer( instance->CreateRenderer() )
+	, mAssociatedWindow( nullptr )
 	, mDome( nullptr )
 	, mDomeRadius( domeRadius )
 {
@@ -91,6 +93,9 @@ void SkyRenderer::AddLight( Light* light )
 
 void SkyRenderer::Render( Camera* camera )
 {
+	if ( mAssociatedWindow != nullptr ) {
+		mRenderer->projectionMatrix()->Perspective( 60.0f, (float)mAssociatedWindow->width() / mAssociatedWindow->height(), 1.0f, mDomeRadius + 10.0f );
+	}
 	mRenderer->Look( camera );
 	mRenderer->Draw();
 }

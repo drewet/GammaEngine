@@ -54,6 +54,8 @@ public:
 
 	virtual void Update( Light* light = nullptr );
 
+	virtual void AssociateSize( Window* window ) { mAssociatedWindow = window; };
+
 private:
 	typedef struct LightData {
 		Vector4f position;
