@@ -34,9 +34,9 @@ int main( int ac, char** av )
 		window->SwapBuffers();
 	}
 
-  delete window;
-  delete instance;
-  return 0;
+	delete window;
+	delete instance;
+	return 0;
 }
 ```
 You can compile it using g++ -std=c++11 filename_you_choose.cpp -lgammaengine
