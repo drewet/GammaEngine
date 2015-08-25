@@ -138,7 +138,7 @@ set(LIBS ${LIBS}
 if("${target}" MATCHES "windows")
 	add_definitions(-DGE_WIN32)
 	include_directories(include/windows)
-	set(LIBS ${LIBS} ${ZLIB_LIBRARY} -lwinmm)
+	set(LIBS ${LIBS} ${ZLIB_LIBRARY} -lwinmm -lwsock32)
 	set(SOURCES ${SOURCES} src/windows/BaseWindow.cpp)
 elseif("${target}" MATCHES "ios")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -stdlib=libc++ -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -D__IPHONE_OS_VERSION_MIN_REQUIRED=030103")

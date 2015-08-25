@@ -1,4 +1,4 @@
-#ifdef WIN32
+#ifdef GE_WIN32
 #include <winsock2.h>
 #else
 #include <sys/types.h>
@@ -6,7 +6,6 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h> /* close */
 #include <netdb.h> /* gethostbyname */
 #define closesocket(s) close(s)
 #define ioctlsocket ioctl
@@ -15,6 +14,7 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 #endif
+#include <unistd.h>
 #include <string.h>
 #include <string>
 #include <cstdlib>
@@ -72,7 +72,7 @@ int Socket::Connect( const std::string& server, short unsigned int port, PortTyp
 
 int Socket::Send( const void* data, size_t size )
 {
-	return send( mSocket, data, size, 0 );
+	return send( mSocket, (const char*)data, size, 0 );
 }
 
 
@@ -98,16 +98,27 @@ int Socket::Receive( void* _data, size_t size, bool fixed )
 
 	while ( ( fixed and ret < (int)size ) or ( not fixed and ret == 0 ) ) {
 		int needed = size - ret;
-		int os_size = 0;
-		while ( os_size == 0 ) {
-			ioctlsocket( mSocket, FIONREAD, &os_size );
+#ifdef GE_WIN32
+		unsigned long int check_size = 0;
+#else
+		int check_size = 0;
+#endif
+		while ( check_size == 0 ) {
+			ioctlsocket( mSocket, FIONREAD, &check_size );
 			usleep( 0 );
 		}
+#ifndef GE_WIN32
+		if ( check_size < 0 ) {
+			return -1;
+		}
+#endif
+		uint8_t* os_buf = (uint8_t*)Instance::baseInstance()->Malloc( check_size );
+		int os_size = recv( mSocket, (char*)os_buf, check_size, 0 );
+#ifdef GE_WIN32
 		if ( os_size < 0 ) {
 			return -1;
 		}
-		uint8_t* os_buf = (uint8_t*)Instance::baseInstance()->Malloc( os_size );
-		os_size = recv( mSocket, os_buf, os_size, 0 );
+#endif
 
 		memcpy( data + ret, os_buf, std::min( needed, os_size ) );
 
