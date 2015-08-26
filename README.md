@@ -15,6 +15,9 @@ mingw32-w64 is also required to build GE on win32 OS.
 Pre-compiled binaries are also available here :
 /* TODO *\
 
+# Documentation
+Full documentation is available here : http://doc.drich.fr
+
 # Sample code
 Here is the minimal source code to show a window using GammaEngine
 ```
