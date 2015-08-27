@@ -60,8 +60,8 @@ int main( int argc, char** argv )
 	gDebug() << "font->texture() : " << font->texture() << "\n";
 // 	return 0;
 
-// 	std::list< Object* > scene_objects = Object::LoadObjects( "scene/street.obj", instance );
-	std::list< Object* > scene_objects = Object::LoadObjects( "scene/Paris/paris.obj", instance );
+ 	std::list< Object* > scene_objects = Object::LoadObjects( "scene/street.obj", instance );
+//	std::list< Object* > scene_objects = Object::LoadObjects( "scene/Paris/paris.obj", instance );
 //	std::list< Object* > scene_objects = Object::LoadObjects( "scene/city.obj", instance );
 
 	Object* cube = instance->LoadObject( "scene/cube.obj" );
