@@ -123,6 +123,10 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 
 #define vDebug( name, args... ) Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); Debug() << ""
 
+#ifndef fDebug // To avoid syntax analyzer error using KDevelop
+extern void fDebug( auto a, ... );
+#endif
+
 #endif // __DBG_CLASS
 
 
