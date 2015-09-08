@@ -155,7 +155,7 @@ void Image::Load( File* file, const std::string& extension, Instance* instance )
 			for ( size_t j = 0; j < extensions.size(); j++ ) {
 				std::string test_case = extensions[j];
 				std::transform( test_case.begin(), test_case.end(), test_case.begin(), ::tolower );
-				if ( extension.find( test_case ) ) {
+				if ( extension.find( test_case ) == 0 ) {
 					loader = mImageLoaders.at(i);
 					break;
 				}
