@@ -352,7 +352,7 @@ void OpenGL43Renderer2D::Draw( int x, int y, int w, int h, Image* image, int tx,
 }
 
 
-void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::string& text )
+void OpenGL43Renderer2D::DrawText( int x, int y, Font* font, uint32_t color, const std::string& text, Renderer2D::TextFlags flags )
 {
 	Prerender();
 
@@ -365,6 +365,33 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 	const float ry = 1.0f / font->texture()->height();
 	uint32_t iBuff = 0;
 
+	uint32_t* lines_ofs = nullptr;
+	uint32_t line = 0;
+
+	if ( flags & Renderer2D::HCenter ) {
+		uint32_t width = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			if ( data[i] == '\n' ) {
+				line++;
+			}
+		}
+		lines_ofs = new uint32_t[ ++line ];
+		line = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			int _c = data[i];
+			width += font->glyph( _c )->advX;
+
+			if ( data[i] == '\n' ) {
+				lines_ofs[line] = x - width / 2;
+				line++;
+				width = 0;
+			}
+		}
+		lines_ofs[line] = x - width / 2;
+		line = 0;
+		x = lines_ofs[0];
+	}
+
 	Matrix m;
 	Vertex vertices[6*32];
 	memset( vertices, 0, sizeof(vertices) );
@@ -374,7 +401,7 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 		uint8_t c = _c;
 
 		if ( data[i] == '\n' ) {
-			x = base_x;
+			x = lines_ofs ? lines_ofs[++line] : base_x;
 			y += font->size();
 			continue;
 		}
@@ -446,10 +473,14 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
 	Render( font->texture(), GL_TRIANGLES, 0, iBuff, m );
+
+	if ( lines_ofs ) {
+		delete lines_ofs;
+	}
 }
 
 
-void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::wstring& text )
+void OpenGL43Renderer2D::DrawText( int x, int y, Font* font, uint32_t color, const std::wstring& text, Renderer2D::TextFlags flags )
 {
 	const wchar_t* data = text.c_str();
 	const uint32_t len = text.length();
@@ -485,6 +516,33 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 	const float ry = 1.0f / font->texture()->height();
 	uint32_t iBuff = 0;
 
+	uint32_t* lines_ofs = nullptr;
+	uint32_t line = 0;
+
+	if ( flags & Renderer2D::HCenter ) {
+		uint32_t width = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			if ( data[i] == '\n' ) {
+				line++;
+			}
+		}
+		lines_ofs = new uint32_t[ ++line ];
+		line = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			int _c = data[i];
+			width += font->glyph( _c )->advX;
+
+			if ( data[i] == '\n' ) {
+				lines_ofs[line] = x - width / 2;
+				line++;
+				width = 0;
+			}
+		}
+		lines_ofs[line] = x - width / 2;
+		line = 0;
+		x = lines_ofs[0];
+	}
+
 	Matrix m;
 	Vertex vertices[6*32];
 	memset( vertices, 0, sizeof(vertices) );
@@ -493,7 +551,7 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 		wchar_t c = text[i];
 
 		if ( data[i] == '\n' ) {
-			x = base_x;
+			x = lines_ofs ? lines_ofs[++line] : base_x;
 			y += font->size();
 			continue;
 		}
@@ -565,6 +623,10 @@ void OpenGL43Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const s
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 0, iBuff * sizeof(Vertex), vertices );
 	Render( font->texture(), GL_TRIANGLES, 0, iBuff, m );
+
+	if ( lines_ofs ) {
+		delete lines_ofs;
+	}
 }
 
 

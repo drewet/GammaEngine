@@ -331,7 +331,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 }
 
 
-void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::string& text )
+void OpenGLES20Renderer2D::DrawText( int x, int y, Font* font, uint32_t color, const std::string& text, Renderer2D::TextFlags flags )
 {
 	Prerender();
 
@@ -345,6 +345,33 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	const float ry = 1.0f / font->texture()->meta( "gles:height", (float)font->texture()->height() );
 	uint32_t iBuff = 0;
 
+	uint32_t* lines_ofs = nullptr;
+	uint32_t line = 0;
+
+	if ( flags & Renderer2D::HCenter ) {
+		uint32_t width = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			if ( data[i] == '\n' ) {
+				line++;
+			}
+		}
+		lines_ofs = new uint32_t[ ++line ];
+		line = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			int _c = data[i];
+			width += font->glyph( _c )->advX;
+
+			if ( data[i] == '\n' ) {
+				lines_ofs[line] = x - width / 2;
+				line++;
+				width = 0;
+			}
+		}
+		lines_ofs[line] = x - width / 2;
+		line = 0;
+		x = lines_ofs[0];
+	}
+
 	Matrix matrix;
 	Vertex2D vertices[6*32];
 	memset( vertices, 0, sizeof(vertices) );
@@ -354,7 +381,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		uint8_t c = _c;
 
 		if ( data[i] == '\n' ) {
-			x = base_x;
+			x = lines_ofs ? lines_ofs[++line] : base_x;
 			y += font->size();
 			continue;
 		}
@@ -418,10 +445,14 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
 	Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+
+	if ( lines_ofs ) {
+		delete lines_ofs;
+	}
 }
 
 
-void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::wstring& text )
+void OpenGLES20Renderer2D::DrawText( int x, int y, Font* font, uint32_t color, const std::wstring& text, Renderer2D::TextFlags flags )
 {
 	const wchar_t* data = text.data();
 	const uint32_t len = text.length();
@@ -457,6 +488,33 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	const float ry = 1.0f / font->texture()->meta( "gles:height", (float)font->texture()->height() );
 	uint32_t iBuff = 0;
 
+	uint32_t* lines_ofs = nullptr;
+	uint32_t line = 0;
+
+	if ( flags & Renderer2D::HCenter ) {
+		uint32_t width = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			if ( data[i] == '\n' ) {
+				line++;
+			}
+		}
+		lines_ofs = new uint32_t[ ++line ];
+		line = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			int _c = data[i];
+			width += font->glyph( _c )->advX;
+
+			if ( data[i] == '\n' ) {
+				lines_ofs[line] = x - width / 2;
+				line++;
+				width = 0;
+			}
+		}
+		lines_ofs[line] = x - width / 2;
+		line = 0;
+		x = lines_ofs[0];
+	}
+
 	Matrix matrix;
 	Vertex2D vertices[6*32];
 	memset( vertices, 0, sizeof(vertices) );
@@ -465,7 +523,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		wchar_t c = data[i];
 
 		if ( data[i] == '\n' ) {
-			x = base_x;
+			x = lines_ofs ? lines_ofs[++line] : base_x;
 			y += font->size();
 			continue;
 		}
@@ -529,6 +587,10 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
 	Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+
+	if ( lines_ofs ) {
+		delete lines_ofs;
+	}
 }
 
 

@@ -36,6 +36,11 @@ class Window;
 class Renderer2D
 {
 public:
+	typedef enum {
+		Nil = 0,
+		HCenter = 1,
+	} TextFlags;
+
 	Renderer2D() : mAssociatedWindow( nullptr ) {}
 	virtual ~Renderer2D(){};
 
@@ -47,8 +52,8 @@ public:
 	virtual void Draw( int x, int y, Image* image, int tx = 0, int ty = 0, int tw = -1, int th = -1, float angle = 0.0f ) = 0;
 	virtual void Draw( int x, int y, int w, int h, Image* image, int tx = 0, int ty = 0, int tw = -1, int th = -1, float angle = 0.0f ) = 0;
 
-	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::string& text ) = 0;
-	virtual void Draw( int x, int y, Font* font, uint32_t color, const std::wstring& text ) = 0;
+	virtual void DrawText( int x, int y, Font* font, uint32_t color, const std::string& text, TextFlags flags = Nil ) = 0;
+	virtual void DrawText( int x, int y, Font* font, uint32_t color, const std::wstring& text, TextFlags flags = Nil ) = 0;
 
 	virtual void DrawLine( int x0, int y0, uint32_t color0, int x1, int y1, uint32_t color1 ) = 0;
 

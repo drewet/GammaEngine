@@ -157,6 +157,7 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 {
 	std::vector< Vertex > vertices;
 	std::vector< uint32_t > indices;
+	uint32_t nFlatLights = 0;
 	uint32_t nSphereLights = 0;
 	uint32_t nConeLights = 0;
 	uint32_t lightsDataCount = 0;
@@ -174,7 +175,11 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 
 	for ( size_t i = 0; i < mLights.size(); i++ ) {
 		if ( mLights[i]->type() == Light::Point ) {
-			nSphereLights++;
+			if ( mLights[i]->attenuation() == 0.0f ) {
+				nFlatLights++;
+			} else {
+				nSphereLights++;
+			}
 		}
 		if ( mLights[i]->type() == Light::Spot ) {
 			nConeLights++;
@@ -190,9 +195,24 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 	};
 	memcpy( &mLightsData[lightsDataCount], &data, sizeof(data) );
 	lightsDataCount++;
+// 	nFlatLights++;
 
 	for ( size_t i = 0; i < mLights.size(); i++ ) {
-		if ( mLights[i]->type() == Light::Point ) {
+		if ( mLights[i]->type() == Light::Point && mLights[i]->attenuation() == 0.0f ) {
+			LightData data = {
+				.position = Vector4f( mLights[i]->position(), 1.0f ),
+				.direction = Vector4f(),
+				.color = mLights[i]->color(),
+				.data = Vector4f( LightRadius( mLights[i] ), 0.0f, 360.0f, 360.0f )
+			};
+			mLightsDataIndices.insert( std::make_pair( mLights[i], lightsDataCount ) );
+			memcpy( &mLightsData[lightsDataCount], &data, sizeof(data) );
+			mLights[i]->setPositionPointer( (Vector3f*)&mLightsData[lightsDataCount].position );
+			lightsDataCount++;
+		}
+	}
+	for ( size_t i = 0; i < mLights.size(); i++ ) {
+		if ( mLights[i]->type() == Light::Point && mLights[i]->attenuation() != 0.0f ) {
 			LightData data = {
 				.position = Vector4f( mLights[i]->position(), 1.0f ),
 				.direction = Vector4f(),
@@ -246,13 +266,22 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 	quad[0].color[2] = quad[1].color[2] = quad[2].color[2] = quad[3].color[2] = 1.0f;
 	quad[0].color[3] = quad[1].color[3] = quad[2].color[3] = quad[3].color[3] = 1.0f;
 
+	gDebug() << "nFlatLights : " << nFlatLights << "\n";
+
 	DrawElementsIndirectCommand direct_commands[] = {
+		{
+			.count = 6,
+			.instanceCount = nFlatLights,
+			.firstIndex = 0,
+			.baseVertex = 0,
+			.baseInstance = 1,
+		},
 		{
 			.count = mSphereIndicesCount,
 			.instanceCount = nSphereLights,
 			.firstIndex = 6,
 			.baseVertex = 4,
-			.baseInstance = 1,
+			.baseInstance = 1 + nFlatLights,
 		},
 		{
 // 			.count = mConeVerticesCount,
@@ -262,7 +291,7 @@ void OpenGL43DeferredRenderer::ComputeCommandList()
 			.firstIndex = 6,
 //			.baseVertex = 6 + mSphereVerticesCount,
 			.baseVertex = 4,
-			.baseInstance = 1 + nSphereLights,
+			.baseInstance = 1 + nFlatLights + nSphereLights,
 		},
 		
 	};
@@ -437,9 +466,14 @@ void OpenGL43DeferredRenderer::Render()
 	mMatrixProjection->Orthogonal( 0.0, mWidth, mHeight, 0.0, -2049.0, 2049.0 );
 	glBindBuffer( GL_UNIFORM_BUFFER, mMatrixProjectionID );
 	glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, mMatrixProjection->data() );
+
+	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, mCommandBuffer );
 	mRenderMutex.lock();
 	glBindVertexArray( mVAOs[mLightsDataIDi] );
 	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr );
+// 	glDisable( GL_DEPTH_TEST );
+// 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
+// 	glMultiDrawElementsIndirect( GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, 1, 0 );
 	mRenderMutex.unlock();
 
 	mMatrixProjection->Identity();
@@ -452,7 +486,8 @@ void OpenGL43DeferredRenderer::Render()
 	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, mCommandBuffer );
 	mRenderMutex.lock();
 	glBindVertexArray( mVAOs[mLightsDataIDi] );
-	glMultiDrawElementsIndirect( GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, 2, 0 );
+// 	glMultiDrawElementsIndirect( GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, 2, 0 );
+	glMultiDrawElementsIndirect( GL_TRIANGLES, GL_UNSIGNED_INT, (void*)sizeof(DrawElementsIndirectCommand), 2, 0 );
 	mRenderMutex.unlock();
 	glBindBuffer( GL_DRAW_INDIRECT_BUFFER, 0 );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
