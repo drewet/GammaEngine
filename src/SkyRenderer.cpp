@@ -77,6 +77,7 @@ SkyRenderer::SkyRenderer( Instance* instance, float domeRadius )
 	mRenderer->LoadFragmentShader( "shaders/skydome.frag" );
 	mRenderer->AddObject( mDome );
 	mRenderer->Compute();
+	mLightPosID = mRenderer->uniformID( "v3SunPos" );
 }
 
 
@@ -96,6 +97,10 @@ void SkyRenderer::Render( Camera* camera )
 	if ( mAssociatedWindow != nullptr ) {
 		mRenderer->projectionMatrix()->Perspective( 60.0f, (float)mAssociatedWindow->width() / mAssociatedWindow->height(), 1.0f, mDomeRadius + 10.0f );
 	}
+
+	// TODO : Handle multiple mLight
+	mRenderer->uniformUpload( mLightPosID, mLights[0]->position() );
+
 	mRenderer->Look( camera );
 	mRenderer->Draw();
 }

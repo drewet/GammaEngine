@@ -51,6 +51,7 @@ protected:
 	Object* mDome;
 	float mDomeRadius;
 	std::vector< Light* > mLights;
+	uintptr_t mLightPosID;
 };
 
 } // namespace GE
