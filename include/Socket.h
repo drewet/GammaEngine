@@ -19,6 +19,7 @@ public:
 	Socket( const std::string& server = "", unsigned short port = 0, PortType type = TCP );
 	~Socket();
 
+	bool isConnected() const { return mSocket > 0; }
 	int Connect( const std::string& server, unsigned short port, PortType type = TCP );
 	int Send( const void* data, size_t size );
 	int Receive( void* data, size_t size, bool fixed = false );

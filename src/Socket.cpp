@@ -14,6 +14,7 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 #endif
+#include <errno.h>
 #include <unistd.h>
 #include <string.h>
 #include <string>
@@ -66,6 +67,13 @@ int Socket::Connect( const std::string& server, short unsigned int port, PortTyp
 
 	int ret = ( mSocket < 0 ) ? mSocket : connect( mSocket, (SOCKADDR*)sin, sizeof( *sin ) );
 
+	if ( ret < 0 ) {
+		gDebug() << "Socket error : " << strerror( errno ) << "\n";
+		if ( mSocket >= 0 ) {
+			closesocket( mSocket );
+		}
+		mSocket = -1;
+	}
 	return ret;
 }
 
