@@ -62,6 +62,8 @@ public:
 	void* Malloc( uintptr_t size, bool clear_mem = true );
 	void Free( void* data );
 
+	void AffectRAM( int64_t sz );
+
 	uint64_t gpu();
 	uint64_t device();
 	uint64_t queue();

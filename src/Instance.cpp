@@ -345,6 +345,12 @@ void* Instance::Realloc( void* last, uintptr_t size, bool clear_mem )
 }
 
 
+void Instance::AffectRAM( int64_t sz )
+{
+	mCpuRamCounter += sz;
+}
+
+
 uint64_t Instance::cpuRamCounter()
 {
 	return mCpuRamCounter;
