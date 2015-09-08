@@ -8,6 +8,7 @@ endif()
 find_package(PNG16 REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(Freetype REQUIRED)
+find_package(LibMad REQUIRED)
 
 include_directories(${FREETYPE_INCLUDE_DIRS})
 include_directories(${PNG16_INCLUDE_DIR})
@@ -85,6 +86,10 @@ set(INCLUDES
 	include/SkyRenderer.h
 	include/Socket.h
 	include/Thread.h
+	include/Music.h
+	include/Sound.h
+	include/AudioLoaderWav.h
+	include/AudioLoaderMp3.h
 	include/MetaObject.h
 	include/Time.h
 	include/Vector.h
@@ -123,6 +128,10 @@ set(SOURCES ${SOURCES}
 	src/Input.cpp
 	src/Socket.cpp
 	src/Thread.cpp
+	src/Music.cpp
+	src/Sound.cpp
+	src/AudioLoaderWav.cpp
+	src/AudioLoaderMp3.cpp
 	src/MetaObject.cpp
 	src/Debug.cpp
 # 	fake/dummy_vk.cpp
@@ -132,6 +141,7 @@ set(LIBS ${LIBS}
 	${PNG16_LIBRARIES}
 	${JPEG_LIBRARIES}
 	${FREETYPE_LIBRARIES}
+	${LIBMAD_LIBRARY}
 	-pthread
 )
 
@@ -140,6 +150,7 @@ if("${target}" MATCHES "windows")
 	include_directories(include/windows)
 	set(LIBS ${LIBS} ${ZLIB_LIBRARY} -lwinmm -lwsock32)
 	set(SOURCES ${SOURCES} src/windows/BaseWindow.cpp)
+	set(SOURCES ${SOURCES} src/windows/AudioOutput.cpp)
 elseif("${target}" MATCHES "ios")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -stdlib=libc++ -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -D__IPHONE_OS_VERSION_MIN_REQUIRED=030103")
 #	set(CMAKE_CXX_FLAGS "-fobjc-abi-version=2 -fobjc-arc -nostdinc -I${CMAKE_IOS_SDK_ROOT}/usr/include -I${CMAKE_IOS_SDK_ROOT}/usr/include/c++/4.2.1 ${CMAKE_CXX_FLAGS} -Wno-unused-private-field -Wno-overloaded-virtual")
@@ -147,13 +158,16 @@ elseif("${target}" MATCHES "ios")
 	add_definitions(-DGE_IOS)
 	include_directories(include/ios)
 	set(SOURCES ${SOURCES} src/ios/BaseWindow.cpp)
+	set(SOURCES ${SOURCES} src/ios/AudioOutput.cpp)
 	set(SOURCES ${SOURCES} src/ios/AppDelegate.mm)
 	set(mode STATIC)
 else()
+	find_package(ALSA REQUIRED)
 	add_definitions(-DGE_LINUX)
 	include_directories(include/linux)
-	set(LIBS ${LIBS} ${OPENGL_LIBRARIES} -lX11 -lXext -ldl)
+	set(LIBS ${LIBS} ${OPENGL_LIBRARIES} ${ALSA_LIBRARY} -lX11 -lXext -ldl)
 	set(SOURCES ${SOURCES} src/linux/BaseWindow.cpp)
+	set(SOURCES ${SOURCES} src/linux/AudioOutput.cpp)
 endif()
 
 message(STATUS "LIBS : ${LIBS}")
