@@ -46,6 +46,7 @@ public:
 	File( std::string filename, MODE mode );
 	File( File* side, std::string filename, MODE mode );
 	File( void* data, uint64_t len, MODE mode, bool copy_buffer = false, Instance* instance = nullptr );
+	File( const File* other );
 	~File();
 
 	bool isOpened();
