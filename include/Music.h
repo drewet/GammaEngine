@@ -2,6 +2,7 @@
 #define GE_MUSIC_H
 
 #include "Sound.h"
+#include "Thread.h"
 
 namespace GE {
 

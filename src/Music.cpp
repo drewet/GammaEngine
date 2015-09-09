@@ -64,15 +64,19 @@ Music& Music::operator=( const Music& other )
 
 void Music::Play()
 {
-	Start();
+	if ( mOutput ) {
+		mOutput->Resume();
+	}
+	Thread::Start();
 }
 
 
 void Music::Stop()
 {
 	if ( mOutput ) {
-		// TODO
+		mOutput->Pause();
 	}
+	Thread::Pause();
 }
 
 
@@ -87,7 +91,7 @@ bool Music::run()
 
 	int ret = mSource->FillBuffer( buffer, 1152 * 2 * 128 );
 	if ( ret > 0 ) {
-		mOutput->PushData( buffer, ret * sizeof(short) / 4 );
+		mOutput->PushData( buffer, ret / sizeof(short) );
 	}
 
 	delete buffer;

@@ -1,4 +1,4 @@
-#include "AudioOutput.h"
+#include "linux/AudioOutput.h"
 #include "Thread.h"
 #include "Debug.h"
 
@@ -168,6 +168,18 @@ void AudioOutputThread::PushData( uint16_t* data, uint32_t size )
 {
 	mQueue.push_back( std::make_pair( data, size ) );
 	// TODO : wake-up thread
+}
+
+
+void AudioOutput::Pause()
+{
+	snd_pcm_pause( mHandle, true );
+}
+
+
+void AudioOutput::Resume()
+{
+	snd_pcm_pause( mHandle, false );
 }
 
 

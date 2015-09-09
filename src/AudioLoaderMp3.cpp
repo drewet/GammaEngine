@@ -11,6 +11,7 @@ using namespace GE;
 
 AudioLoader* AudioLoaderMp3::NewInstance()
 {
+	fDebug0();
 	return new AudioLoaderMp3();
 }
 
@@ -69,6 +70,7 @@ void AudioLoaderMp3::Load( Instance* instance, File* file, bool fullLoading )
 	fDebug( instance, file, fullLoading );
 
 	uint8_t header[ 1024 * 128 ] = { 0 };
+	mData = nullptr;
 	mFrameCount = 0;
 	mFile = new File ( file );
 	mFile->Read( header, sizeof( header ) );
@@ -104,9 +106,12 @@ void AudioLoaderMp3::Load( Instance* instance, File* file, bool fullLoading )
 		}
 		mFrameCount++;
 	}
+	gDebug() << "1" << "\n";
 
 	int sz = mFile->Read( mInputBuffer, sizeof( mInputBuffer ) );
+	gDebug() << "2" << "\n";
 	mad_stream_buffer( mStream, mInputBuffer, sz );
+	gDebug() << "3" << "\n";
 
 	if ( fullLoading ) {
 		uint16_t buf[1152 * 2];
@@ -118,6 +123,7 @@ void AudioLoaderMp3::Load( Instance* instance, File* file, bool fullLoading )
 			mDataSize += ret;
 		}
 	}
+	gDebug() << "4" << "\n";
 }
 
 
