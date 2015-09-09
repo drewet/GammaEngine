@@ -10,8 +10,9 @@ find_package(JPEG REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(LibMad REQUIRED)
 
-include_directories(${FREETYPE_INCLUDE_DIRS})
+include_directories(${FREETYPE_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS}/freetype)
 include_directories(${PNG16_INCLUDE_DIR})
+message(STATUS "inc: ${FREETYPE_INCLUDE_DIRS}")
 
 option(target "target")
 option(backend "backend")

@@ -27,6 +27,10 @@
 #include "Image.h"
 #include "Light.h"
 
+// Windows tricks
+#undef CreateWindow
+#undef DrawText
+
 class OpenGLES20Renderer2D : public Renderer2D, public OpenGLES20Renderer
 {
 public:

@@ -35,6 +35,7 @@
 #include "Image.h"
 #include "Font.h"
 
+#undef DrawText
 #define GLSL(shader)  #shader
 
 extern "C" GE::Renderer2D* CreateRenderer2D( GE::Instance* instance, uint32_t width, uint32_t height ) {

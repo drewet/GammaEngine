@@ -27,6 +27,6 @@ add_library(backend_opengles20
 add_dependencies(backend_opengles20 gammaengine)
 
 SET_TARGET_PROPERTIES(backend_opengles20 PROPERTIES PREFIX "")
-target_link_libraries(backend_opengles20 -lgammaengine ${OPENGL_LIBRARIES} -lEGL -pthread)
+target_link_libraries(backend_opengles20 gammaengine ${OPENGL_LIBRARIES} -pthread)
 
 INSTALL(TARGETS backend_opengles20 ARCHIVE DESTINATION /usr/lib/gammaengine LIBRARY DESTINATION /usr/lib/gammaengine)

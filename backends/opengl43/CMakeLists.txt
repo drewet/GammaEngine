@@ -27,6 +27,6 @@ add_library(backend_opengl43
 add_dependencies(backend_opengl43 gammaengine)
 
 SET_TARGET_PROPERTIES(backend_opengl43 PROPERTIES PREFIX "")
-target_link_libraries(backend_opengl43 -lgammaengine ${OPENGL_LIBRARIES} -pthread)
+target_link_libraries(backend_opengl43 gammaengine ${OPENGL_LIBRARIES} -pthread)
 
 INSTALL(TARGETS backend_opengl43 ARCHIVE DESTINATION /usr/lib/gammaengine LIBRARY DESTINATION /usr/lib/gammaengine)
