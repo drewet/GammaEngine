@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 project(gammaengine)
 
-if(NOT IOS)
+if(NOT "${target}" MATCHES "ios")
 find_package(OpenGL REQUIRED)
 endif()
 find_package(PNG16 REQUIRED)
@@ -34,7 +34,7 @@ if( NOT ${backend} MATCHES OFF )
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-variable -g3")
-if(NOT IOS)
+if(NOT "${target}" MATCHES "ios")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable")
 endif()
 
@@ -99,6 +99,7 @@ set(INCLUDES
 
 set(INCLUDES_TARGET
 	include/${target}/BaseWindow.h
+	include/${target}/AudioOutput.h
 )
 
 set(SOURCES ${SOURCES}
