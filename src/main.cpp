@@ -21,6 +21,8 @@
 #include "Light.h"
 #include "DeferredRenderer.h"
 #include "SkyRenderer.h"
+#include "Sound.h"
+#include "Music.h"
 #include "Debug.h"
 
 using namespace GE;
@@ -56,6 +58,32 @@ int main( int argc, char** argv )
 	Input* input = new Input( window );
 	LightsThread* thread = new LightsThread( window );
 
+	auto sound_devs = AudioOutput::DevicesList();
+	for ( auto dev : sound_devs ) {
+		gDebug() << "Sound card " << dev.first << ": " << dev.second << "\n";
+	}
+
+	Music* music = new Music( "scene/sounds/LRMonoPhase4.mp3" );
+	gDebug() << "Duration : " << music->duration() << "s\n";
+	music->Play();
+	gDebug() << "Playing...\n";
+	while ( true or music->isPlaying() or true ) {
+		Time::Sleep( 1 );
+	}
+	delete music;
+	return 0;
+
+// 	Sound* sound = new Sound( "scene/sounds/LRMonoPhase4.wav" ); // http://www.kozco.com/tech/soundtests.html
+	Sound* sound = new Sound( "scene/sounds/LRMonoPhase4.mp3" );
+	gDebug() << "Duration : " << sound->duration() << "s\n";
+	sound->Play();
+	gDebug() << "Playing...\n";
+	while ( sound->isPlaying() or true ) {
+		Time::Sleep( 1 );
+	}
+	delete sound;
+	return 0;
+
 	Font* font = new Font( "scene/Arial Unicode MS.ttf" );
 	gDebug() << "font->texture() : " << font->texture() << "\n";
 // 	return 0;
@@ -82,7 +110,7 @@ int main( int argc, char** argv )
 	}
 	lights[nLights] = nullptr;
 
-	Light* sun_light = new Light( Vector4f( 1.0, 1.0, 1.0, 4.0 ), Vector3f( 10000.0f, 5000.0f, 10000.0f ), 0.0f );
+	Light* sun_light = new Light( Vector4f( 1.0, 1.0, 1.0, 1.0 ), Vector3f( 10000000.0f, 5000000.0f, 10000000.0f ), 0.0f );
 // 	Light* light0 = new Light( { 0.0f, 0.0f, 10.0f }, { 0.0f, 0.0f, -1.0f }, 70.0f );
 	Light* lightm1 = new Light( Vector4f( 1.0, 1.0, 1.0, 4.0 ), Vector3f( 2.8f, 25.0f, 5.9f ) );
 // 	Light* light0 = new Light( Vector4f( 1.0, 1.0, 1.0, 4.0 ), Vector3f( 2.8f, 0.0f, 5.8f ) );
@@ -122,6 +150,7 @@ int main( int argc, char** argv )
 // 		deferredRenderer->AddLight( lights[i] );
 	}
 
+	deferredRenderer->AddLight( sun_light );
 	deferredRenderer->AddLight( lightm1 );
 	deferredRenderer->AddLight( light0 );
 	deferredRenderer->AddLight( light1 );
@@ -132,6 +161,7 @@ int main( int argc, char** argv )
 // 	SkyRenderer* sky = new SkyRenderer( instance, 100000.0f );
 	SkyRenderer* sky = new SkyRenderer( instance, 1378114.0f );
 	sky->AssociateSize( window );
+	sky->AddLight( sun_light );
 
 	thread->deferredRenderer = deferredRenderer;
 	thread->lights = lights;
@@ -148,6 +178,7 @@ int main( int argc, char** argv )
 	float fps_min = 1.0e34f;
 	float fps_max = 0.0f;
 	float time = Time::GetSeconds();
+	float sun_angle = 0.0f;
 	uint32_t img = 0;
 
 // 	exit(0);
@@ -172,6 +203,21 @@ int main( int argc, char** argv )
 		if ( input->pressed( 'C' ) ) {
 			camera->Translate( { 0.0f, 0.0f, (float)( -10.0 * Time::Delta() ) } );
 		}
+		if ( input->pressed( 'R' ) ) {
+			sun_angle += 0.01f;
+			Vector3f pos = sun_light->position();
+			pos.x = 10000000.0f * std::cos( sun_angle );
+			pos.z = 10000000.0f * std::sin( sun_angle );
+			sun_light->setPosition( pos );
+		}
+		if ( input->pressed( 'T' ) ) {
+			sun_angle -= 0.01f;
+			Vector3f pos = sun_light->position();
+			pos.x = 10000000.0f * std::cos( sun_angle );
+			pos.z = 10000000.0f * std::sin( sun_angle );
+			sun_light->setPosition( pos );
+		}
+		
 		if ( input->pressed( Input::LBUTTON ) ) {
 			camera->RotateH( input->cursorWarp().x, -2.0f );
 			camera->RotateV( input->cursorWarp().y, -2.0f );
@@ -193,8 +239,8 @@ int main( int argc, char** argv )
 		sky->Render( camera );
 
 // 		renderer2d->Draw( 0, 0, font->texture() );
-		renderer2d->Draw( 0, 0, font, 0xFFFFFFFF, "FPS : " + std::to_string( (int)fps ) );
-		renderer2d->Draw( 10, 256, font, 0xFFFFFFFF,  L"\x20ac \x21ac \x22ac \x23ac \x24ac 漢 字 汉 字" );
+		renderer2d->DrawText( 0, 0, font, 0xFFFFFFFF, "FPS : " + std::to_string( (int)fps ) );
+// 		renderer2d->DrawText( 10, 256, font, 0xFFFFFFFF,  L"\x20ac \x21ac \x22ac \x23ac \x24ac 漢 字 汉 字" );
 
 		window->SwapBuffers();
 		Time::GlobalSync();
