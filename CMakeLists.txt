@@ -48,16 +48,6 @@ set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 
-if( ${backend} MATCHES OFF )
-	add_subdirectory(backends/vulkan)
-	add_subdirectory(backends/opengl43)
-	add_subdirectory(backends/opengles20)
-else()
-	file(GLOB SOURCES backends/${backend}/src/*)
-	include_directories(backends/${backend}/include)
-	set(LIBS ${OPENGL_LIBRARIES})
-endif()
-
 
 set(INCLUDES
 	include/Camera.h
@@ -175,6 +165,16 @@ message(STATUS "LIBS : ${LIBS}")
 
 add_library(gammaengine "${mode}" ${SOURCES})
 target_link_libraries(gammaengine ${LIBS})
+
+if( ${backend} MATCHES OFF )
+	add_subdirectory(backends/vulkan)
+	add_subdirectory(backends/opengl43)
+	add_subdirectory(backends/opengles20)
+else()
+	file(GLOB SOURCES backends/${backend}/src/*)
+	include_directories(backends/${backend}/include)
+	set(LIBS ${OPENGL_LIBRARIES})
+endif()
 
 if(NOT ("${target}" MATCHES "ios" OR "${target}" MATCHES "android"))
 add_executable(testexec src/main.cpp)

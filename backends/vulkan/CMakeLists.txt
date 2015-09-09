@@ -21,6 +21,8 @@ add_library(backend_vulkan
 	src/VulkanInstance.cpp
 )
 
+add_dependencies(backend_vulkan gammaengine)
+
 SET_TARGET_PROPERTIES(backend_vulkan PROPERTIES PREFIX "")
 target_link_libraries(backend_vulkan gammaengine -lvulkangl -pthread)
 

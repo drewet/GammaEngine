@@ -24,6 +24,8 @@ add_library(backend_opengl43
 	src/OpenGL43Instance.cpp
 )
 
+add_dependencies(backend_opengl43 gammaengine)
+
 SET_TARGET_PROPERTIES(backend_opengl43 PROPERTIES PREFIX "")
 target_link_libraries(backend_opengl43 -lgammaengine ${OPENGL_LIBRARIES} -pthread)
 

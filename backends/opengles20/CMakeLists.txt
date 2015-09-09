@@ -24,6 +24,8 @@ add_library(backend_opengles20
 	src/OpenGLES20Instance.cpp
 )
 
+add_dependencies(backend_opengles20 gammaengine)
+
 SET_TARGET_PROPERTIES(backend_opengles20 PROPERTIES PREFIX "")
 target_link_libraries(backend_opengles20 -lgammaengine ${OPENGL_LIBRARIES} -lEGL -pthread)
 
