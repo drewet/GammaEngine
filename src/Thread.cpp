@@ -28,12 +28,13 @@ Thread::Thread( Window* shared_graphics_window )
 	, mSharedContext( 0 )
 	, mRunning( false )
 	, mFinished( false )
-	, mThread( nullptr )
+// 	, mThread( nullptr )
 {
 	if ( mSharedWindow ) {
 		mSharedContext = mSharedWindow->CreateSharedContext();
 	}
-	mThread = new std::thread( &Thread::sThreadEntry, this );
+// 	mThread = new std::thread( &Thread::sThreadEntry, this );
+	pthread_create( &mThread, nullptr, (void*(*)(void*))&Thread::sThreadEntry, this );
 }
 
 

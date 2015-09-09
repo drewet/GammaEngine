@@ -21,6 +21,7 @@
 #define GE_THREAD_H
 
 #include <thread>
+#include <pthread.h>
 
 namespace GE
 {
@@ -49,7 +50,8 @@ private:
 	uint64_t mSharedContext;
 	bool mRunning;
 	bool mFinished;
-	std::thread* mThread;
+// 	std::thread* mThread;
+	pthread_t mThread;
 };
 
 }
