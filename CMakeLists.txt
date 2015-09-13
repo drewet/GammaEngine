@@ -16,6 +16,7 @@ message(STATUS "inc: ${FREETYPE_INCLUDE_DIRS}")
 
 option(target "target")
 option(backend "backend")
+option(release "release")
 
 set(mode SHARED)
 
@@ -34,13 +35,19 @@ if( NOT ${backend} MATCHES OFF )
 	add_definitions(-DGE_STATIC_BACKEND=${backend})
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-variable -g3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-variable")
 if(NOT "${target}" MATCHES "ios")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable")
 endif()
 if("${target}" MATCHES "windows")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc -static-libstdc++")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+endif()
+if("${release}" MATCHES "yes")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os")
+	add_definitions(-DGE_RELEASE)
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3")
 endif()
 
 include_directories(.)

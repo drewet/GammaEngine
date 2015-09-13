@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L../../ -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -I./fake -g3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L../../ -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-unused-variable -I./fake")
+
+if("${release}" MATCHES "yes")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os")
+        add_definitions(-DGE_RELEASE)
+else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3")
+endif()
 
 find_package(OpenGL REQUIRED)
 
