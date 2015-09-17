@@ -32,9 +32,9 @@ void log( const std::string& s ) {
 }
 #endif
 
-static std::mutex mMutex;
-static std::map< pthread_t, std::ostringstream* > mOutput;
-static std::map< pthread_t, uint64_t > mTicks;
+//static std::mutex mMutex;
+//static std::map< pthread_t, std::ostringstream* > mOutput;
+//static std::map< pthread_t, uint64_t > mTicks;
 
 Debug::Debug()
 {

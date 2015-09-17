@@ -17,7 +17,7 @@
  *
  */
 
-#if ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) ) )
+#if ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) || defined(GE_RELEASE) ) )
 
 #include "Instance.h"
 #include "Vector.h"
