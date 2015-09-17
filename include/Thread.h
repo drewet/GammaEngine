@@ -49,6 +49,7 @@ private:
 	Window* mSharedWindow;
 	uint64_t mSharedContext;
 	bool mRunning;
+	bool mIsRunning;
 	bool mFinished;
 // 	std::thread* mThread;
 	pthread_t mThread;

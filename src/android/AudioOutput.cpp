@@ -6,12 +6,26 @@
 #define ASSERT( result ) \
 	if ( result != SL_RESULT_SUCCESS ) { gDebug() << "Assertion failed at line " << __LINE__ << " ! : " << result << "\n"; exit(0); }
 
+// #define ASSERT( result ) \
+	if ( result != SL_RESULT_SUCCESS ) { gDebug() << "Assertion failed at line " << __LINE__ << " ! : " << result << "\n"; exit(0); } else { gDebug() << __LINE__ << " Ok\n"; }
+
 using namespace GE;
 
 void AudioOutput::sBqPlayerCallback( SLAndroidSimpleBufferQueueItf bq, void* p )
 {
+// 	fDebug( bq, p );
 	((AudioOutput*)p)->mOutlock++;
 }
+
+
+void AudioOutput::sPlayerCallback( SLPlayItf caller, void* p, SLuint32 event )
+{
+// 	fDebug( caller, p, event );
+	if ( event == SL_PLAYEVENT_HEADATEND ) {
+// 		((AudioOutput*)p)->mOutlock++;
+	}
+}
+
 
 void AudioOutput::WaitThreadLock()
 {
@@ -20,6 +34,7 @@ void AudioOutput::WaitThreadLock()
 	}
 	mLastOutlock = mOutlock;
 }
+
 
 AudioOutput::AudioOutput( uint32_t sample_rate, uint32_t bps, uint32_t input_channels, bool blocking, int speakers )
 	: Time()
@@ -32,15 +47,15 @@ AudioOutput::AudioOutput( uint32_t sample_rate, uint32_t bps, uint32_t input_cha
 	mSr = sample_rate;
 	mOutlock = 0;
 	mLastOutlock = 0;
-	mOutBufSamples = 8192;
-	mOutBuf = (short*)Instance::baseInstance()->Malloc( 2 * mOutBufSamples * sizeof(short) );
-	mOutputBuffer[0] = &mOutBuf[0];
-	mOutputBuffer[1] = &mOutBuf[mOutBufSamples];
+// 	mOutBufSamples = 8192;
+// 	mOutBuf = (short*)Instance::baseInstance()->Malloc( 2 * mOutBufSamples * sizeof(short) );
+// 	mOutputBuffer[0] = &mOutBuf[0];
+// 	mOutputBuffer[1] = &mOutBuf[mOutBufSamples];
 
-	mCurrentOutputIndex = 0;
-	mCurrentOutputBuffer = 0;
-	mCpos = 0;
-	mBlkpos = 0;
+// 	mCurrentOutputIndex = 0;
+// 	mCurrentOutputBuffer = 0;
+// 	mCpos = 0;
+// 	mBlkpos = 0;
 	
 	// Create Engine
 	result = slCreateEngine( &mEngineObject, 0, nullptr, 0, nullptr, nullptr );
@@ -50,8 +65,6 @@ AudioOutput::AudioOutput( uint32_t sample_rate, uint32_t bps, uint32_t input_cha
 	result = (*mEngineObject)->GetInterface( mEngineObject, SL_IID_ENGINE, &mEngine );
 	ASSERT( result );
 
-//	GetAvailableAudioOutputs
-	
 	// Open Output Mix
 	const SLInterfaceID ids[] = { SL_IID_VOLUME };
 	const SLboolean req[] = { SL_BOOLEAN_FALSE };
@@ -85,52 +98,132 @@ AudioOutput::AudioOutput( uint32_t sample_rate, uint32_t bps, uint32_t input_cha
 	result = (*mBqPlayerBufferQueue)->RegisterCallback( mBqPlayerBufferQueue, sBqPlayerCallback, this );
 	ASSERT( result );
 
+	result = (*mBqPlayerPlay)->RegisterCallback( mBqPlayerPlay, sPlayerCallback, this );
+	ASSERT( result );
+
+	result = (*mBqPlayerPlay)->SetCallbackEventsMask( mBqPlayerPlay, SL_PLAYEVENT_HEADATEND | SL_PLAYEVENT_HEADSTALLED );
+	ASSERT( result );
+
 	mOutlock++;
-	(*mBqPlayerPlay)->SetPlayState( mBqPlayerPlay, SL_PLAYSTATE_PLAYING );
+// 	result = (*mBqPlayerPlay)->SetPlayState( mBqPlayerPlay, SL_PLAYSTATE_PLAYING );
+// 	ASSERT( result );
 }
 
 
 AudioOutput::~AudioOutput()
 {
+	if ( mBqPlayerPlay != nullptr ) {
+		(*mBqPlayerPlay)->SetPlayState( mBqPlayerPlay, SL_PLAYSTATE_STOPPED );
+		(*mBqPlayerPlay)->SetMarkerPosition( mBqPlayerPlay, 0 );
+	}
+
+	if ( mBqPlayerBufferQueue != nullptr ) {
+		(*mBqPlayerBufferQueue)->Clear( mBqPlayerBufferQueue );
+	}
+	if ( mBqPlayerObject != nullptr ) {
+		(*mBqPlayerObject)->AbortAsyncOperation( mBqPlayerObject );
+		(*mBqPlayerObject)->Destroy( mBqPlayerObject );
+		mBqPlayerObject = nullptr;
+		mBqPlayerPlay = nullptr;
+		mBqPlayerBufferQueue = nullptr;
+		mBqPlayerEffectSend = nullptr;
+	}
+
+	if ( mOutputMixObject != nullptr ) {
+		(*mOutputMixObject)->Destroy( mOutputMixObject );
+		mOutputMixObject = nullptr;
+	}
+
+	if ( mEngineObject != nullptr ) {
+		(*mEngineObject)->Destroy( mEngineObject );
+		mEngineObject = nullptr;
+		mEngine = nullptr;
+	}
+
+	for ( auto buf : mQueue ) {
+		delete buf;
+	}
+	mQueue.clear();
 }
 
 
 std::vector< std::pair< int, std::string > > AudioOutput::DevicesList()
 {
+	fDebug0();
 	std::vector< std::pair< int, std::string > > ret;
+/*	UNSUPPORTED BY ANDROID (LOL)
+	SLresult result;
+	SLObjectItf engineObject;
+	SLAudioIODeviceCapabilitiesItf audioIODeviceCapabilities;
+	SLAudioOutputDescriptor audioOutputDescriptor;
+	int32_t numOutputs;
+	uint32_t outputDeviceIDs[64];
+
+	result = slCreateEngine( &engineObject, 0, nullptr, 0, nullptr, nullptr );
+	ASSERT( result );
+	result = (*engineObject)->Realize( engineObject, SL_BOOLEAN_FALSE );
+	ASSERT( result );
+	result = (*engineObject)->GetInterface( engineObject, SL_IID_AUDIOIODEVICECAPABILITIES, &audioIODeviceCapabilities );
+	ASSERT( result );
+
+	result = (*audioIODeviceCapabilities)->GetAvailableAudioOutputs( audioIODeviceCapabilities, &numOutputs, outputDeviceIDs );
+	ASSERT( result );
+
+	for ( int32_t i = 0; i < numOutputs; i++ ) {
+		result = (*audioIODeviceCapabilities)->QueryAudioOutputCapabilities( audioIODeviceCapabilities, outputDeviceIDs[i], &audioOutputDescriptor );
+		ret.push_back( std::make_pair( outputDeviceIDs[i], (char*)audioOutputDescriptor.pDeviceName ) );
+		ASSERT( result );
+	}
+
+	(*engineObject)->Destroy( engineObject );
+*/
 	return ret;
 }
 
 
 void AudioOutput::PushData( uint16_t* data, uint32_t size )
 {
-	fDebug( data, size );
-/*
-	short *outBuffer, *inBuffer;
-	uint32_t i;
-	int bufsamps = mOutBufSamples;
-	int index = mCurrentOutputIndex;
-	if ( bufsamps == 0 ) {
-		return;
-	}
-	outBuffer = mOutputBuffer[ mCurrentOutputBuffer ];
+// 	fDebug( data, size );
 
-	for ( i = 0; i < size; i++ ) {
-		outBuffer[index] = ((short*)data)[i];
-		index++;
-		if ( index >= mOutBufSamples ) {
-			(*mBqPlayerBufferQueue)->Enqueue( mBqPlayerBufferQueue, outBuffer, bufsamps * sizeof(short) );
-			mCurrentOutputBuffer = ( mCurrentOutputBuffer + 1 ) % 2;
-			index = 0;
-			outBuffer = mOutputBuffer[ mCurrentOutputBuffer ];
-			WaitThreadLock();
-		}
+	SLAndroidSimpleBufferQueueState state;
+	short* buf = new short[ size * 4 ];
+	memcpy( buf, data, size * 2 * sizeof( short ) );
+
+	(*mBqPlayerBufferQueue)->GetState( mBqPlayerBufferQueue, &state );
+
+	if ( mQueue.size() > 0 ) {
+		WaitThreadLock();
 	}
-	mCurrentOutputIndex = index;
-*/
-	(*mBqPlayerBufferQueue)->Enqueue( mBqPlayerBufferQueue, data, size * sizeof(short) );
-	WaitThreadLock();
+	if ( mQueue.size() > state.count ) {
+		delete mQueue.front();
+		mQueue.pop_front();
+	}
+	(*mBqPlayerBufferQueue)->Enqueue( mBqPlayerBufferQueue, buf, size * 2 * sizeof(short) );
+
+	uint32_t player_state;
+	(*mBqPlayerPlay)->GetPlayState( mBqPlayerPlay, &player_state );
+	if ( player_state != SL_PLAYSTATE_PLAYING ) {
+		(*mBqPlayerPlay)->SetPlayState( mBqPlayerPlay, SL_PLAYSTATE_PLAYING );
+	}
+
 	mTime += (double) size / ( mSr * mOutchannels );
+	mQueue.push_back( buf );
+}
+
+
+void AudioOutput::Stop()
+{
+	(*mBqPlayerPlay)->SetPlayState( mBqPlayerPlay, SL_PLAYSTATE_STOPPED );
+// 	(*mBqPlayerPlay)->SetPlayState( mBqPlayerPlay, SL_PLAYSTATE_PAUSED );
+// 	(*mBqPlayerPlay)->SetMarkerPosition( mBqPlayerPlay, 0 );
+// 	(*mBqPlayerBufferQueue)->Clear( mBqPlayerBufferQueue );
+// 	(*mBqPlayerObject)->AbortAsyncOperation( mBqPlayerObject );
+// 	for ( auto buf : mQueue ) {
+// 		delete buf;
+// 	}
+// 	mQueue.clear();
+	mOutlock = 1;
+	mLastOutlock = 0;
 }
 
 
@@ -148,5 +241,7 @@ void AudioOutput::Resume()
 
 bool AudioOutput::isPlaying() const
 {
-	return true;
+	uint32_t state;
+	(*mBqPlayerPlay)->GetPlayState( mBqPlayerPlay, &state );
+	return state & SL_PLAYSTATE_PLAYING;
 }

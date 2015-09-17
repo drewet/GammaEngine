@@ -56,6 +56,7 @@ public:
 	virtual AudioLoader* NewInstance() = 0;
 	virtual void Load( Instance* instance, File* file, bool fullLoading ) = 0;
 	virtual int32_t FillBuffer( uint16_t* buffer, uint32_t maxSize ) = 0;
+	virtual void Rewind() = 0;
 	uint32_t sampleRate() const { return mSampleRate; }
 	uint32_t bps() const { return mBps; }
 	uint32_t channelsCount() const { return mChannelsCount; }

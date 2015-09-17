@@ -15,6 +15,7 @@ public:
 	virtual AudioLoader* NewInstance();
 	virtual void Load( Instance* instance, File* file, bool fullLoading );
 	virtual int32_t FillBuffer( uint16_t* buffer, uint32_t maxSize );
+	virtual void Rewind();
 
 protected:
 	int ErrorCheck();

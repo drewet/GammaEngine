@@ -64,34 +64,58 @@ Music& Music::operator=( const Music& other )
 
 void Music::Play()
 {
+	fDebug0();
+
 	if ( mOutput ) {
 		mOutput->Resume();
 	}
+
 	Thread::Start();
 }
 
 
 void Music::Stop()
 {
+	fDebug0();
+
 	if ( mOutput ) {
-		mOutput->Pause();
+		mOutput->Stop();
 	}
 	Thread::Pause();
+	while ( Thread::running() ) {
+		Time::Sleep( 10 );
+	}
+
+	if ( mOutput ) {
+		delete mOutput;
+		mOutput = nullptr;
+	}
+
+	if ( mSource ) {
+		mSource->Rewind();
+	}
 }
 
 
 bool Music::run()
 {
-	fDebug0();
+// 	fDebug0();
 	uint16_t* buffer = new uint16_t[1152 * 2 * 128];
 
 	if ( !mOutput and mSource ) {
 		mOutput = new AudioOutput( mSource->sampleRate(), mSource->bps(), mSource->channelsCount(), true );
 	}
+	if ( !mOutput or !mSource ) {
+		delete buffer;
+		return false;
+	}
 
 	int ret = mSource->FillBuffer( buffer, 1152 * 2 * 128 );
 	if ( ret > 0 ) {
 		mOutput->PushData( buffer, ret / sizeof(short) );
+	} else if ( ret < 0 ) {
+		gDebug() << "self pausing\n";
+		Pause();
 	}
 
 	delete buffer;

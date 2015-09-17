@@ -34,6 +34,13 @@ std::vector< std::string > AudioLoaderWav::extensions()
 }
 
 
+void AudioLoaderWav::Rewind()
+{
+	mFile->Rewind();
+	mEos = false;
+}
+
+
 void AudioLoaderWav::Load( Instance* instance, File* file, bool fullLoading )
 {
 	uint8_t header[44] = { 0 };

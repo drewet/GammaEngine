@@ -27,6 +27,7 @@ Thread::Thread( Window* shared_graphics_window )
 	: mSharedWindow( shared_graphics_window )
 	, mSharedContext( 0 )
 	, mRunning( false )
+	, mIsRunning( false )
 	, mFinished( false )
 // 	, mThread( nullptr )
 {
@@ -65,7 +66,7 @@ void Thread::Join()
 
 bool Thread::running()
 {
-	return mRunning;
+	return mIsRunning;
 }
 
 
@@ -82,8 +83,11 @@ void Thread::mThreadEntry()
 	}
 	do {
 		while ( !mRunning ) {
+			mIsRunning = false;
 			usleep( 1000 * 10 );
 		}
+		mIsRunning = true;
 	} while ( run() );
+	mIsRunning = false;
 	mFinished = true;
 }

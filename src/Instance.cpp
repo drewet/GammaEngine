@@ -20,6 +20,7 @@
  
 #include <stdlib.h>
 #include "Instance.h"
+#include "AudioOutput.h"
 #include "Debug.h"
 
 #ifndef ALIGN
@@ -99,6 +100,10 @@ extern "C" Object* LoadObject( const std::string&, Instance* );
 
 Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance, const std::string& backend_file )
 {
+	auto devs = AudioOutput::DevicesList();
+	for ( auto dev : devs ) {
+		gDebug() << "Audio output " << dev.first << " : " << dev.second << "\n";
+	}
 	if ( easy_instance ) {
 		if ( !mBaseInstance ) {
 			mBaseInstance = CreateInstance( appName, appVersion );
@@ -195,6 +200,11 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 		} else {
 			gDebug() << "Backend file " << prefixes[--i] << backend_lib << lib_suffix << " loaded !\n";
 		}
+	}
+
+	auto devs = AudioOutput::DevicesList();
+	for ( auto dev : devs ) {
+		gDebug() << "Audio output " << dev.first << " : " << dev.second << "\n";
 	}
 
 	typedef Instance* (*f_type)( const char*, uint32_t );

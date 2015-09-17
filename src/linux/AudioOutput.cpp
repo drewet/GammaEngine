@@ -154,9 +154,9 @@ bool AudioOutputThread::run()
 {
 	while ( mQueue.size() > 0 ) {
 		std::pair< uint16_t*, uint32_t > q = mQueue.front();
-		mQueue.pop_front();
 		mPlaying = true;
 		snd_pcm_writei( mHandle, q.first, q.second );
+		mQueue.pop_front();
 	}
 	mPlaying = false;
 	// TODO : return ( this->Pause() )
@@ -180,6 +180,16 @@ void AudioOutput::Pause()
 void AudioOutput::Resume()
 {
 	snd_pcm_pause( mHandle, false );
+	if ( snd_pcm_state( mHandle ) != SND_PCM_STATE_RUNNING ) {
+		snd_pcm_start( mHandle );
+	}
+}
+
+
+void AudioOutput::Stop()
+{
+	snd_pcm_drop( mHandle );
+	// TODO
 }
 
 

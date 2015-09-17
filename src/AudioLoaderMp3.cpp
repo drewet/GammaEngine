@@ -35,6 +35,23 @@ std::vector< std::string > AudioLoaderMp3::extensions()
 }
 
 
+void AudioLoaderMp3::Rewind()
+{
+	mUnderrunBufferSize = 0;
+	mEos = false;
+	mFrameCount = 2;
+
+	mad_stream_init( mStream );
+	mad_frame_init( mFrame );
+	mad_synth_init( mSynth );
+	mad_timer_reset( mTimer );
+
+	mFile->Rewind();
+	int sz = mFile->Read( mInputBuffer, sizeof( mInputBuffer ) );
+	mad_stream_buffer( mStream, mInputBuffer, sz );
+}
+
+
 int AudioLoaderMp3::ErrorCheck()
 {
 	int dec = 0;
@@ -84,7 +101,6 @@ void AudioLoaderMp3::Load( Instance* instance, File* file, bool fullLoading )
 	mad_stream_init( mStream );
 	mad_frame_init( mFrame );
 	mad_synth_init( mSynth );
-	*mTimer = mad_timer_zero;
 	mad_timer_reset( mTimer );
 
 // 	MP3_TotalLength(mp3, &mp3->total_hours, &mp3->total_minuts, &mp3->total_seconds); TODO / TBD
@@ -129,8 +145,8 @@ void AudioLoaderMp3::Load( Instance* instance, File* file, bool fullLoading )
 
 int32_t AudioLoaderMp3::FillBuffer( uint16_t* buffer, uint32_t maxSize )
 {
-	fDebug( buffer, maxSize );
-	gDebug() << "1\n";
+// 	fDebug( buffer, maxSize );
+// 	gDebug() << "1\n";
 	bool stop = false;
 	uint32_t total = 0;
 
@@ -140,7 +156,7 @@ int32_t AudioLoaderMp3::FillBuffer( uint16_t* buffer, uint32_t maxSize )
 		mUnderrunBufferSize -= sz;
 		total += sz;
 	}
-	gDebug() << "2\n";
+// 	gDebug() << "2\n";
 
 	while ( not stop and total < maxSize ) {
 // 		gDebug() << "2.1\n";
@@ -197,7 +213,7 @@ int32_t AudioLoaderMp3::FillBuffer( uint16_t* buffer, uint32_t maxSize )
 // 		gDebug() << "2.5\n";
 		total += i * 2;
 	}
-	gDebug() << "3 (" << total << ")\n";
+// 	gDebug() << "3 (" << total << ")\n";
 	return total;
 }
 
