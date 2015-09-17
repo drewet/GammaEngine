@@ -49,6 +49,7 @@ public:
 	Vertex* vertices() const;
 	uint32_t* indices() const;
 	Matrix* matrix() const;
+	Vector3f position() const;
 
 	void setName( const std::string& name );
 

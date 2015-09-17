@@ -211,6 +211,12 @@ Matrix* Object::matrix() const
 }
 
 
+Vector3f Object::position() const
+{
+	return Vector3f( mMatrix->m[3], mMatrix->m[7], mMatrix->m[11] );
+}
+
+
 void Object::setName( const std::string& name )
 {
 	mName = name;

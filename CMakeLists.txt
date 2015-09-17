@@ -9,9 +9,11 @@ find_package(PNG16 REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(LibMad REQUIRED)
+find_package(Bullet REQUIRED)
 
 include_directories(${FREETYPE_INCLUDE_DIRS})
 include_directories(${PNG16_INCLUDE_DIR})
+include_directories(${BULLET_INCLUDE_DIR})
 
 option(target "target")
 option(backend "backend")
@@ -133,6 +135,7 @@ set(LIBS ${LIBS}
 	${JPEG_LIBRARIES}
 	${FREETYPE_LIBRARIES}
 	${LIBMAD_LIBRARY}
+	${BULLET_LIBRARIES}
 	-pthread
 )
 

@@ -21,6 +21,10 @@
 #define GE_PHYSICALGRAPH_H
 
 #include <list>
+
+#include <btBulletDynamicsCommon.h>
+#include <btBulletCollisionCommon.h>
+
 #include "PhysicalCollider.h"
 #include "PhysicalBody.h"
 
@@ -32,8 +36,10 @@ class Instance;
 class PhysicalGraph : protected Time
 {
 public:
-	PhysicalGraph( Instance* instance = nullptr );
+	PhysicalGraph( Instance* instance = nullptr, const Vector3f& gravity = Vector3f() );
 	~PhysicalGraph();
+
+	void setGravity( const Vector3f& g );
 
 	PhysicalCollider* collider();
 
@@ -47,6 +53,12 @@ protected:
 	Instance* mInstance;
 	PhysicalCollider* mCollider;
 	std::list< PhysicalBody* > mBodies;
+
+    btBroadphaseInterface* mBroadphase;
+    btDefaultCollisionConfiguration* mCollisionConfiguration;
+    btCollisionDispatcher* mDispatcher;
+    btSequentialImpulseConstraintSolver* mSolver;
+    btDiscreteDynamicsWorld* mDynamicsWorld;
 };
 
 } // namespace GE
