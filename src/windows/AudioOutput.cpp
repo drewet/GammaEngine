@@ -30,6 +30,11 @@ void AudioOutput::PushData( uint16_t* data, uint32_t size )
 }
 
 
+void AudioOutput::Stop()
+{
+}
+
+
 void AudioOutput::Pause()
 {
 }

@@ -18,6 +18,7 @@ public:
 	AudioOutput( uint32_t sample_rate, uint32_t bps, uint32_t input_channels, bool blocking = false, int speakers = Front_Left | Front_Right );
 	~AudioOutput();
 
+	void Stop();
 	void Pause();
 	void Resume();
 
