@@ -12,8 +12,7 @@ To compile GammaEngine, you will need the following dependancies :
 
 mingw32-w64 is also required to build GE on win32 OS.
 
-Pre-compiled binaries are also available here :
-/* TODO *\
+Pre-compiled binaries are also available here : http://ci.drich.fr/job/GammaEngine/
 
 # Documentation
 Full documentation is available here : http://doc.drich.fr
