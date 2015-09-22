@@ -24,8 +24,9 @@
 	static void load_glext();
 	#include <windows.h>
 	#undef CreateWindow
-	#include <GLES2/gl2.h>
-	#include <GLES2/gl2ext.h>
+//	#include <GLES2/gl2.h>
+//	#include <GLES2/gl2ext.h>
+	#include <GL/gl.h>
 	#include <GL/wglext.h>
 #elif defined(GE_LINUX)
 	#include <EGL/egl.h>

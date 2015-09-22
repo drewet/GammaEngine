@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_map>
 #include "Instance.h"
+#include "Window.h"
 #include "SkyRenderer.h"
 #include "Object.h"
 #include "Light.h"
@@ -49,6 +50,7 @@ void SkyRenderer::BuilderModCB( MeshBuilder::Face* face, void* data )
 
 SkyRenderer::SkyRenderer( Instance* instance, float domeRadius )
 	: mRenderer( instance->CreateRenderer() )
+	, mAssociatedWindow( nullptr )
 	, mDome( nullptr )
 	, mDomeRadius( domeRadius )
 {
@@ -75,6 +77,7 @@ SkyRenderer::SkyRenderer( Instance* instance, float domeRadius )
 	mRenderer->LoadFragmentShader( "shaders/skydome.frag" );
 	mRenderer->AddObject( mDome );
 	mRenderer->Compute();
+	mLightPosID = mRenderer->uniformID( "v3SunPos" );
 }
 
 
@@ -91,6 +94,13 @@ void SkyRenderer::AddLight( Light* light )
 
 void SkyRenderer::Render( Camera* camera )
 {
+	if ( mAssociatedWindow != nullptr ) {
+		mRenderer->projectionMatrix()->Perspective( 60.0f, (float)mAssociatedWindow->width() / mAssociatedWindow->height(), 1.0f, mDomeRadius + 10.0f );
+	}
+
+	// TODO : Handle multiple mLight
+	mRenderer->uniformUpload( mLightPosID, mLights[0]->position() );
+
 	mRenderer->Look( camera );
 	mRenderer->Draw();
 }

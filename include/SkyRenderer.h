@@ -30,6 +30,7 @@ namespace GE {
 class Object;
 class Light;
 class Camera;
+class Matrix;
 
 class SkyRenderer
 {
@@ -40,13 +41,17 @@ public:
 	void AddLight( Light* light );
 	void Render( Camera* cam );
 
+	void AssociateSize( Window* window ) { mAssociatedWindow = window; };
+
 protected:
 	static bool BuilderRemoveCB( MeshBuilder::Face* face, void* data );
 	static void BuilderModCB( MeshBuilder::Face* face, void* data );
 	Renderer* mRenderer;
+	Window* mAssociatedWindow;
 	Object* mDome;
 	float mDomeRadius;
 	std::vector< Light* > mLights;
+	uintptr_t mLightPosID;
 };
 
 } // namespace GE

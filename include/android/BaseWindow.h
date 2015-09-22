@@ -24,10 +24,6 @@
 #include <string>
 #include <thread>
 
-namespace GE {
-
-class Instance;
-
 // #ifdef BASEWINDOW_CPP
 
 	#include <android/sensor.h>
@@ -38,6 +34,11 @@ class Instance;
 	#include <EGL/egl.h>
 	#include <jni.h>
 	#include <android_native_app_glue.h>
+
+
+namespace GE {
+
+class Instance;
 
 	typedef struct ATouch {
 		bool used;

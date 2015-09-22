@@ -136,7 +136,7 @@ ObjectLoader* Object::GetLoader( const std::string filename, File* file )
 				std::string test_case = extensions[j];
 				std::transform( test_case.begin(), test_case.end(), test_case.begin(), ::tolower );
 				printf(" [%s].find(%s)\n", extension.c_str(), test_case.c_str());
-				if ( extension.find( test_case ) ) {
+				if ( extension.find( test_case ) == 0 ) {
 					loader = mObjectLoaders.at(i);
 					break;
 				}
@@ -208,6 +208,12 @@ uint32_t* Object::indices() const
 Matrix* Object::matrix() const
 {
 	return mMatrix;
+}
+
+
+Vector3f Object::position() const
+{
+	return Vector3f( mMatrix->m[3], mMatrix->m[7], mMatrix->m[11] );
 }
 
 

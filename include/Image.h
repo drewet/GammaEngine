@@ -24,13 +24,15 @@
 #include <vector>
 #include <map>
 
+#include "MetaObject.h"
+
 namespace GE {
 
 class Instance;
 class ImageLoader;
 class File;
 
-class Image
+class Image : public MetaObject
 {
 public:
 	Image();

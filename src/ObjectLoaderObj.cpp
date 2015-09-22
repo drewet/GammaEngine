@@ -256,7 +256,7 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 					}
 
 					if ( iBuff + 1 >= maxBuff ) {
-						buff = ( Vertex* )instance->Realloc( buff, maxBuff + 1024 );
+						buff = ( Vertex* )instance->Realloc( buff, sizeof( Vertex ) * ( maxBuff + 1024 ) );
 						maxBuff += 1024;
 					}
 					iBuff++;
@@ -266,7 +266,7 @@ std::list< Object* > ObjectLoaderObj::LoadObjects( Instance* instance, File* fil
 			}
 			if ( n == 3 ) { // Triangle
 				if ( iIndices + 3 >= maxIndices ) {
-					indices = ( uint32_t* )instance->Realloc( indices, maxIndices + 128 * 3 );
+					indices = ( uint32_t* )instance->Realloc( indices, sizeof( uint32_t ) * ( maxIndices + 128 * 3 ) );
 					maxIndices += 128 * 3;
 				}
 				memcpy( &indices[iIndices], face_indices, sizeof( uint32_t ) * 3 );
@@ -439,7 +439,7 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 					}
 
 					if ( iBuff + 1 >= maxBuff ) {
-						buff = ( Vertex* )instance->Realloc( buff, maxBuff + 1024 );
+						buff = ( Vertex* )instance->Realloc( buff, sizeof( Vertex ) * ( maxBuff + 1024 ) );
 						maxBuff += 1024;
 					}
 					iBuff++;
@@ -449,7 +449,7 @@ void ObjectLoaderObj::Load( Instance* instance, File* file )
 			}
 			if ( n == 3 ) { // Triangle
 				if ( iIndices + 3 >= maxIndices ) {
-					indices = ( uint32_t* )instance->Realloc( indices, maxIndices + 128 * 3 );
+					indices = ( uint32_t* )instance->Realloc( indices, sizeof( uint32_t ) * ( maxIndices + 128 * 3 ) );
 					maxIndices += 128 * 3;
 				}
 				memcpy( &indices[iIndices], face_indices, sizeof( uint32_t ) * 3 );
@@ -492,6 +492,7 @@ void ObjectLoaderObj::LoadMaterials( Instance* instance, File* base_file, std::s
 	std::stringstream tokenizer;
 	std::string type;
 	std::string str;
+	std::map < std::string, Image* > textures;
 	float alpha = 0.0f;
 	float f1 = 0.0f;
 	float f2 = 0.0f;
@@ -554,9 +555,14 @@ void ObjectLoaderObj::LoadMaterials( Instance* instance, File* base_file, std::s
 		if ( type == "map_Kd" ) {
 			tokenizer >> str;
 			gDebug() << "texfile : " << str << "\n";
-			File* texfile = new File( file, str, File::READ );
-			mat->map_Kd = new Image( texfile, "", instance );
-			delete texfile;
+			if ( textures.count( str ) > 0 ) {
+				mat->map_Kd = textures.at( str );
+			} else {
+				File* texfile = new File( file, str, File::READ );
+				mat->map_Kd = new Image( texfile, "", instance );
+				textures.emplace( str, mat->map_Kd );
+				delete texfile;
+			}
 		}
 
 		if ( type == "map_bump" || type == "bump" ) {
@@ -570,6 +576,8 @@ void ObjectLoaderObj::LoadMaterials( Instance* instance, File* base_file, std::s
 	}
 
 	delete file;
+	gDebug() << "Textures count : " << textures.size() << "\n";
+	gDebug() << "Materials count : " << mMaterials.size() << "\n";
 }
 
 } // namespace GE

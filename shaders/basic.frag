@@ -36,4 +36,5 @@ void main()
 
 	ge_FragDepth = uint( gl_FragCoord.z * 65535.0 );
 	ge_FragPosition = ge_Position;
+	ge_FragColor.a = 1.0;
 }

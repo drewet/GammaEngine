@@ -42,8 +42,7 @@ void main()
 
 	gl_FragColor.a = 1.0;
 
-	vec4 clouds = ComputeClouds(vpos/* + vec3(ge_Time * speed * 10.0, 0.0, 0.0)*/, v3CameraPos/* + vec3(ge_Time * speed * 10.0, 0.0, 0.0)*/);
-// 	gl_FragColor.rgb = mix( vec3(clouds.a), clouds.rgb, gl_FragColor.rgb );
+	vec4 clouds = ComputeClouds( vpos, v3CameraPos );
 	gl_FragColor.rgb = clouds.rgb * clouds.a + gl_FragColor.rgb * ( 1.0 - clouds.a );
 
 //	gl_FragDepth = 1.0;
@@ -64,7 +63,7 @@ void main()
 
 vec3 sun_color = vec3(1.0);
 
-uniform float cover = 150.0;
+uniform float cover = 220.0;
 uniform float sharpness = 0.97;
 uniform float scale = 0.001;
 
@@ -224,7 +223,7 @@ float CloudsAlpha(vec3 ray, vec3 end, vec3 dir, vec3 modifier, int it, float hei
 	for(i=0; i<it; i++)
 	{
 		accum += CloudDensity(ray * modifier);
-		if(accum >= 1.0){
+		if ( accum >= 1.0 ) {
 			break;
 		}
 		ray += dir * ray_step * 1.0;
@@ -286,11 +285,15 @@ vec4 ComputeClouds(vec3 pos, vec3 cam)
 //	vec4 high = HighClouds(ray, end, dir);
 
 	vec4 accum = vec4(0.0);
-	accum.rgb = CloudColor(ray);
-	accum.rgb = clamp(accum.rgb, vec3(0.05), vec3(1.0));
 
 	accum.a = CloudsAlpha(ray, end, dir, vec3(1.0), CLOUDS_SAMPLES, clouds_height, clouds_thickness);
+	if ( accum.a == 0.0 ) {
+		return vec4( 0.0 );
+	}
 	accum.a = clamp(accum.a, 0.0, 1.0);
+
+	accum.rgb = CloudColor(ray);
+	accum.rgb = clamp(accum.rgb, vec3(0.05), vec3(1.0));
 /*
 //	accum = vec4(0.0);
 

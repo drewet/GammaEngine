@@ -3,7 +3,7 @@ find_package(ZLIB REQUIRED)
 find_path(PNG16_INCLUDE_DIR png.h
   HINTS
     ENV PNG16_DIR
-  PATH_SUFFIXES include/png16 include/png1.6 include/lua include
+  PATH_SUFFIXES include/png16 include/png1.6 include/libpng16 include/libpng1.6 include
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks
@@ -21,7 +21,7 @@ if("${PNG16_INCLUDE_DIR}" MATCHES "")
 find_path(PNG16_INCLUDE_DIR png.h
   HINTS
     ENV PNG16_DIR
-  PATH_SUFFIXES include/png16 include/png1.6 include/lua include
+  PATH_SUFFIXES include/png16 include/png1.6 include/libpng16 include/libpng1.6 include
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks

@@ -52,8 +52,8 @@ extern "C" __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
 	}
 #endif
 
-static PFNGLGETTEXTUREHANDLEARBPROC glGetTextureHandle = 0;
-static PFNGLMAKETEXTUREHANDLERESIDENTARBPROC glMakeTextureHandleResident = 0;
+// static PFNGLGETTEXTUREHANDLEARBPROC glGetTextureHandle = 0;
+// static PFNGLMAKETEXTUREHANDLERESIDENTARBPROC glMakeTextureHandleResident = 0;
 
 extern "C" GE::Renderer* CreateRenderer( GE::Instance* instance ) {
 	return new OpenGL43Renderer( instance );
@@ -100,13 +100,26 @@ OpenGL43Renderer::OpenGL43Renderer( Instance* instance )
 	, mVertexShader( 0 )
 	, mFragmentShader( 0 )
 {
+/*
 	if ( !glGetTextureHandle ) {
+		gDebug() << "Available extensions : " << (char *)glGetString(GL_EXTENSIONS) << "\n";
 		glGetTextureHandle = (PFNGLGETTEXTUREHANDLEARBPROC)SymLib( "glGetTextureHandleARB" );
+		if ( glGetTextureHandle == nullptr ) {
+			glGetTextureHandle = (PFNGLGETTEXTUREHANDLEARBPROC)SymLib( "glGetTextureHandle" );
+		}
+		if ( glGetTextureHandle == nullptr ) {
+			gDebug() << "CRITICAL : glGetTextureHandleARB not found !\n";
+// 			exit(0);
+		}
 	}
 	if ( !glMakeTextureHandleResident ) {
 		glMakeTextureHandleResident = (PFNGLMAKETEXTUREHANDLERESIDENTARBPROC)SymLib( "glMakeTextureHandleResidentARB" );
+		if ( glMakeTextureHandleResident == nullptr ) {
+			gDebug() << "CRITICAL : glMakeTextureHandleResidentARB not found !\n";
+			exit(0);
+		}
 	}
-
+*/
 	mFloatTimeID = 32;
 
 	mMatrixProjection = new Matrix();
@@ -271,6 +284,8 @@ void OpenGL43Renderer::Compute()
 	}
 	mMatrixObjects = (float*)mInstance->Malloc( sizeof(float) * 16 * mObjects.size() );
 
+	int curr = 0;
+
 	for ( size_t i = 0; i < mObjects.size(); i++ ) {
 		DrawElementsIndirectCommand cmd = {
 			.count = mObjects[i]->indicesCount(),
@@ -297,26 +312,28 @@ void OpenGL43Renderer::Compute()
 		verticesCount += mObjects[i]->verticesCount();
 
 		const std::vector< std::pair< Image*, uint32_t > >* textures = ((OpenGL43Object*)mObjects[i])->textures( mInstance );
-		if ( textures ) {
-			textureBases.emplace_back( textureHandles.size() / 2 );
-			uint64_t stride_data = ( (uint64_t)( textures->size() ) ) | (( (uint64_t)textureHandles.size() ) << 32);
+		if ( textures/* and curr++ < 64*/ ) {
+			textureBases.emplace_back( ( textures->size() << 16 ) | ( textureHandles.size() / 2 ) );
 			for ( size_t j = 0; j < textures->size(); j++ ) {
 				if ( (*textures)[j].first != nullptr ) {
-					uint64_t handle = glGetTextureHandle( (*textures)[j].second );
-					glMakeTextureHandleResident( handle );
+					uint64_t handle = glGetTextureHandleARB( (*textures)[j].second );
+					gDebug() << "handle : " << handle << "\n";
+					glMakeTextureHandleResidentARB( handle );
 					textureHandles.emplace_back( handle );
 				} else {
 					textureHandles.emplace_back( 0 );
 				}
-				textureHandles.emplace_back( stride_data ); // 128-bits Stride
+				textureHandles.emplace_back( 0 );
 			}
 		} else {
-// 			textureBases.emplace_back( textureHandles.size() / 2 );
-			textureBases.emplace_back( 0xFFFFFFFF );
-// 			textureHandles.emplace_back( 0 );
-// 			textureHandles.emplace_back( 0 ); // 128-bits Stride
+			textureBases.emplace_back( 0x00000000 );
 		}
+		std::cout << "textureBases[" << i << "] = " << std::hex << textureBases.back() << "\n";
 	}
+	gDebug() << "mObjects.size() : " << mObjects.size() << "\n";
+	gDebug() << "textureBases.size() : " << textureBases.size() << "\n";
+	gDebug() << "textureHandles.size() : " << textureHandles.size() << "\n";
+// 	exit(0);
 
 	glGenVertexArrays( 1, &mVAO );
 	glBindVertexArray( mVAO );

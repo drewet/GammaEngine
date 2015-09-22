@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 namespace GE {
 
@@ -34,6 +35,7 @@ class Font
 {
 public:
 	typedef struct Glyph {
+		wchar_t c;
 		int x, y, w, h, advX, posY;
 	} Glyph;
 
@@ -44,11 +46,15 @@ public:
 
 	uint32_t size() const;
 	void* face() const;
-	Glyph* glyphs();
+	std::map< wchar_t, Glyph >& glyphs();
+	Glyph* glyph( wchar_t c ) const;
 	Image* texture() const;
 	void setSize( uint32_t size );
+	void RenderGlyphs();
 
 	void measureString( const std::string& str, int* width, int* height );
+	void measureString( const std::wstring& str, int* width, int* height );
+	void Release();
 
 	Image* reallocTexture( int width, int height );
 	static FontLoader* AddFontLoader( FontLoader* loader );
@@ -56,11 +62,13 @@ public:
 protected:
 	void Load( File* file, int size, const std::string& extension, Instance* instance );
 
+	Instance* mAllocInstance;
 	int mSize;
 	Image* mTexture;
 	uint8_t* mData;
 	void* mFace;
-	Glyph mGlyphs[256];
+// 	Glyph mGlyphs[256];
+	std::map< wchar_t, Glyph > mGlyphs;
 	FontLoader* mModInstance;
 
 	static std::vector< FontLoader* > mFontLoaders;
@@ -78,6 +86,8 @@ public:
 	virtual void Load( Instance* instance, File* file, uint32_t size ) = 0;
 
 	virtual void resize( Font* font, int size ) = 0;
+	virtual void RenderGlyphs( Font* font ) = 0;
+	virtual uint32_t glyphWidth( Font* font, wchar_t c ) = 0;
 };
 
 }

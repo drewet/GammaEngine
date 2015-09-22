@@ -27,8 +27,13 @@
 //#include <freetype2/freetype.h>
 //#include <freetype2/ftglyph.h>
 #include <ft2build.h>
+#ifdef GE_ANDROID
+#include <freetype/freetype.h>
+#include <freetype/ftglyph.h>
+#else
 #include <freetype.h>
 #include <ftglyph.h>
+#endif
 
 namespace GE {
 
@@ -42,6 +47,8 @@ public:
 	virtual void Load( Instance* instance, File* file, uint32_t size );
 
 	virtual void resize( Font* font, int size );
+	virtual void RenderGlyphs( Font* font );
+	virtual uint32_t glyphWidth( Font* font, wchar_t c );
 
 private:
 	static void fontPrintTextImpl2( FT_Bitmap* bitmap, int xofs, int yofs, uint32_t* framebuffer, int width, int height );

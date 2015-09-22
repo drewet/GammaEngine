@@ -63,9 +63,9 @@ private:
 static inline std::string className(const std::string& prettyFunction)
 {
 	size_t colons = prettyFunction.find("::");
-	if ( prettyFunction.find( "GE::" ) ) {
-		colons += 2 + prettyFunction.substr(colons + 2).find( "::" );
-	}
+// 	if ( prettyFunction.find( "GE::" ) ) {
+// 		colons += 2 + prettyFunction.substr(colons + 2).find( "::" );
+// 	}
 	if (colons == std::string::npos)
 		return "<none>";
 	size_t begin = prettyFunction.substr(0,colons).rfind(" ") + 1;
@@ -110,9 +110,9 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 		Debug() << ", ";
 	}
 // 	Debug() << "[" << type << "]";
-	Debug() << cap;
+	if ( cap ) Debug() << cap;
 	Debug() << arg1;
-	Debug() << cap;
+	if ( cap ) Debug() << cap;
 	fDebug_base( end, false, args... );
 }
 
@@ -122,6 +122,10 @@ template<typename Arg1, typename... Args> static void fDebug_base( const char* e
 #define aDebug( name, args... ) Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << " = { "; fDebug_base( "}\n", true, args )
 
 #define vDebug( name, args... ) Debug() << self_thread() << __CLASS_NAME__ << "::" << __FUNCTION__ << " " << name << "{ "; fDebug_base( "} ", true, args ); Debug() << ""
+
+#ifndef fDebug // To avoid syntax analyzer error using KDevelop
+extern void fDebug( auto a, ... );
+#endif
 
 #endif // __DBG_CLASS
 

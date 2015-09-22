@@ -40,6 +40,8 @@ public:
 	Vector( const Vector<T,4>& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 	Vector( float* v ) : x(v[0]), y(v[1]), z(v[2]), w(v[3]) {}
 
+	Vector<T,n>& operator=( const Vector<T,n>& other );
+
 	void normalize();
 	T length();
 	Vector<T,3> xyz() const { return Vector<T,3>( x, y, z ); }
@@ -113,7 +115,7 @@ typedef Vector<double, 4> Vector4d;
 
 } // namespace GE
 
-#if ( (defined(GE_ANDROID) || defined(GE_IOS))/* && defined(GE_LIB)*/ )
+#if ( (defined(GE_ANDROID) || defined(GE_IOS) || defined(GE_RELEASE) )/* && defined(GE_LIB)*/ )
 #define GE_VECTOR_CPP_INC
 #ifdef GE_LIB
 #include "../src/Vector.cpp"

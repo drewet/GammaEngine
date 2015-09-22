@@ -78,6 +78,7 @@ define_proc(BUFFERSUBDATA, glBufferSubData);
 define_proc(GETBUFFERPARAMETERIV, glGetBufferParameteriv);
 define_proc(BLITFRAMEBUFFER, glBlitFramebuffer);
 define_proc(GENRENDERBUFFERS, glGenRenderbuffers);
+define_proc(DELETERENDERBUFFERS, glDeleteRenderbuffers);
 define_proc(BINDRENDERBUFFER, glBindRenderbuffer);
 define_proc(RENDERBUFFERSTORAGEMULTISAMPLE, glRenderbufferStorageMultisample);
 define_proc(FRAMEBUFFERRENDERBUFFER, glFramebufferRenderbuffer);

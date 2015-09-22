@@ -2,18 +2,22 @@ cmake_minimum_required(VERSION 2.6)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 project(gammaengine)
 
-if(NOT IOS)
+if(NOT "${target}" MATCHES "ios")
 find_package(OpenGL REQUIRED)
 endif()
 find_package(PNG16 REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(Freetype REQUIRED)
+find_package(LibMad REQUIRED)
+find_package(Bullet REQUIRED)
 
-include_directories(${FREETYPE_INCLUDE_DIRS})
+include_directories(${FREETYPE_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS}/freetype)
 include_directories(${PNG16_INCLUDE_DIR})
+include_directories(${BULLET_INCLUDE_DIR})
 
 option(target "target")
 option(backend "backend")
+option(release "release")
 
 set(mode SHARED)
 
@@ -32,9 +36,19 @@ if( NOT ${backend} MATCHES OFF )
 	add_definitions(-DGE_STATIC_BACKEND=${backend})
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-variable -g3")
-if(NOT IOS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unknown-pragmas -Wno-unused-variable")
+if(NOT "${target}" MATCHES "ios")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable")
+endif()
+if("${target}" MATCHES "windows")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc -static-libstdc++")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+endif()
+if("${release}" MATCHES "yes")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os")
+	add_definitions(-DGE_RELEASE)
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3")
 endif()
 
 include_directories(.)
@@ -46,16 +60,6 @@ include_directories(libvulkangl/include)
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
-
-if( ${backend} MATCHES OFF )
-	add_subdirectory(backends/vulkan)
-	add_subdirectory(backends/opengl43)
-	add_subdirectory(backends/opengles20)
-else()
-	file(GLOB SOURCES backends/${backend}/src/*)
-	include_directories(backends/${backend}/include)
-	set(LIBS ${OPENGL_LIBRARIES})
-endif()
 
 
 set(INCLUDES
@@ -83,7 +87,13 @@ set(INCLUDES
 	include/Renderer.h
 	include/Scene.h
 	include/SkyRenderer.h
+	include/Socket.h
 	include/Thread.h
+	include/Music.h
+	include/Sound.h
+	include/AudioLoaderWav.h
+	include/AudioLoaderMp3.h
+	include/MetaObject.h
 	include/Time.h
 	include/Vector.h
 	include/Vertex.h
@@ -92,6 +102,7 @@ set(INCLUDES
 
 set(INCLUDES_TARGET
 	include/${target}/BaseWindow.h
+	include/${target}/AudioOutput.h
 )
 
 set(SOURCES ${SOURCES}
@@ -119,7 +130,13 @@ set(SOURCES ${SOURCES}
 	src/File.cpp
 	src/Time.cpp
 	src/Input.cpp
+	src/Socket.cpp
 	src/Thread.cpp
+	src/Music.cpp
+	src/Sound.cpp
+	src/AudioLoaderWav.cpp
+	src/AudioLoaderMp3.cpp
+	src/MetaObject.cpp
 	src/Debug.cpp
 # 	fake/dummy_vk.cpp
 )
@@ -128,34 +145,51 @@ set(LIBS ${LIBS}
 	${PNG16_LIBRARIES}
 	${JPEG_LIBRARIES}
 	${FREETYPE_LIBRARIES}
+	${LIBMAD_LIBRARY}
+	${BULLET_LIBRARIES}
 	-pthread
 )
 
 if("${target}" MATCHES "windows")
 	add_definitions(-DGE_WIN32)
 	include_directories(include/windows)
-	set(LIBS ${LIBS} ${ZLIB_LIBRARY} -lwinmm)
+	set(LIBS ${LIBS} ${ZLIB_LIBRARY} -lwinmm -lwsock32 -static pthread)
 	set(SOURCES ${SOURCES} src/windows/BaseWindow.cpp)
+	set(SOURCES ${SOURCES} src/windows/AudioOutput.cpp)
 elseif("${target}" MATCHES "ios")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -stdlib=libc++ -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -D__IPHONE_OS_VERSION_MIN_REQUIRED=030103")
 #	set(CMAKE_CXX_FLAGS "-fobjc-abi-version=2 -fobjc-arc -nostdinc -I${CMAKE_IOS_SDK_ROOT}/usr/include -I${CMAKE_IOS_SDK_ROOT}/usr/include/c++/4.2.1 ${CMAKE_CXX_FLAGS} -Wno-unused-private-field -Wno-overloaded-virtual")
 	set(CMAKE_CXX_FLAGS "-fobjc-abi-version=2 -fobjc-arc -nostdinc -I${CMAKE_IOS_SDK_ROOT}/usr/include ${CMAKE_CXX_FLAGS} -Wno-unused-private-field -Wno-overloaded-virtual -Wno-ignored-attributes -Wno-missing-braces")
 	add_definitions(-DGE_IOS)
+	set(LIBS ${LIBS} -pthread)
 	include_directories(include/ios)
 	set(SOURCES ${SOURCES} src/ios/BaseWindow.cpp)
+	set(SOURCES ${SOURCES} src/ios/AudioOutput.cpp)
 	set(SOURCES ${SOURCES} src/ios/AppDelegate.mm)
 	set(mode STATIC)
 else()
+	find_package(ALSA REQUIRED)
 	add_definitions(-DGE_LINUX)
 	include_directories(include/linux)
-	set(LIBS ${LIBS} ${OPENGL_LIBRARIES} -lX11 -lXext -ldl)
+	set(LIBS ${LIBS} ${OPENGL_LIBRARIES} ${ALSA_LIBRARY} -lX11 -lXext -ldl -pthread)
 	set(SOURCES ${SOURCES} src/linux/BaseWindow.cpp)
+	set(SOURCES ${SOURCES} src/linux/AudioOutput.cpp)
 endif()
 
 message(STATUS "LIBS : ${LIBS}")
 
 add_library(gammaengine "${mode}" ${SOURCES})
 target_link_libraries(gammaengine ${LIBS})
+
+if( ${backend} MATCHES OFF )
+	add_subdirectory(backends/vulkan)
+	add_subdirectory(backends/opengl43)
+	add_subdirectory(backends/opengles20)
+else()
+	file(GLOB SOURCES backends/${backend}/src/*)
+	include_directories(backends/${backend}/include)
+	set(LIBS ${OPENGL_LIBRARIES})
+endif()
 
 if(NOT ("${target}" MATCHES "ios" OR "${target}" MATCHES "android"))
 add_executable(testexec src/main.cpp)

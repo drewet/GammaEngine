@@ -27,13 +27,15 @@ Thread::Thread( Window* shared_graphics_window )
 	: mSharedWindow( shared_graphics_window )
 	, mSharedContext( 0 )
 	, mRunning( false )
+	, mIsRunning( false )
 	, mFinished( false )
-	, mThread( nullptr )
+// 	, mThread( nullptr )
 {
 	if ( mSharedWindow ) {
 		mSharedContext = mSharedWindow->CreateSharedContext();
 	}
-	mThread = new std::thread( &Thread::sThreadEntry, this );
+// 	mThread = new std::thread( &Thread::sThreadEntry, this );
+	pthread_create( &mThread, nullptr, (void*(*)(void*))&Thread::sThreadEntry, this );
 }
 
 
@@ -64,7 +66,7 @@ void Thread::Join()
 
 bool Thread::running()
 {
-	return mRunning;
+	return mIsRunning;
 }
 
 
@@ -81,8 +83,11 @@ void Thread::mThreadEntry()
 	}
 	do {
 		while ( !mRunning ) {
+			mIsRunning = false;
 			usleep( 1000 * 10 );
 		}
+		mIsRunning = true;
 	} while ( run() );
+	mIsRunning = false;
 	mFinished = true;
 }

@@ -20,6 +20,9 @@
 #ifndef GE_PHYSICALOBJECT_H
 #define GE_PHYSICALOBJECT_H
 
+#include <btBulletDynamicsCommon.h>
+#include <btBulletCollisionCommon.h>
+
 #include "Vector.h"
 #include "Quaternion.h"
 #include "Matrix.h"
@@ -28,90 +31,60 @@
 namespace GE
 {
 
-/*
- * PhysicalBody :
- *   - using RK4 to calculate forces
- *   - mass is in kg
- *   - distances are in meters
- *   - velocity is in m/s
- */
+class Object;
 
-class PhysicalBody : public Time
+class PhysicalBody : public Time, public btMotionState
 {
 public:
 	typedef enum {
-		BOX = 0,
-		SPHERE = 1,
+		PLANE = 1,
+		BOX = 2,
+		SPHERE = 2,
 		MESH = 10
 	} CollideType;
 
-	PhysicalBody( const Vector3f& pos = { 0.0f }, float mass = 1.0f );
+	PhysicalBody( const Vector3f& pos = Vector3f(), float mass = 1.0f );
 	~PhysicalBody();
 
 	void setMass( float m );
-	void setBoundingBox( const Vector3f& min, const Vector3f& max );
-	void setCollideType( CollideType type );
 	void setFriction( float f );
 
-	Vector3f& velocity();
-	Vector3f& position();
+	void setPlane( const Vector4f& plane );
+	void setBox( const Vector3f& min, const Vector3f& max );
+	void setSphereRadius( float r );
+	void setMesh( Object* object, bool set_target = true, bool _static = false );
+	void setTarget( Object* object );
+
+	Vector3f velocity();
+	Vector3f position();
 	Matrix& matrix();
 	Matrix rotationMatrix();
 	Matrix inverseRotationMatrix();
 	CollideType collisionType();
 	Vector3f* collisionMesh( uint32_t* nVerts = nullptr );
 
+	btRigidBody* rigidBody();
+
 	void ResetForces();
 	void ResetTorque();
-	void Update();
 
 	void ApplyForce( const Vector3f& f );
-	void ApplyGravity( PhysicalBody* other );
-
 	void ApplyTorque( const Vector3f& t );
-
-	void Collide( PhysicalBody* other );
-	void HandleCollision( PhysicalBody* other, const Vector3f& pCollide, Vector3f normal );
+	void ApplyGravity( PhysicalBody* other, bool apply_to_other = true );
 
 protected:
-	typedef struct RK4Deriv {
-		Vector3f velocity;	// m/s
-		Vector3f force;		// N
-		Quaternion spin;
-		Vector3f torque;
-	} RK4Deriv;
-
-	RK4Deriv RK4Evaluate();
-	RK4Deriv RK4Evaluate( double dt, const RK4Deriv& d );
-	void RK4Integrate( double dt );
-
-	bool CollidePointToBox( const Vector3f& point, const Vector3f& min, const Vector3f& max );
-	bool CollideSeparatingAxis( Vector3f* aCorn, Vector3f* bCorn, Vector3f axis, float* res = nullptr );
-
-	float mMass;
-	Vector3f mBoundingBox[8];
-	Vector3f mBoundingBoxMin;
-	Vector3f mBoundingBoxMax;
-	float mInertiaTensor;
-	float mFriction;
+	void ResetBody();
+	virtual void getWorldTransform( btTransform& worldTrans ) const;
+	virtual void setWorldTransform( const btTransform& worldTrans );
 
 	Vector3f mPosition;
-	Vector3f mForce;
-	Vector3f mTorque;
-	Vector3f mMomentum;
-	Vector3f mVelocity;
-
-	Quaternion mOrientation;
-	Vector3f mAngularMomentum;
-	Quaternion mSpin;
-	Vector3f mAngularVelocity;
-
+	float mMass;
 	Matrix mMatrix;
+	Object* mTargetObject;
 
-	CollideType mCollideType;
-	Vector4f mBoundingDiagonal;
-
-	bool mCollided;
+	btCollisionShape* mShape;
+	btRigidBody* mRigidBody;
+	btStridingMeshInterface* mMesh;
 };
 
 

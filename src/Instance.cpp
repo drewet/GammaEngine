@@ -20,6 +20,7 @@
  
 #include <stdlib.h>
 #include "Instance.h"
+#include "AudioOutput.h"
 #include "Debug.h"
 
 #ifndef ALIGN
@@ -66,6 +67,10 @@ Instance* Instance::mBaseInstance = nullptr;
 void* Instance::sBackend = nullptr;
 uint64_t Instance::mBaseThread = 0;
 
+std::string Instance::sLocale = "";
+std::string Instance::sUserName = "";
+std::string Instance::sUserEmail = "";
+
 Instance* Instance::baseInstance()
 {
 	return mBaseInstance;
@@ -95,6 +100,10 @@ extern "C" Object* LoadObject( const std::string&, Instance* );
 
 Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_instance, const std::string& backend_file )
 {
+	auto devs = AudioOutput::DevicesList();
+	for ( auto dev : devs ) {
+		gDebug() << "Audio output " << dev.first << " : " << dev.second << "\n";
+	}
 	if ( easy_instance ) {
 		if ( !mBaseInstance ) {
 			mBaseInstance = CreateInstance( appName, appVersion );
@@ -191,6 +200,11 @@ Instance* Instance::Create( const char* appName, uint32_t appVersion, bool easy_
 		} else {
 			gDebug() << "Backend file " << prefixes[--i] << backend_lib << lib_suffix << " loaded !\n";
 		}
+	}
+
+	auto devs = AudioOutput::DevicesList();
+	for ( auto dev : devs ) {
+		gDebug() << "Audio output " << dev.first << " : " << dev.second << "\n";
 	}
 
 	typedef Instance* (*f_type)( const char*, uint32_t );
@@ -341,6 +355,12 @@ void* Instance::Realloc( void* last, uintptr_t size, bool clear_mem )
 }
 
 
+void Instance::AffectRAM( int64_t sz )
+{
+	mCpuRamCounter += sz;
+}
+
+
 uint64_t Instance::cpuRamCounter()
 {
 	return mCpuRamCounter;
@@ -369,5 +389,42 @@ uint64_t Instance::queue()
 {
 	return mQueues[mDevId];
 }
+
+
+std::string Instance::locale()
+{
+	return sLocale;
+}
+
+
+std::string Instance::username()
+{
+	return sUserName;
+}
+
+
+std::string Instance::useremail()
+{
+	return sUserEmail;
+}
+
+
+void Instance::setLocale( const std::string& s )
+{
+	sLocale = s;
+}
+
+
+void Instance::setUserName( const std::string& s )
+{
+	sUserName = s;
+}
+
+
+void Instance::setUserEmail( const std::string& s )
+{
+	sUserEmail = s;
+}
+
 
 // } // namespace GE

@@ -17,7 +17,7 @@
  *
  */
 
-#if ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) ) )
+#if ( defined(GE_VECTOR_CPP_INC) || !( defined(GE_ANDROID) || defined(GE_IOS) || defined(GE_RELEASE) ) )
 
 #include "Instance.h"
 #include "Vector.h"
@@ -75,6 +75,13 @@
 using namespace GE;
 
 //template <typename T, int n> Vector<T,n>::Vector( T x, T y, T z, T w ) : x( x ), y( y ), z( z ), w( w ) {}
+
+
+template <typename T, int n> Vector<T,n>& Vector<T,n>::operator=( const Vector< T, n >& other )
+{
+	VEC_IM( this-> , other. , + , 0 );
+	return *this;
+}
 
 template <typename T, int n> void Vector<T,n>::normalize() {
 	T add = 0;
@@ -178,6 +185,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector2i& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector3i v( 0, 0, 0 );
@@ -189,6 +197,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector3i& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector4i v( 0, 0, 0, 0 );
@@ -200,6 +209,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector4i& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector2f v( 0, 0 );
@@ -211,6 +221,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector2f& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector3f v( 0, 0, 0 );
@@ -222,6 +233,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector3f& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector4f v( 0, 0, 0, 0 );
@@ -233,6 +245,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector4f& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector2d v( 0, 0 );
@@ -244,6 +257,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector2d& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector3d v( 0, 0, 0 );
@@ -255,6 +269,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector3d& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 	{
 		Vector4d v( 0, 0, 0, 0 );
@@ -266,6 +281,7 @@ static void _init_dummy_vectors()
 		v -= v * (v == v);
 		const Vector4d& v2 = v;
 		v[0] = v2[0];
+		v = v;
 	}
 }
 #endif // GE_ANDROID || GE_IOS

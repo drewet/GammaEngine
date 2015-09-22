@@ -136,6 +136,47 @@ File::File( void* data, uint64_t len, MODE mode, bool copy_buffer, Instance* ins
 }
 
 
+File::File( const File* other )
+	: mType( other->mType )
+	, mMode( other->mMode )
+	, mStream( nullptr )
+{
+	fDebug( other );
+
+	if ( mType == FILE ) {
+		std::ios_base::openmode std_mode = std::ios_base::binary;
+
+		if ( mMode & READ ) {
+			std_mode |= std::ios_base::in;
+		}
+		if ( mMode & WRITE ) {
+			std_mode |= std::ios_base::out;
+		}
+
+		mPath = other->mPath;
+	#ifdef GE_ANDROID
+		mIsAsset = false;
+		mStream = new std::fstream( mPath, std_mode );
+		if ( !mStream->is_open() ) {
+			mStream = new std::fstream( std::string( BaseWindow::androidState()->activity->internalDataPath ) + "/" + mPath, std_mode );
+		}
+		if ( !mStream->is_open() ) {
+			mStream = (std::fstream*)AAssetManager_open( BaseWindow::androidState()->activity->assetManager, mPath.c_str(), AASSET_MODE_STREAMING );
+			mIsAsset = true;
+		}
+	#elif GE_IOS
+		mStream = new std::fstream( mPath, std_mode );
+		if ( !mStream->is_open() ) {
+			delete mStream;
+			mStream = _ge_iOSOpen( mPath.c_str(), std_mode );
+		}
+	#else
+		mStream = new std::fstream( mPath, std_mode );
+	#endif
+	}
+}
+
+
 File::~File()
 {
 	if ( mType == BUFFER ) {
@@ -198,7 +239,7 @@ uint64_t File::Seek( int64_t ofs, DIR dir )
 			mOffset = ofs;
 		} else if ( dir == CURR && (int64_t)mOffset + ofs >= 0 && (int64_t)mOffset + ofs < (int64_t)mBufferSize ) {
 			mOffset = mOffset + ofs;
-		} else if ( dir == END && (int64_t)mBufferSize + ofs >= 0 && mBufferSize + ofs < (int64_t)mBufferSize ) {
+		} else if ( dir == END && (int64_t)mBufferSize + ofs >= 0 && (int64_t)mBufferSize + ofs < (int64_t)mBufferSize ) {
 			mOffset = mBufferSize + ofs;
 		}
 		return mOffset;

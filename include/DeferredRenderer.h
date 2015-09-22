@@ -47,6 +47,8 @@ public:
 	virtual void Look( Camera* cam ) = 0;
 
 	virtual void Update( Light* light = nullptr ) = 0;
+
+	virtual void AssociateSize( Window* window ) = 0;
 };
 
 } // namespace GE

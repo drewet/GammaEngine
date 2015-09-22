@@ -31,7 +31,7 @@ namespace GE {
 
 std::vector< ImageLoader* > Image::mImageLoaders = std::vector< ImageLoader* >();
 static bool ImageLoaderFirstCall = true;
-
+/*
 #if ( defined( GE_IOS ) || defined( GE_ANDROID ) )
 static uint32_t geGetNextPower2( uint32_t width )
 {
@@ -43,7 +43,7 @@ static uint32_t geGetNextPower2( uint32_t width )
 	return b;
 }
 #endif
-
+*/
 Image::Image()
 	: mAllocInstance( nullptr )
 	, mWidth( 0 )
@@ -91,12 +91,12 @@ Image::Image( uint32_t width, uint32_t height, uint32_t backcolor, Instance* ins
 	, mColor( 0xFFFFFFFF )
 {
 	mServerRefs.clear();
-
+/*
 #if ( defined( GE_IOS ) || defined( GE_ANDROID ) )
 	mWidth = geGetNextPower2( mWidth );
 	mHeight = geGetNextPower2( mHeight );
 #endif
-
+*/
 	mData = (uint32_t*)mAllocInstance->Malloc( sizeof(uint32_t) * mWidth * mHeight );
 	for ( uint32_t i = 0; i < mWidth * mHeight; i++ ) {
 		mData[ i ] = backcolor;
@@ -155,7 +155,7 @@ void Image::Load( File* file, const std::string& extension, Instance* instance )
 			for ( size_t j = 0; j < extensions.size(); j++ ) {
 				std::string test_case = extensions[j];
 				std::transform( test_case.begin(), test_case.end(), test_case.begin(), ::tolower );
-				if ( extension.find( test_case ) ) {
+				if ( extension.find( test_case ) == 0 ) {
 					loader = mImageLoaders.at(i);
 					break;
 				}

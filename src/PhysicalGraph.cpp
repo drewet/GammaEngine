@@ -22,16 +22,27 @@
 
 using namespace GE;
 
-PhysicalGraph::PhysicalGraph( Instance* instance )
+PhysicalGraph::PhysicalGraph( Instance* instance, const Vector3f& gravity )
 	: Time()
 	, mInstance( instance ? instance : Instance::baseInstance() )
 	, mCollider( new PhysicalCollider( this ) )
 {
+	mBroadphase = new btDbvtBroadphase();
+	mCollisionConfiguration = new btDefaultCollisionConfiguration();
+	mDispatcher = new btCollisionDispatcher( mCollisionConfiguration );
+	mSolver = new btSequentialImpulseConstraintSolver;
+	mDynamicsWorld = new btDiscreteDynamicsWorld( mDispatcher, mBroadphase, mSolver, mCollisionConfiguration );
+	setGravity( gravity );
 }
 
 
 PhysicalGraph::~PhysicalGraph()
 {
+	delete mDynamicsWorld;
+	delete mSolver;
+	delete mDispatcher;
+	delete mCollisionConfiguration;
+	delete mBroadphase;
 }
 
 
@@ -47,29 +58,25 @@ PhysicalCollider* PhysicalGraph::collider()
 }
 
 
+void PhysicalGraph::setGravity( const Vector3f& g )
+{
+	mDynamicsWorld->setGravity( btVector3( g.x, g.y, g.z ) );
+}
+
+
 void PhysicalGraph::AddBody( PhysicalBody* body )
 {
 	body->setTimeParent( this );
+	mDynamicsWorld->addRigidBody( body->rigidBody() );
 	mBodies.emplace_back( body );
 }
 
 
 void PhysicalGraph::Update()
 {
-	double dt = SlowSync( 1.0 / 60.0 );
+	double dt = SlowSync( 1.0 / 100.0 );
 	if ( std::abs( dt ) <= 0.0 ) {
 		return;
 	}
-
-	decltype(mBodies)::iterator it;
-	decltype(mBodies)::iterator it2;
-
-	for ( it = mBodies.begin(); it != mBodies.end(); ++it ) {
-		it2 = it;
-		while( ++it2 != mBodies.end() ) {
-// 			(*it)->Collide( *it2 );
-			mCollider->Collide( *it, *it2 );
-		}
-		(*it)->Update();
-	}
+	mDynamicsWorld->stepSimulation( dt, 1, dt );
 }

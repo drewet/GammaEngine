@@ -19,6 +19,8 @@
 
 #include <fstream>
 #include <vector>
+#include <locale>
+#include <iomanip>
 
 #include "Window.h"
 #include "Instance.h"
@@ -33,6 +35,7 @@
 #include "Image.h"
 #include "Font.h"
 
+#undef DrawText
 #define GLSL(shader)  #shader
 
 extern "C" GE::Renderer2D* CreateRenderer2D( GE::Instance* instance, uint32_t width, uint32_t height ) {
@@ -188,7 +191,12 @@ void OpenGLES20Renderer2D::Render( Image* image, int mode, int start, int n, con
 void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int tw, int th, float angle )
 {
 	Prerender();
-
+/*
+	// Ensure for gles:width/height variables
+	image->serverReference( mInstance );
+	int width = image->meta( "gles:width" );
+	int height = image->meta( "gles:height" );
+*/
 	if ( tw == -1 ) {
 		tw = image->width();
 	}
@@ -196,35 +204,39 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Image* image, int tx, int ty, int
 		th = image->height();
 	}
 
+	image->serverReference( mInstance );
+	const float rx = 1.0f / image->meta( "gles:width", (float)image->width() );
+	const float ry = 1.0f / image->meta( "gles:height", (float)image->height() );
+
 	Vertex2D vertices[6];
 	memset( vertices, 0, sizeof(vertices) );
-	vertices[0].u = (float)tx / image->width();
-	vertices[0].v = (float)ty / image->height();
+	vertices[0].u = (float)tx * rx;
+	vertices[0].v = (float)ty * ry;
 	vertices[0].x = x;
 	vertices[0].y = y;
 
-	vertices[1].u = (float)(tx+tw) / image->width();
-	vertices[1].v = (float)(ty+th) / image->height();
+	vertices[1].u = (float)(tx+tw) * rx;
+	vertices[1].v = (float)(ty+th) * ry;
 	vertices[1].x = x + image->width();
 	vertices[1].y = y + image->height();
 
-	vertices[2].u = (float)(tx+tw) / image->width();
-	vertices[2].v = (float)ty / image->height();
+	vertices[2].u = (float)(tx+tw) * rx;
+	vertices[2].v = (float)ty * ry;
 	vertices[2].x = x + image->width();
 	vertices[2].y = y;
 
-	vertices[3].u = (float)tx / image->width();
-	vertices[3].v = (float)ty / image->height();
+	vertices[3].u = (float)tx * rx;
+	vertices[3].v = (float)ty * ry;
 	vertices[3].x = x;
 	vertices[3].y = y;
 
-	vertices[4].u = (float)tx / image->width();
-	vertices[4].v = (float)(ty+th) / image->height();
+	vertices[4].u = (float)tx * rx;
+	vertices[4].v = (float)(ty+th) * ry;
 	vertices[4].x = x;
 	vertices[4].y = y + image->height();
 
-	vertices[5].u = (float)(tx+tw) / image->width();
-	vertices[5].v = (float)(ty+th) / image->height();
+	vertices[5].u = (float)(tx+tw) * rx;
+	vertices[5].v = (float)(ty+th) * ry;
 	vertices[5].x = x + image->width();
 	vertices[5].y = y + image->height();
 
@@ -268,35 +280,39 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 		th = image->height();
 	}
 
+	image->serverReference( mInstance );
+	const float rx = 1.0f / image->meta( "gles:width", (float)image->width() );
+	const float ry = 1.0f / image->meta( "gles:height", (float)image->height() );
+
 	Vertex2D vertices[6];
 	memset( vertices, 0, sizeof(vertices) );
-	vertices[0].u = (float)tx / image->width();
-	vertices[0].v = (float)ty / image->height();
+	vertices[0].u = (float)tx * rx;
+	vertices[0].v = (float)ty * ry;
 	vertices[0].x = x;
 	vertices[0].y = y;
 
-	vertices[1].u = (float)(tx+tw) / image->width();
-	vertices[1].v = (float)(ty+th) / image->height();
+	vertices[1].u = (float)(tx+tw) * rx;
+	vertices[1].v = (float)(ty+th) * ry;
 	vertices[1].x = x + w;
 	vertices[1].y = y + h;
 
-	vertices[2].u = (float)(tx+tw) / image->width();
-	vertices[2].v = (float)ty / image->height();
+	vertices[2].u = (float)(tx+tw) * rx;
+	vertices[2].v = (float)ty * ry;
 	vertices[2].x = x + w;
 	vertices[2].y = y;
 
-	vertices[3].u = (float)tx / image->width();
-	vertices[3].v = (float)ty / image->height();
+	vertices[3].u = (float)tx * rx;
+	vertices[3].v = (float)ty * ry;
 	vertices[3].x = x;
 	vertices[3].y = y;
 
-	vertices[4].u = (float)tx / image->width();
-	vertices[4].v = (float)(ty+th) / image->height();
+	vertices[4].u = (float)tx * rx;
+	vertices[4].v = (float)(ty+th) * ry;
 	vertices[4].x = x;
 	vertices[4].y = y + h;
 
-	vertices[5].u = (float)(tx+tw) / image->width();
-	vertices[5].v = (float)(ty+th) / image->height();
+	vertices[5].u = (float)(tx+tw) * rx;
+	vertices[5].v = (float)(ty+th) * ry;
 	vertices[5].x = x + w;
 	vertices[5].y = y + h;
 
@@ -316,7 +332,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, int w, int h, Image* image, int t
 }
 
 
-void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const std::string& text )
+void OpenGLES20Renderer2D::DrawText( int x, int y, Font* font, uint32_t color, const std::string& text, Renderer2D::TextFlags flags )
 {
 	Prerender();
 
@@ -325,9 +341,37 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	const char* data = text.data();
 	const uint32_t len = text.length();
 
-	const float rx = 1.0f / font->texture()->width();
-	const float ry = 1.0f / font->texture()->height();
+	font->texture()->serverReference( mInstance );
+	const float rx = 1.0f / font->texture()->meta( "gles:width", (float)font->texture()->width() );
+	const float ry = 1.0f / font->texture()->meta( "gles:height", (float)font->texture()->height() );
 	uint32_t iBuff = 0;
+
+	uint32_t* lines_ofs = nullptr;
+	uint32_t line = 0;
+
+	if ( flags & Renderer2D::HCenter ) {
+		uint32_t width = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			if ( data[i] == '\n' ) {
+				line++;
+			}
+		}
+		lines_ofs = new uint32_t[ ++line ];
+		line = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			int _c = data[i];
+			width += font->glyph( _c )->advX;
+
+			if ( data[i] == '\n' ) {
+				lines_ofs[line] = x - width / 2;
+				line++;
+				width = 0;
+			}
+		}
+		lines_ofs[line] = x - width / 2;
+		line = 0;
+		x = lines_ofs[0];
+	}
 
 	Matrix matrix;
 	Vertex2D vertices[6*32];
@@ -338,18 +382,18 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 		uint8_t c = _c;
 
 		if ( data[i] == '\n' ) {
-			x = base_x;
+			x = lines_ofs ? lines_ofs[++line] : base_x;
 			y += font->size();
 			continue;
 		}
 
-		float sx = ( (float)font->glyphs()[c].x ) * rx;
-		float sy = ( (float)font->glyphs()[c].y ) * ry;
-		float texMaxX = ( (float)font->glyphs()[c].w ) * rx;
-		float texMaxY = ( (float)font->glyphs()[c].h ) * ry;
-		float width = font->glyphs()[c].w;
-		float height = font->glyphs()[c].h;
-		float fy = (float)y - font->glyphs()[c].posY;
+		float sx = ( (float)font->glyph(c)->x ) * rx;
+		float sy = ( (float)font->glyph(c)->y ) * ry;
+		float texMaxX = ( (float)font->glyph(c)->w ) * rx;
+		float texMaxY = ( (float)font->glyph(c)->h ) * ry;
+		float width = font->glyph(c)->w;
+		float height = font->glyph(c)->h;
+		float fy = (float)y - font->glyph(c)->posY;
 
 		vertices[iBuff + 0].u = sx;
 		vertices[iBuff + 0].v = sy;
@@ -389,7 +433,7 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 
 		vertices[iBuff + 0].color = vertices[iBuff + 1].color = vertices[iBuff + 2].color = vertices[iBuff + 3].color = vertices[iBuff + 4].color = vertices[iBuff + 5].color = 0xFFFFFFFF;
 
-		x += font->glyphs()[c].advX;
+		x += font->glyph(c)->advX;
 		iBuff += 6;
 
 		if ( iBuff >= 6*32 && i + 1 < len ) {
@@ -402,6 +446,152 @@ void OpenGLES20Renderer2D::Draw( int x, int y, Font* font, uint32_t color, const
 	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
 	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
 	Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+
+	if ( lines_ofs ) {
+		delete lines_ofs;
+	}
+}
+
+
+void OpenGLES20Renderer2D::DrawText( int x, int y, Font* font, uint32_t color, const std::wstring& text, Renderer2D::TextFlags flags )
+{
+	const wchar_t* data = text.data();
+	const uint32_t len = text.length();
+	bool rerender = false;
+	std::map< wchar_t, Font::Glyph >& glyphs = font->glyphs();
+
+	for ( uint32_t i = 0; i < len; i++ ) {
+		wchar_t c = data[i];
+		if ( glyphs.count( c ) <= 0 ) {
+			Font::Glyph g = {
+				.c = c,
+				.x = 0,
+				.y = 0,
+				.w = 0,
+				.h = 0,
+				.advX = 0,
+				.posY = 0
+			};
+			glyphs.insert( std::make_pair( c, g ) );
+			rerender = true;
+		}
+	}
+	if ( rerender ) {
+		font->RenderGlyphs();
+	}
+
+	Prerender();
+
+	y += font->size();
+	const int base_x = x;
+	font->texture()->serverReference( mInstance );
+	const float rx = 1.0f / font->texture()->meta( "gles:width", (float)font->texture()->width() );
+	const float ry = 1.0f / font->texture()->meta( "gles:height", (float)font->texture()->height() );
+	uint32_t iBuff = 0;
+
+	uint32_t* lines_ofs = nullptr;
+	uint32_t line = 0;
+
+	if ( flags & Renderer2D::HCenter ) {
+		uint32_t width = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			if ( data[i] == '\n' ) {
+				line++;
+			}
+		}
+		lines_ofs = new uint32_t[ ++line ];
+		line = 0;
+		for ( uint32_t i = 0; i < len; i++ ) {
+			int _c = data[i];
+			width += font->glyph( _c )->advX;
+
+			if ( data[i] == '\n' ) {
+				lines_ofs[line] = x - width / 2;
+				line++;
+				width = 0;
+			}
+		}
+		lines_ofs[line] = x - width / 2;
+		line = 0;
+		x = lines_ofs[0];
+	}
+
+	Matrix matrix;
+	Vertex2D vertices[6*32];
+	memset( vertices, 0, sizeof(vertices) );
+
+	for ( uint32_t i = 0; i < len; i++ ) {
+		wchar_t c = data[i];
+
+		if ( data[i] == '\n' ) {
+			x = lines_ofs ? lines_ofs[++line] : base_x;
+			y += font->size();
+			continue;
+		}
+
+		float sx = ( (float)font->glyph(c)->x ) * rx;
+		float sy = ( (float)font->glyph(c)->y ) * ry;
+		float texMaxX = ( (float)font->glyph(c)->w ) * rx;
+		float texMaxY = ( (float)font->glyph(c)->h ) * ry;
+		float width = font->glyph(c)->w;
+		float height = font->glyph(c)->h;
+		float fy = (float)y - font->glyph(c)->posY;
+
+		vertices[iBuff + 0].u = sx;
+		vertices[iBuff + 0].v = sy;
+		vertices[iBuff + 0].x = x;
+		vertices[iBuff + 0].y = fy;
+// 		vertices[iBuff + 0].z = 0.0f;
+
+		vertices[iBuff + 1].u = sx+texMaxX;
+		vertices[iBuff + 1].v = sy+texMaxY;
+		vertices[iBuff + 1].x = x+width;
+		vertices[iBuff + 1].y = fy+height;
+// 		vertices[iBuff + 1].z = 0.0f;
+
+		vertices[iBuff + 2].u = sx+texMaxX;
+		vertices[iBuff + 2].v = sy;
+		vertices[iBuff + 2].x = x+width;
+		vertices[iBuff + 2].y = fy;
+// 		vertices[iBuff + 2].z = 0.0f;
+		
+		vertices[iBuff + 3].u = sx;
+		vertices[iBuff + 3].v = sy;
+		vertices[iBuff + 3].x = x;
+		vertices[iBuff + 3].y = fy;
+// 		vertices[iBuff + 3].z = 0.0f;
+
+		vertices[iBuff + 4].u = sx;
+		vertices[iBuff + 4].v = sy+texMaxY;
+		vertices[iBuff + 4].x = x;
+		vertices[iBuff + 4].y = fy+height;
+// 		vertices[iBuff + 4].z = 0.0f;
+
+		vertices[iBuff + 5].u = sx+texMaxX;
+		vertices[iBuff + 5].v = sy+texMaxY;
+		vertices[iBuff + 5].x = x+width;
+		vertices[iBuff + 5].y = fy+height;
+// 		vertices[iBuff + 5].z = 0.0f;
+
+		vertices[iBuff + 0].color = vertices[iBuff + 1].color = vertices[iBuff + 2].color = vertices[iBuff + 3].color = vertices[iBuff + 4].color = vertices[iBuff + 5].color = 0xFFFFFFFF;
+
+		x += font->glyph(c)->advX;
+		iBuff += 6;
+
+		if ( iBuff >= 6*32 && i + 1 < len ) {
+			glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+			glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
+			Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+			iBuff = 0;
+		}
+	}
+	glBindBuffer( GL_ARRAY_BUFFER, mVBO );
+	glBufferSubData( GL_ARRAY_BUFFER, 6 * sizeof(Vertex2D), iBuff * sizeof(Vertex2D), vertices );
+	Render( font->texture(), GL_TRIANGLES, 6, iBuff, matrix );
+
+	if ( lines_ofs ) {
+		delete lines_ofs;
+	}
 }
 
 

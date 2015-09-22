@@ -24,6 +24,8 @@
 #include <typeinfo>
 #include <string>
 
+#undef CreateWindow
+
 namespace GE {
 
 class Window;
@@ -60,12 +62,21 @@ public:
 	void* Malloc( uintptr_t size, bool clear_mem = true );
 	void Free( void* data );
 
+	void AffectRAM( int64_t sz );
+
 	uint64_t gpu();
 	uint64_t device();
 	uint64_t queue();
 
 	uint64_t cpuRamCounter();
 	uint64_t gpuRamCounter();
+
+	static std::string locale();
+	static std::string username();
+	static std::string useremail();
+	static void setLocale( const std::string& s );
+	static void setUserName( const std::string& s );
+	static void setUserEmail( const std::string& s );
 
 	static Instance* baseInstance();
 	static uint64_t baseThread();
@@ -75,6 +86,9 @@ protected:
 	static Instance* mBaseInstance;
 	static uint64_t mBaseThread;
 	static void* sBackend;
+	static std::string sLocale;
+	static std::string sUserName;
+	static std::string sUserEmail;
 
 	int mDevId;
 	uint32_t mGpuCount;

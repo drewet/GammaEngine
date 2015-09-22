@@ -27,6 +27,7 @@
 
 #include "Vertex.h"
 #include "Matrix.h"
+#include "MetaObject.h"
 
 namespace GE {
 
@@ -35,7 +36,7 @@ class ObjectLoader;
 class File;
 class Image;
 
-class Object
+class Object : public MetaObject
 {
 public:
 	Object( Vertex* verts = nullptr, uint32_t nVerts = 0, uint32_t* indices = nullptr, uint32_t nIndices = 0 );
@@ -48,6 +49,7 @@ public:
 	Vertex* vertices() const;
 	uint32_t* indices() const;
 	Matrix* matrix() const;
+	Vector3f position() const;
 
 	void setName( const std::string& name );
 

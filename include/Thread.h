@@ -21,6 +21,7 @@
 #define GE_THREAD_H
 
 #include <thread>
+#include <pthread.h>
 
 namespace GE
 {
@@ -31,10 +32,11 @@ class Thread
 {
 public:
 	Thread( Window* shared_graphics_window = nullptr );
-	~Thread();
+	virtual ~Thread();
 
 	void Start();
 	void Pause();
+	void Stop();
 	void Join();
 	bool running();
 
@@ -47,8 +49,10 @@ private:
 	Window* mSharedWindow;
 	uint64_t mSharedContext;
 	bool mRunning;
+	bool mIsRunning;
 	bool mFinished;
-	std::thread* mThread;
+// 	std::thread* mThread;
+	pthread_t mThread;
 };
 
 }
